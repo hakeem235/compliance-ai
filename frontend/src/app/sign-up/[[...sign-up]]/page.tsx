@@ -38,7 +38,9 @@ export default function SignUpPage() {
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center bg-white p-12">
-        <SignUp />
+        <div className="w-full max-w-[420px]">
+          <SignUp />
+        </div>
       </div>
     </div>
   );

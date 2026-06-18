@@ -38,7 +38,9 @@ export default function SignInPage() {
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center bg-white p-12">
-        <SignIn />
+        <div className="w-full max-w-[420px]">
+          <SignIn />
+        </div>
       </div>
     </div>
   );
