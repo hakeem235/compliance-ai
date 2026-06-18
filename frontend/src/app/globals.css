@@ -14,96 +14,106 @@
   .theme {
     --font-sans: var(--font-sans);
     --font-sans-arabic: var(--font-sans-arabic);
+    --font-mono: var(--font-mono);
   }
   :root {
-    /* ComplianceAI design system — "calm legal expert": navy/charcoal base + amber accent */
-    --background: #F8FAFC;
-    --foreground: #0F172A;
+    /* ComplianceAI design system v2 — "trusted green legal expert": deep green sidebar + neutral surface + amber/red risk accents */
+    --background: #F4F6F5;
+    --foreground: #10201A;
     --card: #FFFFFF;
-    --card-foreground: #0F172A;
+    --card-foreground: #10201A;
     --popover: #FFFFFF;
-    --popover-foreground: #0F172A;
-    --primary: #1E293B;
-    --primary-foreground: #F8FAFC;
-    --secondary: #334155;
-    --secondary-foreground: #F8FAFC;
-    --muted: #E2E8F0;
-    --muted-foreground: #475569;
-    --accent: #B45309;
-    --accent-foreground: #FFFBEB;
+    --popover-foreground: #10201A;
+    --primary: #0B3D2E;
+    --primary-foreground: #FFFFFF;
+    --secondary: #EAF6F0;
+    --secondary-foreground: #0B3D2E;
+    --muted: #F2F5F4;
+    --muted-foreground: #7C8B85;
+    --accent: #1F8A5B;
+    --accent-foreground: #FFFFFF;
     --destructive: #DC2626;
     --destructive-foreground: #FEF2F2;
-    --border: #E2E8F0;
-    --input: #E2E8F0;
-    --ring: #B45309;
-    --chart-1: #B45309;
-    --chart-2: #1E293B;
-    --chart-3: #334155;
-    --chart-4: #64748B;
-    --chart-5: #94A3B8;
-    --radius: 0.5rem;
-    --sidebar: #0F172A;
-    --sidebar-foreground: #F8FAFC;
-    --sidebar-primary: #B45309;
-    --sidebar-primary-foreground: #FFFBEB;
-    --sidebar-accent: #1E293B;
-    --sidebar-accent-foreground: #F8FAFC;
-    --sidebar-border: #1E293B;
-    --sidebar-ring: #B45309;
+    --border: #E8EDEB;
+    --input: #E2E9E6;
+    --ring: #1F8A5B;
+    --chart-1: #1F8A5B;
+    --chart-2: #D97706;
+    --chart-3: #2A6FDB;
+    --chart-4: #7C5CFF;
+    --chart-5: #64748B;
+    --radius: 0.625rem;
+    /* Sidebar — deep green, matches mockup #0B2E22 */
+    --sidebar: #0B2E22;
+    --sidebar-foreground: #FFFFFF;
+    --sidebar-foreground-muted: rgba(255, 255, 255, 0.6);
+    --sidebar-primary: #1F8A5B;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: rgba(255, 255, 255, 0.07);
+    --sidebar-accent-foreground: #9FE6C4;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #5BD6A0;
     /* Risk badges — distinct from the brand accent so risk level is never ambiguous */
-    --risk-low: #166534;
-    --risk-low-bg: #DCFCE7;
-    --risk-medium: #92400E;
-    --risk-medium-bg: #FEF3C7;
-    --risk-high: #991B1B;
-    --risk-high-bg: #FEE2E2;
+    --risk-low: #1F8A5B;
+    --risk-low-bg: #EAF6F0;
+    --risk-medium: #D97706;
+    --risk-medium-bg: #FEF4E2;
+    --risk-high: #DC2626;
+    --risk-high-bg: #FDEDED;
+    /* Gauge track behind the risk-score donut */
+    --gauge-track: #F2F5F4;
+    --gauge-track-dark: rgba(255, 255, 255, 0.12);
     /* Citation chip — neutral, never competes with accent or risk colors */
-    --citation-bg: #EFF6FF;
-    --citation-foreground: #1E40AF;
-    --citation-border: #BFDBFE;
+    --citation-bg: #F4FAF7;
+    --citation-foreground: #0B3D2E;
+    --citation-border: #DCEFE6;
   }
   .dark {
-    --background: #0B1220;
-    --foreground: #F1F5F9;
-    --card: #111B2E;
-    --card-foreground: #F1F5F9;
-    --popover: #111B2E;
-    --popover-foreground: #F1F5F9;
-    --primary: #F1F5F9;
-    --primary-foreground: #0F172A;
-    --secondary: #1E293B;
-    --secondary-foreground: #F1F5F9;
-    --muted: #1E293B;
-    --muted-foreground: #94A3B8;
-    --accent: #D97706;
-    --accent-foreground: #1C0A00;
+    --background: #0B1410;
+    --foreground: #EAF3EE;
+    --card: #102019;
+    --card-foreground: #EAF3EE;
+    --popover: #102019;
+    --popover-foreground: #EAF3EE;
+    --primary: #5BD6A0;
+    --primary-foreground: #06281D;
+    --secondary: #16271F;
+    --secondary-foreground: #9FE6C4;
+    --muted: #16271F;
+    --muted-foreground: #8FA89D;
+    --accent: #34D399;
+    --accent-foreground: #06281D;
     --destructive: #F87171;
     --destructive-foreground: #450A0A;
-    --border: rgba(241, 245, 249, 0.1);
-    --input: rgba(241, 245, 249, 0.15);
-    --ring: #D97706;
-    --chart-1: #D97706;
-    --chart-2: #94A3B8;
-    --chart-3: #64748B;
-    --chart-4: #475569;
-    --chart-5: #334155;
-    --sidebar: #0B1220;
-    --sidebar-foreground: #F1F5F9;
-    --sidebar-primary: #D97706;
-    --sidebar-primary-foreground: #1C0A00;
-    --sidebar-accent: #1E293B;
-    --sidebar-accent-foreground: #F1F5F9;
-    --sidebar-border: #1E293B;
-    --sidebar-ring: #D97706;
+    --border: rgba(234, 243, 238, 0.1);
+    --input: rgba(234, 243, 238, 0.15);
+    --ring: #34D399;
+    --chart-1: #34D399;
+    --chart-2: #FBBF24;
+    --chart-3: #60A5FA;
+    --chart-4: #A78BFA;
+    --chart-5: #94A3B8;
+    /* Sidebar stays the same deep green — it's already dark-mode-safe */
+    --sidebar: #081F17;
+    --sidebar-foreground: #EAF3EE;
+    --sidebar-foreground-muted: rgba(234, 243, 238, 0.55);
+    --sidebar-primary: #34D399;
+    --sidebar-primary-foreground: #06281D;
+    --sidebar-accent: rgba(255, 255, 255, 0.06);
+    --sidebar-accent-foreground: #9FE6C4;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #34D399;
     --risk-low: #4ADE80;
-    --risk-low-bg: #14532D;
+    --risk-low-bg: #14322380;
     --risk-medium: #FBBF24;
-    --risk-medium-bg: #78350F;
+    --risk-medium-bg: #3A2A0F;
     --risk-high: #F87171;
-    --risk-high-bg: #450A0A;
-    --citation-bg: #1E2A45;
-    --citation-foreground: #93C5FD;
-    --citation-border: #2C3E5E;
+    --risk-high-bg: #3A1414;
+    --gauge-track: #1B2E26;
+    --gauge-track-dark: rgba(255, 255, 255, 0.12);
+    --citation-bg: #122A20;
+    --citation-foreground: #9FE6C4;
+    --citation-border: #1E3D31;
   }
   * {
     @apply border-border;
@@ -120,4 +130,42 @@
   :lang(ar) {
     font-family: var(--font-sans-arabic), var(--font-sans);
   }
+}
+
+@layer utilities {
+  .font-mono-data {
+    font-family: var(--font-mono), 'IBM Plex Mono', monospace;
+    font-feature-settings: "tnum";
+  }
+}
+
+.ca-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.ca-scroll::-webkit-scrollbar-thumb {
+  background: #D6DEDA;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.ca-scroll::-webkit-scrollbar-thumb:hover {
+  background: #B8C4BF;
+  background-clip: content-box;
+}
+.dark .ca-scroll::-webkit-scrollbar-thumb {
+  background: rgba(234, 243, 238, 0.18);
+}
+.dark .ca-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 243, 238, 0.28);
+}
+@keyframes ca-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ca-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ca-bar {
+  from { width: 0; }
 }

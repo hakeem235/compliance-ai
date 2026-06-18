@@ -32,6 +32,7 @@ const config: Config = {
         sidebar: {
           DEFAULT: "var(--sidebar)",
           foreground: "var(--sidebar-foreground)",
+          "foreground-muted": "var(--sidebar-foreground-muted)",
           primary: "var(--sidebar-primary)",
           "primary-foreground": "var(--sidebar-primary-foreground)",
           accent: "var(--sidebar-accent)",
@@ -52,6 +53,10 @@ const config: Config = {
           foreground: "var(--citation-foreground)",
           border: "var(--citation-border)",
         },
+        gauge: {
+          track: "var(--gauge-track)",
+          "track-dark": "var(--gauge-track-dark)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -61,6 +66,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
         arabic: ["var(--font-sans-arabic)"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
     },
   },

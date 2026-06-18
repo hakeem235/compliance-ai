@@ -1,23 +1,22 @@
-import { AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type RiskLevel = "low" | "medium" | "high";
 
-const RISK_CONFIG: Record<RiskLevel, { label: string; icon: typeof CheckCircle2; classes: string }> = {
+const RISK_CONFIG: Record<RiskLevel, { label: string; classes: string; dot: string }> = {
   low: {
     label: "Low risk",
-    icon: CheckCircle2,
     classes: "bg-risk-low-bg text-risk-low",
+    dot: "bg-risk-low",
   },
   medium: {
     label: "Medium risk",
-    icon: AlertCircle,
     classes: "bg-risk-medium-bg text-risk-medium",
+    dot: "bg-risk-medium",
   },
   high: {
     label: "High risk",
-    icon: AlertTriangle,
     classes: "bg-risk-high-bg text-risk-high",
+    dot: "bg-risk-high",
   },
 };
 
@@ -35,19 +34,19 @@ export function RiskBadge({
   className?: string;
 }) {
   const config = RISK_CONFIG[level];
-  const Icon = config.icon;
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
         config.classes,
         className
       )}
     >
-      <Icon className="size-3.5" aria-hidden="true" />
+      <span className={cn("size-1.5 rounded-full", config.dot)} aria-hidden="true" />
+      {typeof score === "number" && <span className="font-mono-data tabular-nums">{score}</span>}
+      {typeof score === "number" ? <span aria-hidden="true">·</span> : null}
       {label ?? config.label}
-      {typeof score === "number" && <span className="tabular-nums opacity-80">{score}</span>}
     </span>
   );
 }

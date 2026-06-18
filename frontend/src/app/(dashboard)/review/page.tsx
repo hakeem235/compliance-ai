@@ -1,44 +1,79 @@
 import Link from "next/link";
-import { FileText, UploadCloud } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { FileText, UploadCloud, FileCheck2 } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 
-const DOCUMENTS: { id: string; name: string; uploadedAt: string; risk: RiskLevel }[] = [
-  { id: "1", name: "Employment Agreement — Ahmed K.", uploadedAt: "2026-06-12", risk: "medium" },
-  { id: "2", name: "NDA — Vendor Onboarding", uploadedAt: "2026-06-10", risk: "low" },
-  { id: "3", name: "Commercial Lease — Riyadh Office", uploadedAt: "2026-06-02", risk: "high" },
+const DOCUMENTS: { id: string; name: string; type: string; uploadedAt: string; score: number; risk: RiskLevel }[] = [
+  { id: "1", name: "CloudServe MSA v3.docx", type: "Vendor", uploadedAt: "2h ago", score: 78, risk: "high" },
+  { id: "2", name: "Employment_Contract_Sara.pdf", type: "Employment", uploadedAt: "5h ago", score: 54, risk: "medium" },
+  { id: "3", name: "NDA_Mutual_Tahaluf.docx", type: "NDA", uploadedAt: "1d ago", score: 22, risk: "low" },
 ];
 
 export default function ReviewPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Review</h1>
-        <p className="text-sm text-muted-foreground">Upload a contract for AI clause analysis and risk scoring.</p>
+    <div className="mx-auto max-w-[1000px] px-7 py-[26px] pb-10">
+      {/* dropzone */}
+      <div className="cursor-pointer rounded-[18px] border-2 border-dashed border-border bg-card p-[52px_30px] text-center transition-colors hover:border-accent hover:bg-muted/20">
+        <div className="mx-auto mb-[18px] flex size-16 items-center justify-center rounded-2xl bg-risk-low-bg">
+          <UploadCloud className="size-[30px] text-accent" strokeWidth={1.8} />
+        </div>
+        <div className="mb-1.5 text-lg font-bold">Drag &amp; drop a contract to analyze</div>
+        <div className="mb-[18px] text-[13.5px] text-muted-foreground">
+          or <span className="font-semibold text-accent">browse your files</span> — we&apos;ll extract text, run
+          OCR if needed, and review it
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">PDF</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">DOCX</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">TXT</span>
+          <span className="rounded-full bg-risk-low-bg px-3 py-1 text-[11.5px] font-semibold text-accent">OCR enabled</span>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-        <UploadCloud className="size-6 text-muted-foreground" aria-hidden="true" />
-        Drag and drop a PDF, DOCX, or TXT file here to upload — upload pipeline pending backend integration.
-      </div>
-
-      <div className="space-y-2">
-        {DOCUMENTS.map((doc) => (
-          <Link key={doc.id} href={`/review/${doc.id}`}>
-            <Card className="cursor-pointer transition-shadow duration-200 hover:shadow-md">
-              <CardContent className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="size-5 text-muted-foreground" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">Uploaded {doc.uploadedAt}</p>
-                  </div>
+      {/* recent uploads */}
+      <div className="mt-6">
+        <div className="mb-3 text-sm font-bold">Recent uploads</div>
+        <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+          {DOCUMENTS.map((doc, i) => (
+            <Link
+              key={doc.id}
+              href={`/review/${doc.id}`}
+              className={`flex items-center gap-[13px] px-[18px] py-3.5 transition-colors hover:bg-muted/30 ${i > 0 ? "border-t border-border" : ""}`}
+            >
+              <div
+                className="flex size-[34px] flex-none items-center justify-center rounded-lg"
+                style={{
+                  background:
+                    doc.risk === "high" ? "var(--risk-high-bg)" : doc.risk === "medium" ? "var(--risk-medium-bg)" : "var(--risk-low-bg)",
+                }}
+              >
+                <FileText
+                  className="size-4"
+                  style={{
+                    color: doc.risk === "high" ? "var(--risk-high)" : doc.risk === "medium" ? "var(--risk-medium)" : "var(--risk-low)",
+                  }}
+                  strokeWidth={1.8}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="text-[13px] font-semibold">{doc.name}</div>
+                <div className="font-mono-data text-[11px] text-muted-foreground">
+                  {doc.type} · {doc.uploadedAt}
                 </div>
-                <RiskBadge level={doc.risk} />
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+              </div>
+              <RiskBadge
+                level={doc.risk}
+                score={doc.score}
+                label={doc.risk === "high" ? "High" : doc.risk === "medium" ? "Medium" : "Low"}
+              />
+            </Link>
+          ))}
+          {DOCUMENTS.length === 0 && (
+            <div className="flex flex-col items-center gap-2 p-10 text-center text-sm text-muted-foreground">
+              <FileCheck2 className="size-6" aria-hidden="true" />
+              No documents uploaded yet.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
