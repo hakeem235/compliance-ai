@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Send, MessagesSquare, BookText } from "lucide-react";
-
-type Citation = { title: string; source: string };
-type Message = { role: "user" | "ai"; text: string; citations?: Citation[] };
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { Send, MessagesSquare, BookText, AlertTriangle } from "lucide-react";
+import { api, ApiError, type ChatMessage } from "@/lib/api";
 
 const SUGGESTIONS = [
   "Is a non-compete clause enforceable under Saudi Labor Law?",
@@ -16,35 +15,64 @@ const SOURCES = [
   { name: "Saudi Labor Law", meta: "245 articles indexed · updated 2024", color: "var(--risk-low)" },
   { name: "PDPL & SDAIA Regs", meta: "Personal Data Protection Law + implementing regs", color: "var(--risk-low)" },
   { name: "Commercial Regulations", meta: "Companies Law, CR & SME rules", color: "var(--risk-low)" },
-  { name: "Your documents", meta: "148 contracts · embedded & searchable", color: "#2A6FDB" },
+  { name: "Your documents", meta: "Embedded & searchable once uploaded", color: "#2A6FDB" },
 ];
 
-function cannedReply(): Message {
-  return {
-    role: "ai",
-    text: "Under the Saudi Labor Law, post-employment non-compete clauses are enforceable only if they are reasonable in duration, geography, and scope of work — and necessary to protect a legitimate business interest. A common safe limit is a maximum of two (2) years from the end of the contract. Overly broad clauses are routinely struck down by labor courts. I recommend narrowing the clause to specific competitors and a defined region.",
-    citations: [
-      { title: "Saudi Labor Law — Article 83", source: "Non-compete: max 2 years, must be limited in time, place & work" },
-      { title: "Ministerial Resolution 4904", source: "Reasonableness test for restrictive covenants" },
-    ],
-  };
-}
-
 export default function AskPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { getToken } = useAuth();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [systemNote, setSystemNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [initializing, setInitializing] = useState(true);
 
-  function send(text: string) {
+  const tokenFn = useCallback(() => getToken(), [getToken]);
+
+  useEffect(() => {
+    let active = true;
+    setInitializing(true);
+    api.chatSessions
+      .create({}, tokenFn)
+      .then((session) => {
+        if (!active) return;
+        setSessionId(session.id);
+        setMessages(session.messages ?? []);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof ApiError ? err.message : "Failed to start a chat session.");
+      })
+      .finally(() => {
+        if (active) setInitializing(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [tokenFn]);
+
+  async function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    setMessages((m) => [...m, { role: "user", text: trimmed }]);
+    if (!trimmed || !sessionId) return;
+    setMessages((m) => [
+      ...m,
+      { id: `local-${Date.now()}`, role: "user", content: trimmed, citations: [], created_at: new Date().toISOString() },
+    ]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      setMessages((m) => [...m, cannedReply()]);
+    setSystemNote(null);
+    setError(null);
+    try {
+      await api.chatSessions.ask(sessionId, trimmed, tokenFn);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 503) {
+        setSystemNote(err.message);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Failed to send message.");
+      }
+    } finally {
       setTyping(false);
-    }, 900);
+    }
   }
 
   return (
@@ -53,7 +81,14 @@ export default function AskPage() {
       <div className="flex min-w-0 flex-1 flex-col border-e border-border">
         <div className="ca-scroll flex-1 overflow-y-auto px-7 py-[26px]">
           <div className="mx-auto max-w-[720px]">
-            {messages.length === 0 && (
+            {error && (
+              <div className="mb-4 flex items-center gap-2 rounded-[10px] border border-[#F8DADA] bg-[#FDF5F5] px-4 py-3 text-[13px] text-risk-high">
+                <AlertTriangle className="size-4 flex-none" strokeWidth={1.8} />
+                {error}
+              </div>
+            )}
+
+            {messages.length === 0 && !initializing && (
               <div className="px-0 py-[30px] pb-[26px] text-center">
                 <div
                   className="mx-auto mb-4 flex size-14 items-center justify-center rounded-[15px]"
@@ -72,7 +107,8 @@ export default function AskPage() {
                     <button
                       key={q}
                       onClick={() => send(q)}
-                      className="flex items-center gap-[11px] rounded-xl border border-border bg-card px-4 py-[13px] text-start text-[13px] font-medium text-secondary-foreground transition-colors hover:border-accent hover:bg-muted/30"
+                      disabled={!sessionId}
+                      className="flex items-center gap-[11px] rounded-xl border border-border bg-card px-4 py-[13px] text-start text-[13px] font-medium text-secondary-foreground transition-colors hover:border-accent hover:bg-muted/30 disabled:opacity-50"
                     >
                       <BookText className="size-4 flex-none text-accent" strokeWidth={1.7} />
                       {q}
@@ -82,15 +118,15 @@ export default function AskPage() {
               </div>
             )}
 
-            {messages.map((m, i) =>
+            {messages.map((m) =>
               m.role === "user" ? (
-                <div key={i} className="mb-5 flex justify-end">
+                <div key={m.id} className="mb-5 flex justify-end">
                   <div className="max-w-[80%] rounded-[14px_14px_4px_14px] bg-primary px-[15px] py-[11px] text-[13.5px] leading-[1.55] text-primary-foreground">
-                    {m.text}
+                    {m.content}
                   </div>
                 </div>
               ) : (
-                <div key={i} className="mb-5 flex gap-[11px]">
+                <div key={m.id} className="mb-5 flex gap-[11px]">
                   <div
                     className="flex size-[30px] flex-none items-center justify-center rounded-lg"
                     style={{ background: "linear-gradient(150deg,#1F8A5B,#34D399)" }}
@@ -98,26 +134,18 @@ export default function AskPage() {
                     <MessagesSquare className="size-4 text-white" strokeWidth={1.7} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13.5px] leading-[1.65]">{m.text}</div>
-                    {m.citations && m.citations.length > 0 && (
-                      <div className="mt-[11px] flex flex-col gap-[7px]">
-                        {m.citations.map((c) => (
-                          <div
-                            key={c.title}
-                            className="flex items-start gap-2.5 rounded-[10px] border border-citation-border bg-citation px-3 py-2.5"
-                          >
-                            <BookText className="mt-px size-3.5 flex-none text-citation-foreground" strokeWidth={1.8} />
-                            <div>
-                              <div className="text-xs font-bold text-citation-foreground">{c.title}</div>
-                              <div className="mt-px text-[11px] text-muted-foreground">{c.source}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="text-[13.5px] leading-[1.65]">{m.content}</div>
                   </div>
                 </div>
               )
+            )}
+
+            {systemNote && (
+              <div className="mb-5 flex justify-center">
+                <div className="max-w-[90%] rounded-[12px] border border-border bg-muted/40 px-4 py-2.5 text-center text-[12.5px] text-muted-foreground">
+                  {systemNote}
+                </div>
+              </div>
             )}
 
             {typing && (
@@ -147,12 +175,14 @@ export default function AskPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") send(input);
               }}
+              disabled={!sessionId}
               placeholder="Ask about a clause, regulation, or document…"
-              className="flex-1 border-0 bg-transparent text-[13.5px] outline-none"
+              className="flex-1 border-0 bg-transparent text-[13.5px] outline-none disabled:opacity-60"
             />
             <button
               onClick={() => send(input)}
-              className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-primary transition-colors hover:bg-[#0E4A38]"
+              disabled={!sessionId}
+              className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-primary transition-colors hover:bg-[#0E4A38] disabled:opacity-60"
             >
               <Send className="size-[18px] text-primary-foreground" strokeWidth={1.8} />
             </button>

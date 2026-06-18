@@ -1,24 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Check, FileDown, FileText } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { ArrowLeft, Check, FileDown, FileText, AlertTriangle, Loader2 } from "lucide-react";
+import { api, ApiError, type GeneratedDocType } from "@/lib/api";
 
-const TEMPLATES = [
-  { name: "Mutual NDA", desc: "Two-way confidentiality agreement", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
-  { name: "Employment Contract", desc: "Labor-Law compliant employment", bg: "bg-[#EEF3FF]", color: "#2A6FDB" },
-  { name: "Freelance Agreement", desc: "Independent contractor terms", bg: "bg-[#F3EEFF]", color: "#7C5CFF" },
-  { name: "Vendor Contract", desc: "Supplier / procurement MSA", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
-  { name: "Service Agreement", desc: "Scope, SLA & payment terms", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
-  { name: "Non-Compete", desc: "Restrictive covenant (≤2 yrs)", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
-  { name: "Warning Letter", desc: "Disciplinary notice (HR)", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
-  { name: "Termination Letter", desc: "End-of-service notice", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
+const TEMPLATES: { name: string; docType: GeneratedDocType; desc: string; bg: string; color: string }[] = [
+  { name: "Mutual NDA", docType: "nda", desc: "Two-way confidentiality agreement", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
+  { name: "Employment Contract", docType: "employment", desc: "Labor-Law compliant employment", bg: "bg-[#EEF3FF]", color: "#2A6FDB" },
+  { name: "Freelance Agreement", docType: "freelance", desc: "Independent contractor terms", bg: "bg-[#F3EEFF]", color: "#7C5CFF" },
+  { name: "Vendor Contract", docType: "vendor", desc: "Supplier / procurement MSA", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
+  { name: "Service Agreement", docType: "service", desc: "Scope, SLA & payment terms", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
+  { name: "Non-Compete", docType: "non_compete", desc: "Restrictive covenant (≤2 yrs)", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
+  { name: "Warning Letter", docType: "warning_letter", desc: "Disciplinary notice (HR)", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
+  { name: "Termination Letter", docType: "termination_letter", desc: "End-of-service notice", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
 ];
 
 const STEP_LABELS = ["Parties", "Terms", "Review"];
 
 export default function GeneratePage() {
-  const [template, setTemplate] = useState<string | null>(null);
+  const { getToken } = useAuth();
+  const [template, setTemplate] = useState<(typeof TEMPLATES)[number] | null>(null);
   const [step, setStep] = useState(1);
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const tokenFn = useCallback(() => getToken(), [getToken]);
+
+  function updateAnswer(key: string, value: string) {
+    setAnswers((a) => ({ ...a, [key]: value }));
+  }
+
+  async function finishAndPersist() {
+    if (!template) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.generatedDocuments.create({ doc_type: template.docType, questionnaire_answers: answers }, tokenFn);
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to save generated document.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (!template) {
     return (
@@ -34,8 +61,11 @@ export default function GeneratePage() {
             <button
               key={t.name}
               onClick={() => {
-                setTemplate(t.name);
+                setTemplate(t);
                 setStep(1);
+                setAnswers({});
+                setSaved(false);
+                setError(null);
               }}
               className="rounded-[14px] border border-border bg-card p-[18px] text-start transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
             >
@@ -62,7 +92,7 @@ export default function GeneratePage() {
           <ArrowLeft className="size-3.5" strokeWidth={2} />
           All templates
         </button>
-        <div className="text-[17px] font-bold tracking-tight">{template}</div>
+        <div className="text-[17px] font-bold tracking-tight">{template.name}</div>
 
         {/* steps indicator */}
         <div className="my-5 flex items-center">
@@ -88,11 +118,19 @@ export default function GeneratePage() {
 
         {step === 1 && (
           <div className="flex flex-col gap-4">
-            <TextField label="Disclosing party (your company)" defaultValue="Najd Solutions LLC" />
-            <TextField label="Receiving party" placeholder="e.g. Tahaluf Technologies" />
+            <TextField
+              label="Disclosing party (your company)"
+              defaultValue="Najd Solutions LLC"
+              onChange={(v) => updateAnswer("disclosing_party", v)}
+            />
+            <TextField
+              label="Receiving party"
+              placeholder="e.g. Tahaluf Technologies"
+              onChange={(v) => updateAnswer("receiving_party", v)}
+            />
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="CR number" placeholder="1010XXXXXX" />
-              <TextField label="City" defaultValue="Riyadh" />
+              <TextField label="CR number" placeholder="1010XXXXXX" onChange={(v) => updateAnswer("cr_number", v)} />
+              <TextField label="City" defaultValue="Riyadh" onChange={(v) => updateAnswer("city", v)} />
             </div>
             <div className="rounded-[11px] border border-[#DCEFE6] bg-[#F4FAF7] p-[12px_14px] text-[11.5px] leading-[1.4] text-secondary-foreground/80">
               <b>Bilingual output</b> — generate this document in English + Arabic side by side.
@@ -106,12 +144,13 @@ export default function GeneratePage() {
               <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground/80">Purpose of disclosure</label>
               <textarea
                 defaultValue="Evaluation of a potential software integration partnership."
+                onChange={(e) => updateAnswer("purpose", e.target.value)}
                 className="h-[78px] w-full resize-none rounded-[10px] border border-border p-3 text-[13px] outline-none focus:border-accent"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="Confidentiality term" defaultValue="3 years" />
-              <TextField label="Governing law" defaultValue="Saudi Arabia" />
+              <TextField label="Confidentiality term" defaultValue="3 years" onChange={(v) => updateAnswer("confidentiality_term", v)} />
+              <TextField label="Governing law" defaultValue="Saudi Arabia" onChange={(v) => updateAnswer("governing_law", v)} />
             </div>
             <div>
               <label className="mb-2 block text-xs font-semibold text-secondary-foreground/80">Include clauses</label>
@@ -148,13 +187,29 @@ export default function GeneratePage() {
                 </div>
               ))}
             </div>
+            {error && (
+              <div className="flex items-center gap-2 rounded-[10px] border border-[#F8DADA] bg-[#FDF5F5] px-3.5 py-2.5 text-[12.5px] text-risk-high">
+                <AlertTriangle className="size-3.5 flex-none" strokeWidth={1.8} />
+                {error}
+              </div>
+            )}
+            {saved && (
+              <div className="flex items-center gap-2 rounded-[10px] border border-[#D7EEE3] bg-risk-low-bg px-3.5 py-2.5 text-[12.5px] text-primary">
+                <Check className="size-3.5 flex-none" strokeWidth={2} />
+                Saved to your generated documents. PDF/DOCX export isn&apos;t wired up yet (no export pipeline server-side).
+              </div>
+            )}
             <div className="mt-1 flex gap-2.5">
-              <button className="flex h-[42px] flex-1 items-center justify-center gap-[7px] rounded-[10px] bg-primary text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38]">
-                <FileDown className="size-[15px]" strokeWidth={1.8} />
-                Export PDF
+              <button
+                onClick={finishAndPersist}
+                disabled={saving || saved}
+                className="flex h-[42px] flex-1 items-center justify-center gap-[7px] rounded-[10px] bg-primary text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:opacity-60"
+              >
+                {saving ? <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} /> : <FileDown className="size-[15px]" strokeWidth={1.8} />}
+                {saved ? "Saved" : "Save draft"}
               </button>
-              <button className="h-[42px] flex-1 rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground">
-                Export DOCX
+              <button disabled className="h-[42px] flex-1 rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground opacity-60">
+                Export DOCX (coming soon)
               </button>
             </div>
           </div>
@@ -226,13 +281,24 @@ export default function GeneratePage() {
   );
 }
 
-function TextField({ label, defaultValue, placeholder }: { label: string; defaultValue?: string; placeholder?: string }) {
+function TextField({
+  label,
+  defaultValue,
+  placeholder,
+  onChange,
+}: {
+  label: string;
+  defaultValue?: string;
+  placeholder?: string;
+  onChange?: (value: string) => void;
+}) {
   return (
     <div>
       <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground/80">{label}</label>
       <input
         defaultValue={defaultValue}
         placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
         className="h-10 w-full rounded-[10px] border border-border px-[13px] text-[13px] outline-none focus:border-accent"
       />
     </div>

@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { PLANS } from "@/lib/plans";
 
 const USAGE = [
   { label: "AI document reviews", used: 312, total: 500 },
@@ -6,32 +7,13 @@ const USAGE = [
   { label: "Team seats", used: 6, total: 10 },
 ];
 
-const PLANS = [
-  {
-    name: "Starter",
-    price: "SAR 249",
-    blurb: "For freelancers & solo founders",
-    features: ["50 AI reviews/mo", "1 seat", "Generator + Calendar"],
-    cta: "Downgrade",
-    current: false,
-  },
-  {
-    name: "Growth",
-    price: "SAR 749",
-    blurb: "For SMEs & growing teams",
-    features: ["500 AI reviews/mo", "10 seats · roles & RBAC", "AI Assistant + audit logs"],
-    cta: "Your plan",
-    current: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    blurb: "For legal ops & large orgs",
-    features: ["Unlimited reviews", "SSO + custom roles", "Dedicated knowledge base"],
-    cta: "Contact sales",
-    current: false,
-  },
-];
+const CURRENT_PLAN_NAME = "Growth";
+
+const BILLING_PLANS = PLANS.map((plan) => ({
+  ...plan,
+  current: plan.name === CURRENT_PLAN_NAME,
+  cta: plan.name === CURRENT_PLAN_NAME ? "Your plan" : plan.name === "Enterprise" ? "Contact sales" : "Downgrade",
+}));
 
 const INVOICES = [
   { id: "INV-2026-006", date: "1 Jun 2026", amount: "SAR 749.00" },
@@ -93,7 +75,7 @@ export default function BillingPage() {
       {/* plans */}
       <div className="mb-3.5 text-sm font-bold">Plans</div>
       <div className="mb-6 grid grid-cols-3 gap-3.5">
-        {PLANS.map((plan) => (
+        {BILLING_PLANS.map((plan) => (
           <div
             key={plan.name}
             className="relative rounded-[14px] border bg-card p-5"

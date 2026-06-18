@@ -4,18 +4,20 @@ Clerk JWT authentication for DRF.
 Verifies the Clerk-issued session JWT on every request and resolves it to an
 OrgUser. Role and organization_id are read only from the verified token
 claims — never trusted from request body/query params.
-
-NOTE: JWKS verification (via Clerk's public JWKS endpoint) is not wired yet —
-CLERK_SECRET_KEY / CLERK_JWT_ISSUER must be provisioned first (see
-hakeemproject/CHANNEL.md Phase 6 out-of-band entry). This is a structural
-placeholder so the rest of the API layer can be built against a stable
-`request.user` / `request.org_user` contract.
 """
 
+from functools import lru_cache
+
+import jwt
 from django.conf import settings
 from rest_framework import authentication, exceptions
 
 from .models import OrgUser
+
+
+@lru_cache(maxsize=1)
+def _jwks_client(issuer: str) -> jwt.PyJWKClient:
+    return jwt.PyJWKClient(f"{issuer}/.well-known/jwks.json")
 
 
 class ClerkJWTAuthentication(authentication.BaseAuthentication):
@@ -24,9 +26,9 @@ class ClerkJWTAuthentication(authentication.BaseAuthentication):
         if not auth_header.startswith("Bearer "):
             return None
 
-        if not settings.CLERK_SECRET_KEY:
+        if not settings.CLERK_SECRET_KEY or not settings.CLERK_JWT_ISSUER:
             raise exceptions.AuthenticationFailed(
-                "Clerk is not configured (CLERK_SECRET_KEY missing) — cannot verify session token."
+                "Clerk is not configured (CLERK_SECRET_KEY/CLERK_JWT_ISSUER missing) — cannot verify session token."
             )
 
         token = auth_header.removeprefix("Bearer ").strip()
@@ -40,5 +42,14 @@ class ClerkJWTAuthentication(authentication.BaseAuthentication):
         return (org_user, token)
 
     def _verify_token(self, token: str) -> dict:
-        # TODO: verify signature against Clerk's JWKS endpoint and decode claims.
-        raise exceptions.AuthenticationFailed("Clerk JWT verification not yet implemented.")
+        try:
+            signing_key = _jwks_client(settings.CLERK_JWT_ISSUER).get_signing_key_from_jwt(token)
+            return jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["RS256"],
+                issuer=settings.CLERK_JWT_ISSUER,
+                options={"verify_aud": False},
+            )
+        except jwt.PyJWTError as exc:
+            raise exceptions.AuthenticationFailed(f"Invalid session token: {exc}") from exc
