@@ -1,3 +1,5 @@
+@import '@clerk/ui/themes/shadcn.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,77 +12,98 @@
 
 @layer base {
   .theme {
-    --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
+    --font-sans-arabic: var(--font-sans-arabic);
   }
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* ComplianceAI design system — "calm legal expert": navy/charcoal base + amber accent */
+    --background: #F8FAFC;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
+    --primary: #1E293B;
+    --primary-foreground: #F8FAFC;
+    --secondary: #334155;
+    --secondary-foreground: #F8FAFC;
+    --muted: #E2E8F0;
+    --muted-foreground: #475569;
+    --accent: #B45309;
+    --accent-foreground: #FFFBEB;
+    --destructive: #DC2626;
+    --destructive-foreground: #FEF2F2;
+    --border: #E2E8F0;
+    --input: #E2E8F0;
+    --ring: #B45309;
+    --chart-1: #B45309;
+    --chart-2: #1E293B;
+    --chart-3: #334155;
+    --chart-4: #64748B;
+    --chart-5: #94A3B8;
+    --radius: 0.5rem;
+    --sidebar: #0F172A;
+    --sidebar-foreground: #F8FAFC;
+    --sidebar-primary: #B45309;
+    --sidebar-primary-foreground: #FFFBEB;
+    --sidebar-accent: #1E293B;
+    --sidebar-accent-foreground: #F8FAFC;
+    --sidebar-border: #1E293B;
+    --sidebar-ring: #B45309;
+    /* Risk badges — distinct from the brand accent so risk level is never ambiguous */
+    --risk-low: #166534;
+    --risk-low-bg: #DCFCE7;
+    --risk-medium: #92400E;
+    --risk-medium-bg: #FEF3C7;
+    --risk-high: #991B1B;
+    --risk-high-bg: #FEE2E2;
+    /* Citation chip — neutral, never competes with accent or risk colors */
+    --citation-bg: #EFF6FF;
+    --citation-foreground: #1E40AF;
+    --citation-border: #BFDBFE;
   }
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: #0B1220;
+    --foreground: #F1F5F9;
+    --card: #111B2E;
+    --card-foreground: #F1F5F9;
+    --popover: #111B2E;
+    --popover-foreground: #F1F5F9;
+    --primary: #F1F5F9;
+    --primary-foreground: #0F172A;
+    --secondary: #1E293B;
+    --secondary-foreground: #F1F5F9;
+    --muted: #1E293B;
+    --muted-foreground: #94A3B8;
+    --accent: #D97706;
+    --accent-foreground: #1C0A00;
+    --destructive: #F87171;
+    --destructive-foreground: #450A0A;
+    --border: rgba(241, 245, 249, 0.1);
+    --input: rgba(241, 245, 249, 0.15);
+    --ring: #D97706;
+    --chart-1: #D97706;
+    --chart-2: #94A3B8;
+    --chart-3: #64748B;
+    --chart-4: #475569;
+    --chart-5: #334155;
+    --sidebar: #0B1220;
+    --sidebar-foreground: #F1F5F9;
+    --sidebar-primary: #D97706;
+    --sidebar-primary-foreground: #1C0A00;
+    --sidebar-accent: #1E293B;
+    --sidebar-accent-foreground: #F1F5F9;
+    --sidebar-border: #1E293B;
+    --sidebar-ring: #D97706;
+    --risk-low: #4ADE80;
+    --risk-low-bg: #14532D;
+    --risk-medium: #FBBF24;
+    --risk-medium-bg: #78350F;
+    --risk-high: #F87171;
+    --risk-high-bg: #450A0A;
+    --citation-bg: #1E2A45;
+    --citation-foreground: #93C5FD;
+    --citation-border: #2C3E5E;
   }
   * {
     @apply border-border;
@@ -90,5 +113,11 @@
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  :lang(ar) {
+    font-family: var(--font-sans-arabic), var(--font-sans);
   }
 }

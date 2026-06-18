@@ -1,8 +1,17 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Settings</h1>
-      <p className="text-sm text-muted-foreground">Organization profile, members, and role management — pending Clerk org integration.</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Organization profile, members, and role management — pending Clerk org integration.
+        </CardContent>
+      </Card>
     </div>
   );
 }

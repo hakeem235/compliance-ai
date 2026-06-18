@@ -39,11 +39,28 @@ const config: Config = {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        risk: {
+          low: "var(--risk-low)",
+          "low-bg": "var(--risk-low-bg)",
+          medium: "var(--risk-medium)",
+          "medium-bg": "var(--risk-medium-bg)",
+          high: "var(--risk-high)",
+          "high-bg": "var(--risk-high-bg)",
+        },
+        citation: {
+          DEFAULT: "var(--citation-bg)",
+          foreground: "var(--citation-foreground)",
+          border: "var(--citation-border)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)"],
+        arabic: ["var(--font-sans-arabic)"],
       },
     },
   },
