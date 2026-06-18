@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare } from "lucide-react";
+import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare, Check } from "lucide-react";
 import { AiDisclaimer } from "@/components/citation-chip";
+import { PLANS } from "@/lib/plans";
 
 const FEATURES = [
   {
@@ -57,8 +58,12 @@ export default function LandingPage() {
           Compliance<span className="text-accent">AI</span>
         </div>
         <div className="flex-1" />
-        <span className="cursor-pointer text-[13px] font-medium text-[#5B6B66]">Product</span>
-        <span className="mx-1 cursor-pointer text-[13px] font-medium text-[#5B6B66]">Pricing</span>
+        <a href="#product" className="cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
+          Product
+        </a>
+        <a href="#pricing" className="mx-1 cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
+          Pricing
+        </a>
         <SignedIn>
           <Link
             href="/dashboard"
@@ -165,21 +170,100 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1100px] grid-cols-4 gap-[18px] px-10 py-6 pb-[72px]">
-        {FEATURES.map((f) => (
-          <div key={f.title}>
-            <div className={`mb-3 flex size-10 items-center justify-center rounded-[11px] ${f.bg}`}>
-              <f.icon className="size-5" style={{ color: f.color }} strokeWidth={1.7} />
-            </div>
-            <div className="mb-1.5 text-sm font-bold">{f.title}</div>
-            <div className="text-[12.5px] leading-[1.5] text-[#7C8B85]">{f.desc}</div>
+      <div id="product" className="border-t border-[#EEF2F0] px-10 py-[72px]">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="mb-10 text-center">
+            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">Everything your legal workflow needs</h2>
+            <p className="text-[14.5px] text-[#7C8B85]">One platform for review, generation, deadlines and questions.</p>
           </div>
-        ))}
+          <div className="grid grid-cols-4 gap-[18px]">
+            {FEATURES.map((f) => (
+              <div key={f.title}>
+                <div className={`mb-3 flex size-10 items-center justify-center rounded-[11px] ${f.bg}`}>
+                  <f.icon className="size-5" style={{ color: f.color }} strokeWidth={1.7} />
+                </div>
+                <div className="mb-1.5 text-sm font-bold">{f.title}</div>
+                <div className="text-[12.5px] leading-[1.5] text-[#7C8B85]">{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div id="pricing" className="border-t border-[#EEF2F0] bg-[#FAFBFB] px-10 py-[72px]">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="mb-10 text-center">
+            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">Simple, transparent pricing</h2>
+            <p className="text-[14.5px] text-[#7C8B85]">Cancel anytime. Prices in Saudi riyals, billed monthly.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-5">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className="relative rounded-[16px] border bg-white p-7"
+                style={plan.name === "Growth" ? { borderWidth: 2, borderColor: "var(--accent)" } : { borderColor: "#E8EDEB" }}
+              >
+                {plan.name === "Growth" && (
+                  <span className="absolute -top-3 start-7 rounded-full bg-accent px-3 py-1 text-[10.5px] font-bold text-accent-foreground">
+                    MOST POPULAR
+                  </span>
+                )}
+                <div className="text-sm font-bold">{plan.name}</div>
+                <div className="font-mono-data my-2.5 text-[30px] font-bold">
+                  {plan.price}
+                  {plan.price !== "Custom" && <span className="text-sm text-[#7C8B85]">/mo</span>}
+                </div>
+                <div className="mb-5 text-[12.5px] text-[#7C8B85]">{plan.blurb}</div>
+                <div className="mb-6 flex flex-col gap-2.5 text-[13px] text-[#3A4A44]">
+                  {plan.features.map((f) => (
+                    <div key={f} className="flex gap-2.5">
+                      <Check className="size-4 flex-none text-accent" strokeWidth={2.2} />
+                      {f}
+                    </div>
+                  ))}
+                </div>
+                <SignedOut>
+                  <SignUpButton>
+                    <button
+                      className={
+                        plan.name === "Growth"
+                          ? "w-full rounded-[10px] bg-primary py-3 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#0E4A38]"
+                          : "w-full rounded-[10px] border border-[#E2E9E6] bg-white py-3 text-[13.5px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
+                      }
+                    >
+                      {plan.name === "Enterprise" ? "Contact sales" : "Start free trial"}
+                    </button>
+                  </SignUpButton>
+                </SignedOut>
+                <SignedIn>
+                  <Link
+                    href="/billing"
+                    className={
+                      plan.name === "Growth"
+                        ? "flex w-full items-center justify-center rounded-[10px] bg-primary py-3 text-[13.5px] font-semibold text-white transition-colors hover:bg-[#0E4A38]"
+                        : "flex w-full items-center justify-center rounded-[10px] border border-[#E2E9E6] bg-white py-3 text-[13.5px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
+                    }
+                  >
+                    {plan.name === "Enterprise" ? "Contact sales" : "Manage plan"}
+                  </Link>
+                </SignedIn>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="border-t border-[#EEF2F0] px-10 py-[22px]">
-        <div className="mx-auto max-w-[1100px]">
+        <div className="mx-auto flex max-w-[1100px] items-center justify-between">
           <AiDisclaimer />
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="text-[12.5px] font-medium text-[#7C8B85] hover:text-[#2A4A3E]">
+              Terms &amp; Conditions
+            </Link>
+            <Link href="/privacy" className="text-[12.5px] font-medium text-[#7C8B85] hover:text-[#2A4A3E]">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
     </main>
