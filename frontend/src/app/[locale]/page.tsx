@@ -46,6 +46,9 @@ export default function LandingPage() {
         <a href="#pricing" className="mx-1 cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
           {t("nav.pricing")}
         </a>
+        <a href="#faq" className="mx-1 cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
+          {t("nav.faq")}
+        </a>
         <SignedIn>
           <Link
             href="/dashboard"
@@ -243,6 +246,26 @@ export default function LandingPage() {
               <span key={name} className="text-[14px] font-semibold text-[#B8C2BE]">
                 {name}
               </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div id="faq" className="border-t border-[#EEF2F0] px-10 py-[72px]">
+        <div className="mx-auto max-w-[760px]">
+          <h2 className="mb-10 text-center text-[32px] font-bold tracking-tight">{t("faq.heading")}</h2>
+          <div className="flex flex-col gap-3">
+            {(t.raw("faq.items") as { q: string; a: string }[]).map((item) => (
+              <details
+                key={item.q}
+                className="group rounded-[12px] border border-[#EEF2F0] px-5 py-4 [&_summary::-webkit-details-marker]:hidden"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-semibold text-[#10201A]">
+                  {item.q}
+                  <span className="text-[18px] text-[#9AA8A2] transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-[14px] leading-[1.7] text-[#5B6B66]">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>
