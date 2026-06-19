@@ -4,6 +4,8 @@ from .models import ClauseFinding, Document, DocumentAnalysis, GeneratedDocument
 
 
 class ClauseFindingSerializer(serializers.ModelSerializer):
+    citation_source = serializers.StringRelatedField()
+
     class Meta:
         model = ClauseFinding
         fields = ["id", "clause_text", "risk_level", "category", "recommendation", "citation_source"]
@@ -20,12 +22,13 @@ class DocumentAnalysisSerializer(serializers.ModelSerializer):
 
 class DocumentSerializer(serializers.ModelSerializer):
     latest_analysis = serializers.SerializerMethodField()
+    content_text = serializers.CharField(write_only=True, required=False, allow_blank=True, default="")
 
     class Meta:
         model = Document
         fields = [
             "id", "filename", "file_type", "s3_key", "status", "version",
-            "parent_document", "created_at", "updated_at", "latest_analysis",
+            "parent_document", "created_at", "updated_at", "latest_analysis", "content_text",
         ]
         read_only_fields = ["id", "status", "created_at", "updated_at"]
 

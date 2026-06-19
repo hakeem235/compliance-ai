@@ -209,7 +209,7 @@ export const api = {
   documents: {
     list: (getToken: GetTokenFn) => apiGet<Document[]>("/api/documents/", getToken),
     get: (id: string, getToken: GetTokenFn) => apiGet<Document>(`/api/documents/${id}/`, getToken),
-    create: (body: { filename: string; file_type: FileType; s3_key: string }, getToken: GetTokenFn) =>
+    create: (body: { filename: string; file_type: FileType; s3_key: string; content_text?: string }, getToken: GetTokenFn) =>
       apiPost<Document>("/api/documents/", body, getToken),
     analyze: (id: string, getToken: GetTokenFn) =>
       apiPost<{ detail: string; document_id: string }>(`/api/documents/${id}/analyze/`, {}, getToken),

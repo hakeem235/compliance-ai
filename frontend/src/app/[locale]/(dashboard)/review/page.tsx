@@ -69,8 +69,13 @@ export default function ReviewPage() {
       // create the Document record with a synthetic placeholder s3_key. The
       // file's bytes are not actually persisted anywhere — see final report.
       const placeholderKey = `local/${crypto.randomUUID()}/${file.name}`;
+      const fileType = fileTypeFromName(file.name);
+      // Only .txt is read client-side for now — there's no PDF/DOCX parser
+      // wired up (would need a new dependency), so those file types upload
+      // with no extractable text and "Analyze with AI" reports that gap.
+      const contentText = fileType === "txt" ? await file.text() : undefined;
       await api.documents.create(
-        { filename: file.name, file_type: fileTypeFromName(file.name), s3_key: placeholderKey },
+        { filename: file.name, file_type: fileType, s3_key: placeholderKey, content_text: contentText },
         tokenFn
       );
       await loadDocuments();
