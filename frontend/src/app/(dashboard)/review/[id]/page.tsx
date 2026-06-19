@@ -8,6 +8,7 @@ import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 import { CitationChip } from "@/components/citation-chip";
 import { RiskGauge } from "@/components/risk-gauge";
 import { api, ApiError, type Document } from "@/lib/api";
+import { REGULATIONS } from "@/lib/regulations";
 
 type Finding = {
   level: RiskLevel;
@@ -55,7 +56,15 @@ const EXAMPLE_FINDINGS: Finding[] = [
     title: "Governing law not specified",
     note: "The jurisdiction placeholder is unfilled. For a Saudi entity, disputes should be resolved under KSA law.",
     recommendation: "Specify the laws of the Kingdom of Saudi Arabia and Riyadh courts / SCCA arbitration.",
-    citation: "",
+    citation: REGULATIONS.companiesLaw,
+  },
+  {
+    level: "medium",
+    ref: "§22.4",
+    title: "No personal data protection clause",
+    note: "The contract involves processing of customer personal data but contains no PDPL-compliant data processing terms, retention limits, or breach notification obligations.",
+    recommendation: "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL.",
+    citation: REGULATIONS.pdpl,
   },
 ];
 
