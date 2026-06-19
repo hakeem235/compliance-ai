@@ -35,6 +35,8 @@ const FEATURES = [
   },
 ];
 
+const CLIENTS = ["Najd Solutions", "Riyadh Capital Partners", "Khaleej Logistics", "Tabuk Health Group", "Dammam Retail Co."];
+
 const RISK_ITEMS = [
   { color: "#FF8A8A", text: "Uncapped liability · §9.2", level: "High" },
   { color: "#F7C56E", text: "Missing PDPL clause", level: "Med" },
@@ -248,6 +250,21 @@ export default function LandingPage() {
                   </Link>
                 </SignedIn>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-[#EEF2F0] px-10 py-10">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="mb-6 text-center text-[12px] font-semibold uppercase tracking-wide text-[#9AA8A2]">
+            Trusted by teams across the Kingdom
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            {CLIENTS.map((name) => (
+              <span key={name} className="text-[14px] font-semibold text-[#B8C2BE]">
+                {name}
+              </span>
             ))}
           </div>
         </div>
