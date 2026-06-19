@@ -92,10 +92,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 risk_score=None,
                 risk_summary=(
                     "This document's text could not be analyzed: no text was extracted at "
-                    "upload time. Text extraction is currently only wired up for .txt files "
-                    "(no PDF/DOCX/OCR parsing pipeline yet — that requires either a new "
-                    "client-side parsing dependency or a server-side OCR service, neither "
-                    "provisioned yet). Try uploading a .txt file to test live AI review."
+                    "upload time. Text is extracted client-side from the file's embedded text "
+                    "layer (PDF, DOCX, TXT) — there's no OCR pipeline, so scanned/image-only "
+                    "PDFs and legacy .doc files aren't supported. Try re-uploading a text-based "
+                    "PDF or DOCX, or a .txt file."
                 ),
                 status="completed",
                 model_version=ANTHROPIC_MODEL,

@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { FileText, UploadCloud, FileCheck2, Loader2, AlertTriangle } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 import { api, ApiError, type Document, type FileType } from "@/lib/api";
+import { extractDocxText, extractPdfText } from "@/lib/extract-text";
 
 function riskFromScore(score: number | null): RiskLevel {
   if (score === null) return "low";
@@ -70,10 +71,19 @@ export default function ReviewPage() {
       // file's bytes are not actually persisted anywhere — see final report.
       const placeholderKey = `local/${crypto.randomUUID()}/${file.name}`;
       const fileType = fileTypeFromName(file.name);
-      // Only .txt is read client-side for now — there's no PDF/DOCX parser
-      // wired up (would need a new dependency), so those file types upload
-      // with no extractable text and "Analyze with AI" reports that gap.
-      const contentText = fileType === "txt" ? await file.text() : undefined;
+      // Text is extracted client-side (no server-side OCR/parsing pipeline —
+      // no S3 storage is provisioned, so the original bytes aren't persisted
+      // anywhere either way). If extraction fails for a malformed/scanned
+      // file, content_text is left empty and "Analyze with AI" reports that
+      // honestly instead of fabricating a result.
+      let contentText: string | undefined;
+      try {
+        if (fileType === "txt") contentText = await file.text();
+        else if (fileType === "pdf") contentText = await extractPdfText(file);
+        else if (fileType === "docx") contentText = await extractDocxText(file);
+      } catch {
+        contentText = undefined;
+      }
       await api.documents.create(
         { filename: file.name, file_type: fileType, s3_key: placeholderKey, content_text: contentText },
         tokenFn
@@ -201,6 +211,14 @@ export default function ReviewPage() {
                     <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-muted-foreground">
                       <Loader2 className="size-3 animate-spin" strokeWidth={2} />
                       {t("processing")}
+                    </span>
+                  ) : doc.status === "failed" ? (
+                    <span
+                      title={doc.latest_analysis?.risk_summary}
+                      className="flex items-center gap-1.5 rounded-full bg-risk-high-bg px-3 py-1 text-[11.5px] font-semibold text-risk-high"
+                    >
+                      <AlertTriangle className="size-3" strokeWidth={2} />
+                      {t("analysisFailed")}
                     </span>
                   ) : (
                     <button

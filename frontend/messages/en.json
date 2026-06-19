@@ -438,11 +438,11 @@
     "dropzoneTitle": "Drag & drop a contract to analyze",
     "dropzoneSubtitlePrefix": "or",
     "dropzoneBrowse": "browse your files",
-    "dropzoneSubtitleSuffix": "— we'll extract text, run OCR if needed, and review it",
+    "dropzoneSubtitleSuffix": "— text is extracted in your browser (PDF, DOCX, TXT); scanned image-only PDFs aren't supported yet",
     "badgePdf": "PDF",
     "badgeDocx": "DOCX",
     "badgeTxt": "TXT",
-    "badgeOcr": "OCR enabled",
+    "badgeOcr": "No OCR (text-layer only)",
     "recentUploads": "Recent uploads",
     "loadingDocuments": "Loading documents…",
     "noDocuments": "No documents uploaded yet.",
@@ -458,7 +458,8 @@
     "errorAnalyze": "Failed to start analysis.",
     "riskHigh": "High",
     "riskMedium": "Medium",
-    "riskLow": "Low"
+    "riskLow": "Low",
+    "analysisFailed": "Couldn't analyze"
   },
   "ReviewDetail": {
     "loading": "Loading document…",
@@ -469,9 +470,9 @@
     "idLabel": "{status} · ID {id}",
     "askAssistant": "Ask Assistant",
     "exportReport": "Export Report",
-    "pendingTitle": "Analysis pending — AI pipeline not yet configured",
-    "pendingProcessing": "Analysis was queued for this document, but the AI Contract Review Engine isn't wired up yet (no OPENAI_API_KEY/PINECONE_API_KEY configured server-side), so no findings exist yet.",
-    "pendingNotAnalyzed": "This document hasn't been analyzed yet, and the backend AI pipeline isn't configured. Click \"Analyze with AI\" from the review list to queue it once the pipeline is live.",
+    "pendingTitle": "Analysis pending",
+    "pendingProcessing": "Analysis is running — this can take a few seconds. Refresh in a moment.",
+    "pendingNotAnalyzed": "This document hasn't been analyzed yet. Click \"Analyze with AI\" from the review list to run it.",
     "illustrativeNotice": "The risk score, findings, and document viewer below are an <b>illustrative example</b> of what a completed analysis will look like — not real data for this document.",
     "riskScore": "RISK SCORE",
     "highRisk": "High Risk",
@@ -517,7 +518,8 @@
         "note": "The contract involves processing of customer personal data but contains no PDPL-compliant data processing terms, retention limits, or breach notification obligations.",
         "recommendation": "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL."
       }
-    }
+    },
+    "extractionFailedTitle": "Couldn't analyze this document"
   },
   "StayCompliant": {
     "weekdays": {

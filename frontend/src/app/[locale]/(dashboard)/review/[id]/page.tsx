@@ -93,6 +93,11 @@ export default function DocumentAnalysisPage() {
 
   const analysis = doc.latest_analysis;
   const hasRealAnalysis = !!analysis && analysis.findings.length > 0;
+  // analyze() creates a DocumentAnalysis with no findings and risk_score=null
+  // when the file's text couldn't be extracted (e.g. PDF/DOCX — no parsing
+  // pipeline yet). Show that real explanation instead of the generic
+  // "pending" banner or the illustrative example data.
+  const extractionFailed = doc.status === "failed" && !!analysis && analysis.risk_score === null;
 
   return (
     <div className="mx-auto max-w-[1340px] px-7 py-[22px] pb-10">
@@ -128,7 +133,15 @@ export default function DocumentAnalysisPage() {
         </div>
       </div>
 
-      {!hasRealAnalysis ? (
+      {extractionFailed ? (
+        <div className="mb-[18px] rounded-[14px] border border-[#F2D4D4] bg-[#FDF5F5] p-6 text-center">
+          <AlertTriangle className="mx-auto mb-2.5 size-6 text-risk-high" strokeWidth={1.7} />
+          <div className="text-[14px] font-bold text-risk-high">{t("extractionFailedTitle")}</div>
+          <div className="mx-auto mt-1.5 max-w-[560px] text-[12.5px] leading-[1.5] text-secondary-foreground/70">
+            {analysis!.risk_summary}
+          </div>
+        </div>
+      ) : !hasRealAnalysis ? (
         <div className="mb-[18px] rounded-[14px] border border-[#EDE6C8] bg-[#FBFAF4] p-6 text-center">
           <Hourglass className="mx-auto mb-2.5 size-6 text-[#9A7B12]" strokeWidth={1.7} />
           <div className="text-[14px] font-bold text-[#7A6510]">{t("pendingTitle")}</div>
@@ -141,61 +154,63 @@ export default function DocumentAnalysisPage() {
         </div>
       ) : null}
 
-      {/* risk overview */}
-      <div className="mb-[18px] grid grid-cols-[280px_1fr] gap-[18px] opacity-100" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
-        <div className="flex flex-col items-center rounded-[14px] border border-border bg-card p-5">
-          <RiskGauge score={hasRealAnalysis ? analysis!.risk_score ?? 0 : 78} size={128} strokeWidth={13} color="#DC2626">
-            <div className="font-mono-data text-[40px] font-bold leading-none text-risk-high">
-              {hasRealAnalysis ? analysis!.risk_score ?? "—" : 78}
+      {!extractionFailed && (
+        <>
+          {/* risk overview */}
+          <div className="mb-[18px] grid grid-cols-[280px_1fr] gap-[18px] opacity-100" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
+            <div className="flex flex-col items-center rounded-[14px] border border-border bg-card p-5">
+              <RiskGauge score={hasRealAnalysis ? analysis!.risk_score ?? 0 : 78} size={128} strokeWidth={13} color="#DC2626">
+                <div className="font-mono-data text-[40px] font-bold leading-none text-risk-high">
+                  {hasRealAnalysis ? analysis!.risk_score ?? "—" : 78}
+                </div>
+                <div className="text-[10px] text-muted-foreground">{t("riskScore")}</div>
+              </RiskGauge>
+              <div className="mt-3.5">
+                <RiskBadge level="high" label={t("highRisk")} className="px-[13px] py-[5px] text-[12.5px] font-bold" />
+              </div>
+              <div className="mt-4 flex w-full flex-col gap-2.5">
+                <SeverityBar label={t("severityHigh")} value={4} pct={80} color="var(--risk-high)" />
+                <SeverityBar label={t("severityMedium")} value={5} pct={55} color="var(--risk-medium)" />
+                <SeverityBar label={t("severityLow")} value={8} pct={35} color="var(--risk-low)" />
+              </div>
             </div>
-            <div className="text-[10px] text-muted-foreground">{t("riskScore")}</div>
-          </RiskGauge>
-          <div className="mt-3.5">
-            <RiskBadge level="high" label={t("highRisk")} className="px-[13px] py-[5px] text-[12.5px] font-bold" />
-          </div>
-          <div className="mt-4 flex w-full flex-col gap-2.5">
-            <SeverityBar label={t("severityHigh")} value={4} pct={80} color="var(--risk-high)" />
-            <SeverityBar label={t("severityMedium")} value={5} pct={55} color="var(--risk-medium)" />
-            <SeverityBar label={t("severityLow")} value={8} pct={35} color="var(--risk-low)" />
-          </div>
-        </div>
 
-        <div className="rounded-[14px] border border-border bg-card p-5">
-          <div className="mb-[11px] flex items-center gap-2">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-              <path d="m12 3 1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10z" stroke="#1F8A5B" strokeWidth="1.7" strokeLinejoin="round" />
-            </svg>
-            <div className="text-sm font-bold">{t("aiRiskSummary")}</div>
-          </div>
-          <p className="mb-3.5 text-[13.5px] leading-[1.65] text-secondary-foreground/80">
-            {hasRealAnalysis ? analysis!.risk_summary || t("noSummary") : t("exampleSummary")}
-          </p>
-        </div>
-      </div>
-
-      {/* two-column: doc viewer + findings */}
-      <div className="grid grid-cols-2 items-start gap-[18px]" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
-        <div className="overflow-hidden rounded-[14px] border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-[13px]">
-            <div className="text-[13px] font-bold">{t("document")}</div>
-            <div className="flex items-center gap-[11px] text-[10.5px] text-muted-foreground">
-              <LegendDot color="#FBD5D5" label={t("legendHigh")} />
-              <LegendDot color="#FBE4C0" label={t("legendMedium")} />
-              <LegendDot color="#CDEBDC" label={t("legendLow")} />
+            <div className="rounded-[14px] border border-border bg-card p-5">
+              <div className="mb-[11px] flex items-center gap-2">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <path d="m12 3 1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10z" stroke="#1F8A5B" strokeWidth="1.7" strokeLinejoin="round" />
+                </svg>
+                <div className="text-sm font-bold">{t("aiRiskSummary")}</div>
+              </div>
+              <p className="mb-3.5 text-[13.5px] leading-[1.65] text-secondary-foreground/80">
+                {hasRealAnalysis ? analysis!.risk_summary || t("noSummary") : t("exampleSummary")}
+              </p>
             </div>
           </div>
-          <div className="ca-scroll max-h-[560px] overflow-y-auto px-[22px] py-5 font-mono-data text-[12.5px] leading-[1.9] text-secondary-foreground/80">
-            <p className="text-secondary-foreground/60">
-              {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
-            </p>
-          </div>
-        </div>
 
-        {/* findings */}
-        <div>
-          <div className="ca-scroll flex max-h-[560px] flex-col gap-3 overflow-y-auto pe-1">
-            {hasRealAnalysis
-              ? analysis!.findings.map((f, idx) => (
+          {/* two-column: doc viewer + findings */}
+          <div className="grid grid-cols-2 items-start gap-[18px]" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
+            <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-[13px]">
+                <div className="text-[13px] font-bold">{t("document")}</div>
+                <div className="flex items-center gap-[11px] text-[10.5px] text-muted-foreground">
+                  <LegendDot color="#FBD5D5" label={t("legendHigh")} />
+                  <LegendDot color="#FBE4C0" label={t("legendMedium")} />
+                  <LegendDot color="#CDEBDC" label={t("legendLow")} />
+                </div>
+              </div>
+              <div className="ca-scroll max-h-[560px] overflow-y-auto px-[22px] py-5 font-mono-data text-[12.5px] leading-[1.9] text-secondary-foreground/80">
+                <p className="text-secondary-foreground/60">
+                  {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
+                </p>
+              </div>
+            </div>
+
+            {/* findings */}
+            <div>
+              <div className="ca-scroll flex max-h-[560px] flex-col gap-3 overflow-y-auto pe-1">
+                {hasRealAnalysis
+                  ? analysis!.findings.map((f, idx) => (
                   <div key={idx} className="rounded-[11px] border bg-card p-[15px]" style={LEVEL_STYLE[f.risk_level]}>
                     <div className="mb-1.5 flex items-center gap-2">
                       <span
@@ -247,9 +262,11 @@ export default function DocumentAnalysisPage() {
                     ) : null}
                   </div>
                 ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
