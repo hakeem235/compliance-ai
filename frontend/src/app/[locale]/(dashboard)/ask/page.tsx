@@ -1,24 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
 import { Send, MessagesSquare, BookText, AlertTriangle } from "lucide-react";
 import { api, ApiError, type ChatMessage } from "@/lib/api";
 
-const SUGGESTIONS = [
-  "Is a non-compete clause enforceable under Saudi Labor Law?",
-  "What must a PDPL-compliant privacy notice include?",
-  "Summarize the key risks in my CloudServe MSA.",
-];
+const SUGGESTION_KEYS = ["0", "1", "2"] as const;
 
-const SOURCES = [
-  { name: "Saudi Labor Law", meta: "245 articles indexed · updated 2024", color: "var(--risk-low)" },
-  { name: "PDPL & SDAIA Regs", meta: "Personal Data Protection Law + implementing regs", color: "var(--risk-low)" },
-  { name: "Commercial Regulations", meta: "Companies Law, CR & SME rules", color: "var(--risk-low)" },
-  { name: "Your documents", meta: "Embedded & searchable once uploaded", color: "#2A6FDB" },
-];
+const SOURCE_KEYS = [
+  { key: "saudiLaborLaw", color: "var(--risk-low)" },
+  { key: "pdplRegs", color: "var(--risk-low)" },
+  { key: "commercialRegs", color: "var(--risk-low)" },
+  { key: "yourDocuments", color: "#2A6FDB" },
+] as const;
 
 export default function AskPage() {
+  const t = useTranslations("Ask");
   const { getToken } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -41,7 +39,7 @@ export default function AskPage() {
         setMessages(session.messages ?? []);
       })
       .catch((err) => {
-        if (active) setError(err instanceof ApiError ? err.message : "Failed to start a chat session.");
+        if (active) setError(err instanceof ApiError ? err.message : t("errorStartSession"));
       })
       .finally(() => {
         if (active) setInitializing(false);
@@ -68,7 +66,7 @@ export default function AskPage() {
       if (err instanceof ApiError && err.status === 503) {
         setSystemNote(err.message);
       } else {
-        setError(err instanceof ApiError ? err.message : "Failed to send message.");
+        setError(err instanceof ApiError ? err.message : t("errorSendMessage"));
       }
     } finally {
       setTyping(false);
@@ -96,24 +94,27 @@ export default function AskPage() {
                 >
                   <MessagesSquare className="size-7 text-white" strokeWidth={1.8} />
                 </div>
-                <div className="text-xl font-bold tracking-tight">How can I help with your compliance today?</div>
+                <div className="text-xl font-bold tracking-tight">{t("heroTitle")}</div>
                 <div className="mt-[7px] text-[13.5px] leading-[1.5] text-muted-foreground">
-                  Ask about contracts, Saudi regulations, or your uploaded documents.
+                  {t("heroSubtitleLine1")}
                   <br />
-                  Every answer is grounded in source regulations with citations.
+                  {t("heroSubtitleLine2")}
                 </div>
                 <div className="mx-auto mt-6 flex max-w-[480px] flex-col gap-2.5">
-                  {SUGGESTIONS.map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => send(q)}
-                      disabled={!sessionId}
-                      className="flex items-center gap-[11px] rounded-xl border border-border bg-card px-4 py-[13px] text-start text-[13px] font-medium text-secondary-foreground transition-colors hover:border-accent hover:bg-muted/30 disabled:opacity-50"
-                    >
-                      <BookText className="size-4 flex-none text-accent" strokeWidth={1.7} />
-                      {q}
-                    </button>
-                  ))}
+                  {SUGGESTION_KEYS.map((key) => {
+                    const q = t(`suggestions.${key}`);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => send(q)}
+                        disabled={!sessionId}
+                        className="flex items-center gap-[11px] rounded-xl border border-border bg-card px-4 py-[13px] text-start text-[13px] font-medium text-secondary-foreground transition-colors hover:border-accent hover:bg-muted/30 disabled:opacity-50"
+                      >
+                        <BookText className="size-4 flex-none text-accent" strokeWidth={1.7} />
+                        {q}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -176,7 +177,7 @@ export default function AskPage() {
                 if (e.key === "Enter") send(input);
               }}
               disabled={!sessionId}
-              placeholder="Ask about a clause, regulation, or document…"
+              placeholder={t("inputPlaceholder")}
               className="flex-1 border-0 bg-transparent text-[13.5px] outline-none disabled:opacity-60"
             />
             <button
@@ -188,29 +189,29 @@ export default function AskPage() {
             </button>
           </div>
           <div className="mx-auto mt-2 max-w-[720px] text-center text-[10.5px] text-muted-foreground">
-            AI-assisted guidance with source citations · not a substitute for licensed legal counsel
+            {t("footerDisclaimer")}
           </div>
         </div>
       </div>
 
       {/* sources panel */}
       <div className="ca-scroll w-[280px] flex-none overflow-y-auto bg-muted/40 px-5 py-[22px]">
-        <div className="mb-3.5 text-[11px] font-bold tracking-wide text-muted-foreground">KNOWLEDGE SOURCES</div>
+        <div className="mb-3.5 text-[11px] font-bold tracking-wide text-muted-foreground">{t("knowledgeSources")}</div>
         <div className="flex flex-col gap-2.5">
-          {SOURCES.map((s) => (
-            <div key={s.name} className="rounded-[11px] border border-border bg-card p-3">
+          {SOURCE_KEYS.map((s) => (
+            <div key={s.key} className="rounded-[11px] border border-border bg-card p-3">
               <div className="mb-0.5 flex items-center gap-[7px]">
                 <span className="size-[7px] rounded-full" style={{ background: s.color }} />
-                <span className="text-xs font-bold">{s.name}</span>
+                <span className="text-xs font-bold">{t(`sources.${s.key}.name`)}</span>
               </div>
-              <div className="text-[11px] leading-[1.4] text-muted-foreground">{s.meta}</div>
+              <div className="text-[11px] leading-[1.4] text-muted-foreground">{t(`sources.${s.key}.meta`)}</div>
             </div>
           ))}
         </div>
         <div className="mt-[18px] rounded-[11px] border border-[#D7EEE3] bg-risk-low-bg p-[13px]">
-          <div className="mb-1 text-[11.5px] font-bold text-primary">RAG retrieval</div>
+          <div className="mb-1 text-[11.5px] font-bold text-primary">{t("ragTitle")}</div>
           <div className="text-[11px] leading-[1.5] text-secondary-foreground/80">
-            Answers are generated only from retrieved passages above. Citations link to the exact source article.
+            {t("ragDesc")}
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, AlertTriangle, Clock, ShieldCheck, Loader2 } from "lucide-react";
@@ -16,17 +17,18 @@ function riskFromScore(score: number | null): RiskLevel {
   return "low";
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: ReturnType<typeof useTranslations>): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("timeJustNow");
+  if (mins < 60) return t("timeMinutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t("timeHoursAgo", { count: hrs });
+  return t("timeDaysAgo", { count: Math.floor(hrs / 24) });
 }
 
 export default function DashboardPage() {
+  const t = useTranslations("Dashboard");
   const { getToken } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [events, setEvents] = useState<ComplianceEvent[]>([]);
@@ -46,7 +48,7 @@ export default function DashboardPage() {
         setEvents(evs);
       })
       .catch((err) => {
-        if (active) setError(err instanceof ApiError ? err.message : "Failed to load dashboard data.");
+        if (active) setError(err instanceof ApiError ? err.message : t("errorLoad"));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -93,7 +95,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center gap-2 p-20 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" strokeWidth={1.8} />
-        Loading dashboard…
+        {t("loading")}
       </div>
     );
   }
@@ -116,7 +118,7 @@ export default function DashboardPage() {
           />
           <div className="relative">
             <div className="mb-1 text-[12.5px] font-semibold text-sidebar-foreground-muted">
-              Organization Risk Score
+              {t("orgRiskScore")}
             </div>
             <div className="flex items-center gap-[18px]">
               <RiskGauge score={stats.avgRisk} variant="dark">
@@ -125,35 +127,37 @@ export default function DashboardPage() {
               </RiskGauge>
               <div className="flex-1">
                 <div className="mb-[9px] inline-flex items-center gap-1.5 rounded-full bg-[#F5B544]/[0.18] px-2.5 py-1 text-[11.5px] font-semibold text-[#F7C56E]">
-                  {stats.highCount > 0 ? "Needs attention" : "On track"}
+                  {stats.highCount > 0 ? t("needsAttention") : t("onTrack")}
                 </div>
                 <div className="text-[11.5px] leading-[1.5] text-white/60">
-                  {stats.highCount} high-risk document{stats.highCount === 1 ? "" : "s"} across {stats.documentsCount} reviewed.
+                  {stats.highCount === 1
+                    ? t("highRiskSummary_one", { documentsCount: stats.documentsCount })
+                    : t("highRiskSummary_other", { highCount: stats.highCount, documentsCount: stats.documentsCount })}
                 </div>
               </div>
             </div>
             <div className="mt-4 flex gap-[7px]">
               <div className="flex-1 rounded-[9px] bg-white/[0.06] px-1 py-2 text-center">
                 <div className="font-mono-data text-[17px] font-bold text-[#FF8A8A]">{stats.highCount}</div>
-                <div className="mt-px text-[9.5px] text-white/50">High</div>
+                <div className="mt-px text-[9.5px] text-white/50">{t("high")}</div>
               </div>
               <div className="flex-1 rounded-[9px] bg-white/[0.06] px-1 py-2 text-center">
                 <div className="font-mono-data text-[17px] font-bold text-[#F7C56E]">{stats.medCount}</div>
-                <div className="mt-px text-[9.5px] text-white/50">Medium</div>
+                <div className="mt-px text-[9.5px] text-white/50">{t("medium")}</div>
               </div>
               <div className="flex-1 rounded-[9px] bg-white/[0.06] px-1 py-2 text-center">
                 <div className="font-mono-data text-[17px] font-bold text-[#5BD6A0]">{stats.lowCount}</div>
-                <div className="mt-px text-[9.5px] text-white/50">Low</div>
+                <div className="mt-px text-[9.5px] text-white/50">{t("low")}</div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3.5">
-          <StatCard label="Documents reviewed" value={String(stats.documentsCount)} icon={FileText} iconBg="bg-risk-low-bg" iconColor="#1F8A5B" />
-          <StatCard label="Active alerts" value={String(stats.activeAlerts)} icon={AlertTriangle} iconBg="bg-risk-high-bg" iconColor="#DC2626" />
-          <StatCard label="Expiring contracts" value={String(stats.expiringSoon)} icon={Clock} iconBg="bg-risk-medium-bg" iconColor="#D97706" />
-          <StatCard label="Compliance events" value={String(events.length)} icon={ShieldCheck} iconBg="bg-risk-low-bg" iconColor="#1F8A5B" />
+          <StatCard label={t("statDocumentsReviewed")} value={String(stats.documentsCount)} icon={FileText} iconBg="bg-risk-low-bg" iconColor="#1F8A5B" />
+          <StatCard label={t("statActiveAlerts")} value={String(stats.activeAlerts)} icon={AlertTriangle} iconBg="bg-risk-high-bg" iconColor="#DC2626" />
+          <StatCard label={t("statExpiringContracts")} value={String(stats.expiringSoon)} icon={Clock} iconBg="bg-risk-medium-bg" iconColor="#D97706" />
+          <StatCard label={t("statComplianceEvents")} value={String(events.length)} icon={ShieldCheck} iconBg="bg-risk-low-bg" iconColor="#1F8A5B" />
         </div>
       </div>
 
@@ -161,21 +165,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-[1fr_360px] gap-[18px]">
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-[18px] py-[13px]">
-            <div className="text-sm font-bold">Recent reviews</div>
+            <div className="text-sm font-bold">{t("recentReviews")}</div>
             <Link href="/review" className="text-xs font-semibold text-accent hover:underline">
-              View all →
+              {t("viewAll")}
             </Link>
           </div>
           {recentReviews.length === 0 ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">No documents uploaded yet.</div>
+            <div className="p-10 text-center text-sm text-muted-foreground">{t("noDocuments")}</div>
           ) : (
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-muted/40">
-                  <th className="px-[18px] py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">Document</th>
-                  <th className="px-2 py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">Type</th>
-                  <th className="px-2 py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">Risk</th>
-                  <th className="px-[18px] py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">Date</th>
+                  <th className="px-[18px] py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{t("tableDocument")}</th>
+                  <th className="px-2 py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{t("tableType")}</th>
+                  <th className="px-2 py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{t("tableRisk")}</th>
+                  <th className="px-[18px] py-2.5 text-start text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">{t("tableDate")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,7 +208,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-2 py-3 text-[12.5px] text-muted-foreground">{doc.file_type.toUpperCase()}</td>
                       <td className="px-2 py-3">{score !== null ? <RiskBadge level={risk} score={score} /> : <span className="text-xs text-muted-foreground">{doc.status}</span>}</td>
-                      <td className="px-[18px] py-3 font-mono-data text-xs text-muted-foreground">{timeAgo(doc.created_at)}</td>
+                      <td className="px-[18px] py-3 font-mono-data text-xs text-muted-foreground">{timeAgo(doc.created_at, t)}</td>
                     </tr>
                   );
                 })}
@@ -215,9 +219,9 @@ export default function DashboardPage() {
 
         <div className="flex flex-col gap-[18px]">
           <div className="rounded-[14px] border border-border bg-card p-[16px_18px]">
-            <div className="mb-[13px] text-sm font-bold">Compliance alerts</div>
+            <div className="mb-[13px] text-sm font-bold">{t("complianceAlerts")}</div>
             {upcomingAlerts.length === 0 ? (
-              <div className="text-[12.5px] text-muted-foreground">No active compliance alerts.</div>
+              <div className="text-[12.5px] text-muted-foreground">{t("noActiveAlerts")}</div>
             ) : (
               <div className="flex flex-col gap-[11px]">
                 {upcomingAlerts.map((alert) => (
@@ -228,7 +232,7 @@ export default function DashboardPage() {
                     />
                     <div>
                       <div className="text-[12.5px] font-semibold leading-tight">{alert.type.replace(/_/g, " ")}</div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">Due {alert.due_date} · {alert.status}</div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">{t("due", { date: alert.due_date, status: alert.status })}</div>
                     </div>
                   </div>
                 ))}
@@ -238,16 +242,18 @@ export default function DashboardPage() {
 
           <div className="rounded-[14px] border border-border bg-card p-[16px_18px]">
             <div className="mb-[13px] flex items-center justify-between">
-              <div className="text-sm font-bold">Expiring contracts</div>
+              <div className="text-sm font-bold">{t("expiringContracts")}</div>
               <Link href="/stay-compliant" className="text-xs font-semibold text-accent hover:underline">
-                Calendar →
+                {t("calendarLink")}
               </Link>
             </div>
             {stats.expiringSoon === 0 ? (
-              <div className="text-[12.5px] text-muted-foreground">No contracts expiring within 30 days.</div>
+              <div className="text-[12.5px] text-muted-foreground">{t("noExpiringContracts")}</div>
             ) : (
               <div className="text-[12.5px] text-muted-foreground">
-                {stats.expiringSoon} contract{stats.expiringSoon === 1 ? "" : "s"} expiring within 30 days — see the calendar for dates.
+                {stats.expiringSoon === 1
+                  ? t("expiringSummary_one")
+                  : t("expiringSummary_other", { count: stats.expiringSoon })}
               </div>
             )}
           </div>

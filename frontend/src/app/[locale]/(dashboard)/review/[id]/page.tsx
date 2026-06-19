@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass } from "lucide-react";
@@ -13,59 +14,25 @@ import { REGULATIONS } from "@/lib/regulations";
 type Finding = {
   level: RiskLevel;
   ref: string;
-  title: string;
-  note: string;
-  recommendation: string;
-  citation: string;
+  titleKey: string;
+  citation?: string;
+  hasTranslatedCitation?: boolean;
 };
 
 // Illustrative-only findings shown when no real DocumentAnalysis exists yet —
 // the AI Contract Review Engine isn't wired up server-side (no
 // OPENAI_API_KEY/PINECONE_API_KEY), so every real document currently has
 // latest_analysis === null. This block is clearly labeled as an example below.
+// Titles/notes/recommendations/citations are translated via
+// ReviewDetail.findings.<key>.* where available; citation strings sourced
+// from src/lib/regulations.ts (out of scope for this task) remain in
+// English — see final report.
 const EXAMPLE_FINDINGS: Finding[] = [
-  {
-    level: "high",
-    ref: "§9.2",
-    title: "Uncapped client indemnity / unlimited liability",
-    note: 'Clause 9.2 requires the Client to indemnify the Supplier "without limitation," exposing your business to unlimited and consequential damages while the Supplier\'s liability stays capped at 12 months\' fees.',
-    recommendation:
-      "Make the indemnity mutual and cap aggregate liability for both parties at 12 months' fees. Exclude consequential and indirect damages on both sides.",
-    citation: "Saudi Civil Transactions Law, Art. 174 · Commercial best practice",
-  },
-  {
-    level: "high",
-    ref: "§11.3",
-    title: "One-sided termination for convenience",
-    note: "The Supplier can terminate on 7 days' notice with no reciprocal right for the Client, creating service-continuity and switching risk.",
-    recommendation:
-      "Grant both parties symmetric termination rights with a minimum 30–60 day notice period and a transition-assistance obligation.",
-    citation: "Contract fairness · balanced-risk principle",
-  },
-  {
-    level: "medium",
-    ref: "§15.1",
-    title: "IP ownership tied to payment milestones",
-    note: 'Deliverables remain Supplier property until "full and final payment," leaving ownership ambiguous during disputes or staged payments.',
-    recommendation: "Define IP assignment on a per-milestone basis and grant an interim licence to avoid work stoppage.",
-    citation: "Saudi Copyright Law · IP best practice",
-  },
-  {
-    level: "low",
-    ref: "§18.1 · missing",
-    title: "Governing law not specified",
-    note: "The jurisdiction placeholder is unfilled. For a Saudi entity, disputes should be resolved under KSA law.",
-    recommendation: "Specify the laws of the Kingdom of Saudi Arabia and Riyadh courts / SCCA arbitration.",
-    citation: REGULATIONS.companiesLaw,
-  },
-  {
-    level: "medium",
-    ref: "§22.4",
-    title: "No personal data protection clause",
-    note: "The contract involves processing of customer personal data but contains no PDPL-compliant data processing terms, retention limits, or breach notification obligations.",
-    recommendation: "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL.",
-    citation: REGULATIONS.pdpl,
-  },
+  { level: "high", ref: "§9.2", titleKey: "indemnity", hasTranslatedCitation: true },
+  { level: "high", ref: "§11.3", titleKey: "termination", hasTranslatedCitation: true },
+  { level: "medium", ref: "§15.1", titleKey: "ipOwnership", hasTranslatedCitation: true },
+  { level: "low", ref: "§18.1 · missing", titleKey: "governingLaw", citation: REGULATIONS.companiesLaw },
+  { level: "medium", ref: "§22.4", titleKey: "dataProtection", citation: REGULATIONS.pdpl },
 ];
 
 const LEVEL_STYLE: Record<RiskLevel, { borderColor: string; borderInlineStart: string }> = {
@@ -75,6 +42,7 @@ const LEVEL_STYLE: Record<RiskLevel, { borderColor: string; borderInlineStart: s
 };
 
 export default function DocumentAnalysisPage() {
+  const t = useTranslations("ReviewDetail");
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { getToken } = useAuth();
@@ -94,7 +62,7 @@ export default function DocumentAnalysisPage() {
         if (active) setDoc(d);
       })
       .catch((err) => {
-        if (active) setError(err instanceof ApiError ? err.message : "Failed to load document.");
+        if (active) setError(err instanceof ApiError ? err.message : t("errorLoad"));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -108,7 +76,7 @@ export default function DocumentAnalysisPage() {
     return (
       <div className="flex items-center justify-center gap-2 p-20 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" strokeWidth={1.8} />
-        Loading document…
+        {t("loading")}
       </div>
     );
   }
@@ -117,8 +85,8 @@ export default function DocumentAnalysisPage() {
     return (
       <div className="mx-auto max-w-[700px] px-7 py-16 text-center">
         <AlertTriangle className="mx-auto mb-3 size-8 text-risk-high" strokeWidth={1.6} />
-        <div className="text-base font-bold">Couldn&apos;t load this document</div>
-        <div className="mt-1.5 text-sm text-muted-foreground">{error ?? "Document not found."}</div>
+        <div className="text-base font-bold">{t("loadErrorTitle")}</div>
+        <div className="mt-1.5 text-sm text-muted-foreground">{error ?? t("documentNotFound")}</div>
       </div>
     );
   }
@@ -139,23 +107,23 @@ export default function DocumentAnalysisPage() {
             <span className="rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground/70">
               {doc.file_type.toUpperCase()}
             </span>
-            <span className="rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground/70">v{doc.version}</span>
+            <span className="rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground/70">{t("version", { version: doc.version })}</span>
             <span className="font-mono-data rounded-md bg-muted px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground/70">
-              {doc.status} · ID {doc.id}
+              {t("idLabel", { status: doc.status, id: doc.id })}
             </span>
           </div>
         </div>
         <div className="flex gap-2.5">
           <button className="flex h-[38px] items-center gap-[7px] rounded-[10px] border border-border bg-card px-[15px] text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent">
             <MessagesSquare className="size-[15px]" strokeWidth={1.8} />
-            Ask Assistant
+            {t("askAssistant")}
           </button>
           <button
             disabled={!hasRealAnalysis}
             className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-primary px-[18px] text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-[15px]" strokeWidth={1.8} />
-            Export Report
+            {t("exportReport")}
           </button>
         </div>
       </div>
@@ -163,15 +131,12 @@ export default function DocumentAnalysisPage() {
       {!hasRealAnalysis ? (
         <div className="mb-[18px] rounded-[14px] border border-[#EDE6C8] bg-[#FBFAF4] p-6 text-center">
           <Hourglass className="mx-auto mb-2.5 size-6 text-[#9A7B12]" strokeWidth={1.7} />
-          <div className="text-[14px] font-bold text-[#7A6510]">Analysis pending — AI pipeline not yet configured</div>
+          <div className="text-[14px] font-bold text-[#7A6510]">{t("pendingTitle")}</div>
           <div className="mx-auto mt-1.5 max-w-[520px] text-[12.5px] leading-[1.5] text-secondary-foreground/70">
-            {doc.status === "processing"
-              ? "Analysis was queued for this document, but the AI Contract Review Engine isn't wired up yet (no OPENAI_API_KEY/PINECONE_API_KEY configured server-side), so no findings exist yet."
-              : "This document hasn't been analyzed yet, and the backend AI pipeline isn't configured. Click \"Analyze with AI\" from the review list to queue it once the pipeline is live."}
+            {doc.status === "processing" ? t("pendingProcessing") : t("pendingNotAnalyzed")}
           </div>
           <div className="mx-auto mt-4 max-w-[760px] rounded-[10px] border border-border bg-card p-3 text-start text-[11.5px] text-muted-foreground">
-            The risk score, findings, and document viewer below are an <b>illustrative example</b> of what a
-            completed analysis will look like — not real data for this document.
+            {t.rich("illustrativeNotice", { b: (chunks) => <b>{chunks}</b> })}
           </div>
         </div>
       ) : null}
@@ -183,15 +148,15 @@ export default function DocumentAnalysisPage() {
             <div className="font-mono-data text-[40px] font-bold leading-none text-risk-high">
               {hasRealAnalysis ? analysis!.risk_score ?? "—" : 78}
             </div>
-            <div className="text-[10px] text-muted-foreground">RISK SCORE</div>
+            <div className="text-[10px] text-muted-foreground">{t("riskScore")}</div>
           </RiskGauge>
           <div className="mt-3.5">
-            <RiskBadge level="high" label="High Risk" className="px-[13px] py-[5px] text-[12.5px] font-bold" />
+            <RiskBadge level="high" label={t("highRisk")} className="px-[13px] py-[5px] text-[12.5px] font-bold" />
           </div>
           <div className="mt-4 flex w-full flex-col gap-2.5">
-            <SeverityBar label="High severity" value={4} pct={80} color="var(--risk-high)" />
-            <SeverityBar label="Medium severity" value={5} pct={55} color="var(--risk-medium)" />
-            <SeverityBar label="Low / advisory" value={8} pct={35} color="var(--risk-low)" />
+            <SeverityBar label={t("severityHigh")} value={4} pct={80} color="var(--risk-high)" />
+            <SeverityBar label={t("severityMedium")} value={5} pct={55} color="var(--risk-medium)" />
+            <SeverityBar label={t("severityLow")} value={8} pct={35} color="var(--risk-low)" />
           </div>
         </div>
 
@@ -200,12 +165,10 @@ export default function DocumentAnalysisPage() {
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
               <path d="m12 3 1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10z" stroke="#1F8A5B" strokeWidth="1.7" strokeLinejoin="round" />
             </svg>
-            <div className="text-sm font-bold">AI Risk Summary</div>
+            <div className="text-sm font-bold">{t("aiRiskSummary")}</div>
           </div>
           <p className="mb-3.5 text-[13.5px] leading-[1.65] text-secondary-foreground/80">
-            {hasRealAnalysis
-              ? analysis!.risk_summary || "No summary text was generated for this analysis."
-              : "This Master Services Agreement carries high overall risk, driven primarily by an uncapped liability clause and a unilateral termination right favoring the supplier. The agreement also lacks a data-protection clause aligned with Saudi PDPL requirements and omits a governing-law provision, which defaults dispute resolution outside the Kingdom. (Example text — not generated for this document.)"}
+            {hasRealAnalysis ? analysis!.risk_summary || t("noSummary") : t("exampleSummary")}
           </p>
         </div>
       </div>
@@ -214,18 +177,16 @@ export default function DocumentAnalysisPage() {
       <div className="grid grid-cols-2 items-start gap-[18px]" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-[13px]">
-            <div className="text-[13px] font-bold">Document</div>
+            <div className="text-[13px] font-bold">{t("document")}</div>
             <div className="flex items-center gap-[11px] text-[10.5px] text-muted-foreground">
-              <LegendDot color="#FBD5D5" label="High" />
-              <LegendDot color="#FBE4C0" label="Medium" />
-              <LegendDot color="#CDEBDC" label="Low" />
+              <LegendDot color="#FBD5D5" label={t("legendHigh")} />
+              <LegendDot color="#FBE4C0" label={t("legendMedium")} />
+              <LegendDot color="#CDEBDC" label={t("legendLow")} />
             </div>
           </div>
           <div className="ca-scroll max-h-[560px] overflow-y-auto px-[22px] py-5 font-mono-data text-[12.5px] leading-[1.9] text-secondary-foreground/80">
             <p className="text-secondary-foreground/60">
-              {hasRealAnalysis
-                ? "Full document text rendering is not yet implemented — this view will show the document body with inline highlights once available."
-                : "Document text preview is unavailable until the AI pipeline runs. This area illustrates inline clause highlighting once real analysis exists."}
+              {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
             </p>
           </div>
         </div>
@@ -233,40 +194,59 @@ export default function DocumentAnalysisPage() {
         {/* findings */}
         <div>
           <div className="ca-scroll flex max-h-[560px] flex-col gap-3 overflow-y-auto pe-1">
-            {(hasRealAnalysis
-              ? analysis!.findings.map((f) => ({
-                  level: f.risk_level,
-                  ref: f.category,
-                  title: f.category,
-                  note: f.clause_text,
-                  recommendation: f.recommendation,
-                  citation: f.citation_source ?? "",
-                }))
-              : EXAMPLE_FINDINGS
-            ).map((f, idx) => (
-              <div key={idx} className="rounded-[11px] border bg-card p-[15px]" style={LEVEL_STYLE[f.level]}>
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span
-                    className="rounded-[5px] px-2 py-0.5 text-[10px] font-bold uppercase"
-                    style={{
-                      background:
-                        f.level === "high" ? "var(--risk-high-bg)" : f.level === "medium" ? "var(--risk-medium-bg)" : "var(--risk-low-bg)",
-                      color: f.level === "high" ? "var(--risk-high)" : f.level === "medium" ? "var(--risk-medium)" : "var(--risk-low)",
-                    }}
-                  >
-                    {f.level}
-                  </span>
-                  <span className="font-mono-data text-[11px] text-muted-foreground">{f.ref}</span>
-                </div>
-                <div className="mb-1.5 text-[13.5px] font-bold">{f.title}</div>
-                <div className="mb-2.5 text-[12.5px] leading-[1.55] text-muted-foreground">{f.note}</div>
-                <div className="mb-2.5 rounded-[9px] bg-[#F4FAF7] p-[10px_12px]">
-                  <div className="mb-1 text-[10.5px] font-bold text-accent">RECOMMENDATION</div>
-                  <div className="text-xs leading-[1.5] text-secondary-foreground/80">{f.recommendation}</div>
-                </div>
-                {f.citation ? <CitationChip source={f.citation} /> : null}
-              </div>
-            ))}
+            {hasRealAnalysis
+              ? analysis!.findings.map((f, idx) => (
+                  <div key={idx} className="rounded-[11px] border bg-card p-[15px]" style={LEVEL_STYLE[f.risk_level]}>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span
+                        className="rounded-[5px] px-2 py-0.5 text-[10px] font-bold uppercase"
+                        style={{
+                          background:
+                            f.risk_level === "high" ? "var(--risk-high-bg)" : f.risk_level === "medium" ? "var(--risk-medium-bg)" : "var(--risk-low-bg)",
+                          color: f.risk_level === "high" ? "var(--risk-high)" : f.risk_level === "medium" ? "var(--risk-medium)" : "var(--risk-low)",
+                        }}
+                      >
+                        {f.risk_level}
+                      </span>
+                      <span className="font-mono-data text-[11px] text-muted-foreground">{f.category}</span>
+                    </div>
+                    <div className="mb-1.5 text-[13.5px] font-bold">{f.category}</div>
+                    <div className="mb-2.5 text-[12.5px] leading-[1.55] text-muted-foreground">{f.clause_text}</div>
+                    <div className="mb-2.5 rounded-[9px] bg-[#F4FAF7] p-[10px_12px]">
+                      <div className="mb-1 text-[10.5px] font-bold text-accent">{t("recommendation")}</div>
+                      <div className="text-xs leading-[1.5] text-secondary-foreground/80">{f.recommendation}</div>
+                    </div>
+                    {f.citation_source ? <CitationChip source={f.citation_source} /> : null}
+                  </div>
+                ))
+              : EXAMPLE_FINDINGS.map((f, idx) => (
+                  <div key={idx} className="rounded-[11px] border bg-card p-[15px]" style={LEVEL_STYLE[f.level]}>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <span
+                        className="rounded-[5px] px-2 py-0.5 text-[10px] font-bold uppercase"
+                        style={{
+                          background:
+                            f.level === "high" ? "var(--risk-high-bg)" : f.level === "medium" ? "var(--risk-medium-bg)" : "var(--risk-low-bg)",
+                          color: f.level === "high" ? "var(--risk-high)" : f.level === "medium" ? "var(--risk-medium)" : "var(--risk-low)",
+                        }}
+                      >
+                        {f.level}
+                      </span>
+                      <span className="font-mono-data text-[11px] text-muted-foreground">{f.ref}</span>
+                    </div>
+                    <div className="mb-1.5 text-[13.5px] font-bold">{t(`findings.${f.titleKey}.title`)}</div>
+                    <div className="mb-2.5 text-[12.5px] leading-[1.55] text-muted-foreground">{t(`findings.${f.titleKey}.note`)}</div>
+                    <div className="mb-2.5 rounded-[9px] bg-[#F4FAF7] p-[10px_12px]">
+                      <div className="mb-1 text-[10.5px] font-bold text-accent">{t("recommendation")}</div>
+                      <div className="text-xs leading-[1.5] text-secondary-foreground/80">{t(`findings.${f.titleKey}.recommendation`)}</div>
+                    </div>
+                    {f.hasTranslatedCitation ? (
+                      <CitationChip source={t(`findings.${f.titleKey}.citation`)} />
+                    ) : f.citation ? (
+                      <CitationChip source={f.citation} />
+                    ) : null}
+                  </div>
+                ))}
           </div>
         </div>
       </div>

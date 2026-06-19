@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { Globe } from "lucide-react";
 
-export function LanguageSwitcher() {
-  const t = useTranslations("LanguageSwitcher");
+export function LanguageToggleButton() {
+  const t = useTranslations("DashboardLayout");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -15,7 +15,7 @@ export function LanguageSwitcher() {
 
   return (
     <button
-      aria-label={t("label")}
+      title={t("switchLanguage")}
       onClick={() => {
         router.replace(pathname, { locale: nextLocale });
         router.refresh();
@@ -23,7 +23,7 @@ export function LanguageSwitcher() {
       className="flex h-[38px] items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-[12.5px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
     >
       <Globe className="size-[15px]" strokeWidth={1.8} />
-      {t(locale)}
+      {t("languageButtonLabel")}
     </button>
   );
 }

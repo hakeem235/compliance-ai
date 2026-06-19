@@ -51,5 +51,363 @@
     "label": "Language",
     "en": "English",
     "ar": "العربية"
+  },
+  "DashboardLayout": {
+    "brandSubtitle": "Legal & Compliance",
+    "aiCredits": "AI Review Credits",
+    "upgradePlan": "Upgrade plan",
+    "searchPlaceholder": "Search documents, clauses, regulations…",
+    "switchLanguage": "Switch language",
+    "languageButtonLabel": "العربية",
+    "notifications": "Notifications",
+    "userName": "Faisal Al-Otaibi",
+    "userRole": "Business Owner"
+  },
+  "Dashboard": {
+    "loading": "Loading dashboard…",
+    "orgRiskScore": "Organization Risk Score",
+    "needsAttention": "Needs attention",
+    "onTrack": "On track",
+    "highRiskSummary_one": "{highCount} high-risk document across {documentsCount} reviewed.",
+    "highRiskSummary_other": "{highCount} high-risk documents across {documentsCount} reviewed.",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "statDocumentsReviewed": "Documents reviewed",
+    "statActiveAlerts": "Active alerts",
+    "statExpiringContracts": "Expiring contracts",
+    "statComplianceEvents": "Compliance events",
+    "recentReviews": "Recent reviews",
+    "viewAll": "View all →",
+    "noDocuments": "No documents uploaded yet.",
+    "tableDocument": "Document",
+    "tableType": "Type",
+    "tableRisk": "Risk",
+    "tableDate": "Date",
+    "complianceAlerts": "Compliance alerts",
+    "noActiveAlerts": "No active compliance alerts.",
+    "due": "Due {date} · {status}",
+    "expiringContracts": "Expiring contracts",
+    "calendarLink": "Calendar →",
+    "noExpiringContracts": "No contracts expiring within 30 days.",
+    "expiringSummary_one": "{count} contract expiring within 30 days — see the calendar for dates.",
+    "expiringSummary_other": "{count} contracts expiring within 30 days — see the calendar for dates.",
+    "timeJustNow": "just now",
+    "timeMinutesAgo": "{count}m ago",
+    "timeHoursAgo": "{count}h ago",
+    "timeDaysAgo": "{count}d ago",
+    "errorLoad": "Failed to load dashboard data."
+  },
+  "Ask": {
+    "suggestions": {
+      "0": "Is a non-compete clause enforceable under Saudi Labor Law?",
+      "1": "What must a PDPL-compliant privacy notice include?",
+      "2": "Summarize the key risks in my CloudServe MSA."
+    },
+    "sources": {
+      "saudiLaborLaw": { "name": "Saudi Labor Law", "meta": "245 articles indexed · updated 2024" },
+      "pdplRegs": { "name": "PDPL & SDAIA Regs", "meta": "Personal Data Protection Law + implementing regs" },
+      "commercialRegs": { "name": "Commercial Regulations", "meta": "Companies Law, CR & SME rules" },
+      "yourDocuments": { "name": "Your documents", "meta": "Embedded & searchable once uploaded" }
+    },
+    "heroTitle": "How can I help with your compliance today?",
+    "heroSubtitleLine1": "Ask about contracts, Saudi regulations, or your uploaded documents.",
+    "heroSubtitleLine2": "Every answer is grounded in source regulations with citations.",
+    "inputPlaceholder": "Ask about a clause, regulation, or document…",
+    "footerDisclaimer": "AI-assisted guidance with source citations · not a substitute for licensed legal counsel",
+    "knowledgeSources": "KNOWLEDGE SOURCES",
+    "ragTitle": "RAG retrieval",
+    "ragDesc": "Answers are generated only from retrieved passages above. Citations link to the exact source article.",
+    "errorStartSession": "Failed to start a chat session.",
+    "errorSendMessage": "Failed to send message."
+  },
+  "Billing": {
+    "usage": {
+      "aiReviews": "AI document reviews",
+      "generatedDocuments": "Generated documents",
+      "teamSeats": "Team seats"
+    },
+    "currentPlan": "CURRENT PLAN",
+    "renews": "Renews 1 July 2026 · billed annually",
+    "upgrade": "Upgrade",
+    "manage": "Manage",
+    "usageThisCycle": "Usage this cycle",
+    "plans": "Plans",
+    "current": "CURRENT",
+    "yourPlan": "Your plan",
+    "contactSales": "Contact sales",
+    "downgrade": "Downgrade",
+    "perMonth": "/mo",
+    "paymentMethod": "Payment method",
+    "expires": "Expires 09/27",
+    "updateCard": "Update card",
+    "invoices": "Invoices",
+    "paid": "Paid",
+    "pdf": "PDF"
+  },
+  "Generate": {
+    "templates": {
+      "nda": { "name": "Mutual NDA", "desc": "Two-way confidentiality agreement" },
+      "employment": { "name": "Employment Contract", "desc": "Labor-Law compliant employment" },
+      "freelance": { "name": "Freelance Agreement", "desc": "Independent contractor terms" },
+      "vendor": { "name": "Vendor Contract", "desc": "Supplier / procurement MSA" },
+      "service": { "name": "Service Agreement", "desc": "Scope, SLA & payment terms" },
+      "nonCompete": { "name": "Non-Compete", "desc": "Restrictive covenant (≤2 yrs)" },
+      "warningLetter": { "name": "Warning Letter", "desc": "Disciplinary notice (HR)" },
+      "terminationLetter": { "name": "Termination Letter", "desc": "End-of-service notice" }
+    },
+    "stepLabels": {
+      "0": "Parties",
+      "1": "Terms",
+      "2": "Review"
+    },
+    "chooseTemplate": "Choose a template",
+    "chooseTemplateDesc": "AI drafts a Saudi-compliant document from a short questionnaire — exportable as PDF or DOCX.",
+    "allTemplates": "All templates",
+    "step1": {
+      "disclosingParty": "Disclosing party (your company)",
+      "receivingParty": "Receiving party",
+      "receivingPartyPlaceholder": "e.g. Tahaluf Technologies",
+      "crNumber": "CR number",
+      "city": "City",
+      "bilingualTitle": "Bilingual output",
+      "bilingualDesc": "— generate this document in English + Arabic side by side."
+    },
+    "step2": {
+      "purpose": "Purpose of disclosure",
+      "confidentialityTerm": "Confidentiality term",
+      "governingLaw": "Governing law",
+      "includeClauses": "Include clauses",
+      "returnMaterials": "Return / destruction of materials",
+      "disputeResolution": "Dispute resolution (SCCA arbitration)",
+      "nonSolicitation": "Non-solicitation of employees"
+    },
+    "step3": {
+      "draftReady": "Draft ready",
+      "draftReadyDesc": "AI generated a 4-page Mutual NDA with all selected clauses, validated against Saudi commercial standards. Review the live preview, then export.",
+      "checklist": {
+        "0": "Governing law set to Kingdom of Saudi Arabia",
+        "1": "Mutual obligations balanced for both parties",
+        "2": "Bilingual (EN + AR) ready"
+      },
+      "savedNotice": "Saved to your generated documents. PDF/DOCX export isn't wired up yet (no export pipeline server-side).",
+      "saveDraft": "Save draft",
+      "saved": "Saved",
+      "exportDocx": "Export DOCX (coming soon)",
+      "errorSave": "Failed to save generated document."
+    },
+    "back": "Back",
+    "continue": "Continue →",
+    "preview": {
+      "documentTitle": "MUTUAL NON-DISCLOSURE AGREEMENT",
+      "documentTitleAr": "اتفاقية عدم إفصاح متبادلة",
+      "intro": "This Mutual Non-Disclosure Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {disclosingParty} (\"Disclosing Party\") and the {receivingParty}.",
+      "section1Title": "1. Purpose",
+      "section1Body": "The parties wish to explore a potential software integration partnership and may disclose certain confidential information for that purpose.",
+      "section2Title": "2. Confidential Information",
+      "section2Body": "Each party shall protect the other's Confidential Information using no less than a reasonable standard of care and shall not disclose it to third parties.",
+      "section3Title": "3. Term",
+      "section3Body": "Confidentiality obligations shall survive for a period of three (3) years from the date of disclosure.",
+      "section4Title": "4. Governing Law",
+      "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+      "disclosingPartySignature": "Disclosing Party",
+      "receivingPartySignature": "Receiving Party"
+    },
+    "defaults": {
+      "disclosingParty": "Najd Solutions LLC",
+      "city": "Riyadh",
+      "crNumberPlaceholder": "1010XXXXXX",
+      "purpose": "Evaluation of a potential software integration partnership.",
+      "confidentialityTerm": "3 years",
+      "governingLaw": "Saudi Arabia"
+    }
+  },
+  "Review": {
+    "uploading": "Uploading…",
+    "dropzoneTitle": "Drag & drop a contract to analyze",
+    "dropzoneSubtitlePrefix": "or",
+    "dropzoneBrowse": "browse your files",
+    "dropzoneSubtitleSuffix": "— we'll extract text, run OCR if needed, and review it",
+    "badgePdf": "PDF",
+    "badgeDocx": "DOCX",
+    "badgeTxt": "TXT",
+    "badgeOcr": "OCR enabled",
+    "recentUploads": "Recent uploads",
+    "loadingDocuments": "Loading documents…",
+    "noDocuments": "No documents uploaded yet.",
+    "processing": "Processing",
+    "analyzeWithAi": "Analyze with AI",
+    "starting": "Starting…",
+    "timeJustNow": "just now",
+    "timeMinutesAgo": "{count}m ago",
+    "timeHoursAgo": "{count}h ago",
+    "timeDaysAgo": "{count}d ago",
+    "errorLoad": "Failed to load documents.",
+    "errorUpload": "Upload failed.",
+    "errorAnalyze": "Failed to start analysis.",
+    "riskHigh": "High",
+    "riskMedium": "Medium",
+    "riskLow": "Low"
+  },
+  "ReviewDetail": {
+    "loading": "Loading document…",
+    "loadErrorTitle": "Couldn't load this document",
+    "documentNotFound": "Document not found.",
+    "errorLoad": "Failed to load document.",
+    "version": "v{version}",
+    "idLabel": "{status} · ID {id}",
+    "askAssistant": "Ask Assistant",
+    "exportReport": "Export Report",
+    "pendingTitle": "Analysis pending — AI pipeline not yet configured",
+    "pendingProcessing": "Analysis was queued for this document, but the AI Contract Review Engine isn't wired up yet (no OPENAI_API_KEY/PINECONE_API_KEY configured server-side), so no findings exist yet.",
+    "pendingNotAnalyzed": "This document hasn't been analyzed yet, and the backend AI pipeline isn't configured. Click \"Analyze with AI\" from the review list to queue it once the pipeline is live.",
+    "illustrativeNotice": "The risk score, findings, and document viewer below are an <b>illustrative example</b> of what a completed analysis will look like — not real data for this document.",
+    "riskScore": "RISK SCORE",
+    "highRisk": "High Risk",
+    "severityHigh": "High severity",
+    "severityMedium": "Medium severity",
+    "severityLow": "Low / advisory",
+    "aiRiskSummary": "AI Risk Summary",
+    "noSummary": "No summary text was generated for this analysis.",
+    "exampleSummary": "This Master Services Agreement carries high overall risk, driven primarily by an uncapped liability clause and a unilateral termination right favoring the supplier. The agreement also lacks a data-protection clause aligned with Saudi PDPL requirements and omits a governing-law provision, which defaults dispute resolution outside the Kingdom. (Example text — not generated for this document.)",
+    "document": "Document",
+    "legendHigh": "High",
+    "legendMedium": "Medium",
+    "legendLow": "Low",
+    "docTextUnavailableReal": "Full document text rendering is not yet implemented — this view will show the document body with inline highlights once available.",
+    "docTextUnavailableExample": "Document text preview is unavailable until the AI pipeline runs. This area illustrates inline clause highlighting once real analysis exists.",
+    "recommendation": "RECOMMENDATION",
+    "findings": {
+      "indemnity": {
+        "title": "Uncapped client indemnity / unlimited liability",
+        "note": "Clause 9.2 requires the Client to indemnify the Supplier \"without limitation,\" exposing your business to unlimited and consequential damages while the Supplier's liability stays capped at 12 months' fees.",
+        "recommendation": "Make the indemnity mutual and cap aggregate liability for both parties at 12 months' fees. Exclude consequential and indirect damages on both sides.",
+        "citation": "Saudi Civil Transactions Law, Art. 174 · Commercial best practice"
+      },
+      "termination": {
+        "title": "One-sided termination for convenience",
+        "note": "The Supplier can terminate on 7 days' notice with no reciprocal right for the Client, creating service-continuity and switching risk.",
+        "recommendation": "Grant both parties symmetric termination rights with a minimum 30–60 day notice period and a transition-assistance obligation.",
+        "citation": "Contract fairness · balanced-risk principle"
+      },
+      "ipOwnership": {
+        "title": "IP ownership tied to payment milestones",
+        "note": "Deliverables remain Supplier property until \"full and final payment,\" leaving ownership ambiguous during disputes or staged payments.",
+        "recommendation": "Define IP assignment on a per-milestone basis and grant an interim licence to avoid work stoppage.",
+        "citation": "Saudi Copyright Law · IP best practice"
+      },
+      "governingLaw": {
+        "title": "Governing law not specified",
+        "note": "The jurisdiction placeholder is unfilled. For a Saudi entity, disputes should be resolved under KSA law.",
+        "recommendation": "Specify the laws of the Kingdom of Saudi Arabia and Riyadh courts / SCCA arbitration."
+      },
+      "dataProtection": {
+        "title": "No personal data protection clause",
+        "note": "The contract involves processing of customer personal data but contains no PDPL-compliant data processing terms, retention limits, or breach notification obligations.",
+        "recommendation": "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL."
+      }
+    }
+  },
+  "StayCompliant": {
+    "weekdays": {
+      "sun": "SUN",
+      "mon": "MON",
+      "tue": "TUE",
+      "wed": "WED",
+      "thu": "THU",
+      "fri": "FRI",
+      "sat": "SAT"
+    },
+    "typeLabels": {
+      "licenseRenewal": "License Renewal",
+      "contractExpiry": "Contract Expiry",
+      "taxDeadline": "Tax Deadline",
+      "hrObligation": "HR Obligation"
+    },
+    "legendRenewals": "Renewals / Contracts",
+    "legendTax": "Tax",
+    "legendHr": "HR",
+    "loadingCalendar": "Loading calendar…",
+    "upcomingDeadlines": "Upcoming deadlines",
+    "noUpcomingEvents": "No upcoming compliance events.",
+    "statusLabel": "Status: {status}",
+    "remindersTitle": "Reminders",
+    "remindersDesc": "Email + dashboard alerts are sent via the <code>notify_emails</code> list on each event.",
+    "errorLoad": "Failed to load compliance events."
+  },
+  "Settings": {
+    "profile": "Profile",
+    "changePhoto": "Change photo",
+    "photoHint": "JPG or PNG, max 2MB",
+    "fullName": "Full name",
+    "email": "Email",
+    "role": "Role",
+    "preferredLanguage": "Preferred language",
+    "english": "English",
+    "arabic": "العربية",
+    "security": "Security",
+    "password": "Password",
+    "passwordLastChanged": "Last changed 3 months ago",
+    "change": "Change",
+    "mfa": "Multi-factor authentication",
+    "mfaDetail": "Authenticator app · backup codes generated",
+    "on": "ON",
+    "pending": "Pending",
+    "activeSessions": "Active sessions",
+    "activeSessionsDetail": "2 devices · Riyadh, Jeddah",
+    "signOutAll": "Sign out all",
+    "teamMembers": "Team members",
+    "invite": "+ Invite",
+    "member": "Member",
+    "mfaShort": "MFA",
+    "status": "Status",
+    "active": "Active",
+    "invited": "Invited",
+    "businessOwner": "Business Owner",
+    "legalReviewer": "Legal Reviewer",
+    "teamMember": "Team Member"
+  },
+  "Admin": {
+    "stats": {
+      "activeUsers": "Active users",
+      "docsAnalyzed": "Docs analyzed (30d)",
+      "aiCalls": "AI calls (30d)",
+      "storageUsed": "Storage used"
+    },
+    "auditLog": "Audit log",
+    "immutableRbac": "Immutable · RBAC enforced",
+    "event": "Event",
+    "actor": "Actor",
+    "time": "Time",
+    "yesterday": "Yesterday",
+    "auditEvents": {
+      "docAnalyzed": "Document analyzed",
+      "roleChanged": "Role changed",
+      "docExported": "Document exported",
+      "mfaEnabled": "MFA enabled",
+      "memberInvited": "Member invited"
+    },
+    "ragKnowledgeBase": "RAG knowledge base",
+    "addSource": "+ Add source",
+    "knowledgeBase": {
+      "saudiLaborLaw": "Saudi Labor Law",
+      "pdplSdaia": "PDPL + SDAIA regs",
+      "commercialRegs": "Commercial regulations",
+      "companyPolicies": "Company policies"
+    },
+    "meta": {
+      "articlesIndexed": "{count} articles · indexed",
+      "chunksIndexed": "{count} chunks · indexed",
+      "reEmbedding": "re-embedding…"
+    },
+    "jurisdictionRoadmap": "Jurisdiction roadmap",
+    "jurisdictions": {
+      "saudiLive": "🇸🇦 Saudi · Live",
+      "uaeQ3": "UAE · Q3",
+      "bahrain": "Bahrain",
+      "kuwait": "Kuwait",
+      "qatar": "Qatar",
+      "ukUsa": "UK · USA"
+    }
   }
 }

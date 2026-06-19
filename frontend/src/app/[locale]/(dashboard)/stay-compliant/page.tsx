@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
 import { ChevronLeft, ChevronRight, BellRing, Loader2, AlertTriangle } from "lucide-react";
 import { api, ApiError, type ComplianceEvent } from "@/lib/api";
 
-type DayEvent = { color: string; label: string };
+type DayEvent = { color: string; labelKey: string };
 type CalDay = { day: number; muted: boolean; today?: boolean; date?: Date; event?: DayEvent };
 
-const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 const TYPE_COLOR: Record<ComplianceEvent["type"], string> = {
   license_renewal: "#D97706",
@@ -17,11 +18,11 @@ const TYPE_COLOR: Record<ComplianceEvent["type"], string> = {
   hr_obligation: "#1F8A5B",
 };
 
-const TYPE_LABEL: Record<ComplianceEvent["type"], string> = {
-  license_renewal: "License Renewal",
-  contract_expiry: "Contract Expiry",
-  tax_deadline: "Tax Deadline",
-  hr_obligation: "HR Obligation",
+const TYPE_LABEL_KEY: Record<ComplianceEvent["type"], string> = {
+  license_renewal: "licenseRenewal",
+  contract_expiry: "contractExpiry",
+  tax_deadline: "taxDeadline",
+  hr_obligation: "hrObligation",
 };
 
 const STATUS_COLOR: Record<ComplianceEvent["status"], string> = {
@@ -44,7 +45,7 @@ function buildCalendar(viewDate: Date, events: ComplianceEvent[]): CalDay[] {
   for (const ev of events) {
     const d = new Date(ev.due_date + "T00:00:00");
     if (d.getFullYear() === year && d.getMonth() === month) {
-      eventsByDay.set(d.getDate(), { color: TYPE_COLOR[ev.type], label: ev.category || TYPE_LABEL[ev.type] });
+      eventsByDay.set(d.getDate(), { color: TYPE_COLOR[ev.type], labelKey: ev.category || TYPE_LABEL_KEY[ev.type] });
     }
   }
 
@@ -72,6 +73,7 @@ function buildCalendar(viewDate: Date, events: ComplianceEvent[]): CalDay[] {
 }
 
 export default function StayCompliantPage() {
+  const t = useTranslations("StayCompliant");
   const { getToken } = useAuth();
   const [events, setEvents] = useState<ComplianceEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export default function StayCompliantPage() {
         if (active) setEvents(evs);
       })
       .catch((err) => {
-        if (active) setError(err instanceof ApiError ? err.message : "Failed to load compliance events.");
+        if (active) setError(err instanceof ApiError ? err.message : t("errorLoad"));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -110,6 +112,11 @@ export default function StayCompliantPage() {
   }, [events]);
 
   const monthLabel = viewDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const typeLabelKeys = Object.values(TYPE_LABEL_KEY);
+  function resolveLabel(labelKey: string): string {
+    return typeLabelKeys.includes(labelKey) ? t(`typeLabels.${labelKey}`) : labelKey;
+  }
 
   return (
     <div className="grid grid-cols-[1fr_320px] items-start gap-[18px] px-7 py-6 pb-10">
@@ -134,22 +141,22 @@ export default function StayCompliantPage() {
             </div>
           </div>
           <div className="flex gap-3 text-[10.5px] text-muted-foreground">
-            <LegendDot color="#D97706" label="Renewals / Contracts" />
-            <LegendDot color="#2A6FDB" label="Tax" />
-            <LegendDot color="#1F8A5B" label="HR" />
+            <LegendDot color="#D97706" label={t("legendRenewals")} />
+            <LegendDot color="#2A6FDB" label={t("legendTax")} />
+            <LegendDot color="#1F8A5B" label={t("legendHr")} />
           </div>
         </div>
         <div className="grid grid-cols-7 border-b border-border">
-          {WEEKDAYS.map((w) => (
+          {WEEKDAY_KEYS.map((w) => (
             <div key={w} className="py-2 text-center text-[10.5px] font-semibold text-muted-foreground">
-              {w}
+              {t(`weekdays.${w}`)}
             </div>
           ))}
         </div>
         {loading ? (
           <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" strokeWidth={1.8} />
-            Loading calendar…
+            {t("loadingCalendar")}
           </div>
         ) : (
           <div className="grid grid-cols-7">
@@ -170,7 +177,7 @@ export default function StayCompliantPage() {
                     className="mt-1.5 truncate rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-semibold leading-tight text-white"
                     style={{ background: d.event.color }}
                   >
-                    {d.event.label}
+                    {resolveLabel(d.event.labelKey)}
                   </div>
                 )}
               </div>
@@ -188,9 +195,9 @@ export default function StayCompliantPage() {
           </div>
         )}
         <div className="rounded-[14px] border border-border bg-card p-[16px_18px]">
-          <div className="mb-3.5 text-sm font-bold">Upcoming deadlines</div>
+          <div className="mb-3.5 text-sm font-bold">{t("upcomingDeadlines")}</div>
           {upcoming.length === 0 && !loading ? (
-            <div className="text-[12.5px] text-muted-foreground">No upcoming compliance events.</div>
+            <div className="text-[12.5px] text-muted-foreground">{t("noUpcomingEvents")}</div>
           ) : (
             <div className="flex flex-col gap-3.5">
               {upcoming.map((item) => {
@@ -205,8 +212,8 @@ export default function StayCompliantPage() {
                       <div className="text-[9px] text-muted-foreground">{d.toLocaleDateString("en-US", { month: "short" }).toUpperCase()}</div>
                     </div>
                     <div className="flex-1 ps-[11px]" style={{ borderInlineStart: `2px solid ${color}33` }}>
-                      <div className="text-[12.5px] font-semibold">{item.category || TYPE_LABEL[item.type]}</div>
-                      <div className="text-[11px] text-muted-foreground">Status: {item.status}</div>
+                      <div className="text-[12.5px] font-semibold">{item.category || t(`typeLabels.${TYPE_LABEL_KEY[item.type]}`)}</div>
+                      <div className="text-[11px] text-muted-foreground">{t("statusLabel", { status: item.status })}</div>
                     </div>
                   </div>
                 );
@@ -217,10 +224,10 @@ export default function StayCompliantPage() {
         <div className="rounded-[14px] bg-sidebar p-[16px_18px] text-sidebar-foreground">
           <div className="mb-1.5 flex items-center gap-2">
             <BellRing className="size-4 text-[#5BD6A0]" strokeWidth={1.8} />
-            <span className="text-[13px] font-bold">Reminders</span>
+            <span className="text-[13px] font-bold">{t("remindersTitle")}</span>
           </div>
           <div className="text-[11.5px] leading-[1.5] text-sidebar-foreground-muted">
-            Email + dashboard alerts are sent via the <code>notify_emails</code> list on each event.
+            {t.rich("remindersDesc", { code: (chunks) => <code>{chunks}</code> })}
           </div>
         </div>
       </div>

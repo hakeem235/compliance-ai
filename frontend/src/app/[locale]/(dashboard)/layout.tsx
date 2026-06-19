@@ -1,12 +1,15 @@
+import { useTranslations } from "next-intl";
 import { UserButton } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
-import { Search, Bell, Globe } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { TopbarTitle } from "@/components/topbar-title";
 import { OrgSwitcher } from "@/components/org-switcher";
+import { LanguageToggleButton } from "@/components/language-toggle-button";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("DashboardLayout");
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
@@ -32,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Compliance<span className="text-[#5BD6A0]">AI</span>
             </div>
             <div className="text-[10px] font-medium tracking-wide text-sidebar-foreground-muted">
-              Legal &amp; Compliance
+              {t("brandSubtitle")}
             </div>
           </div>
         </Link>
@@ -48,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* AI credits usage meter */}
         <div className="mx-3.5 mb-2.5 mt-2 rounded-xl border border-white/[0.07] bg-white/5 p-[13px]">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11.5px] font-semibold text-white/80">AI Review Credits</span>
+            <span className="text-[11.5px] font-semibold text-white/80">{t("aiCredits")}</span>
             <span className="font-mono-data text-[11px] text-[#5BD6A0]">
               312<span className="text-white/35">/500</span>
             </span>
@@ -63,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             href="/billing"
             className="mt-[11px] block w-full rounded-lg bg-[#5BD6A0]/[0.16] py-[7px] text-center text-[11.5px] font-semibold text-[#9FE6C4] transition-colors hover:bg-[#5BD6A0]/[0.26]"
           >
-            Upgrade plan
+            {t("upgradePlan")}
           </Link>
         </div>
       </aside>
@@ -77,19 +80,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="relative w-[300px] max-w-[34vw]">
             <Search className="absolute inset-inline-start-3 top-1/2 size-4 -translate-y-1/2 opacity-40" />
             <input
-              placeholder="Search documents, clauses, regulations…"
+              placeholder={t("searchPlaceholder")}
               className="h-[38px] w-full rounded-[10px] border border-border bg-muted/60 ps-9 pe-3 text-[13px] outline-none transition-colors focus:border-accent focus:bg-card"
             />
           </div>
+          <LanguageToggleButton />
           <button
-            title="Switch language"
-            className="flex h-[38px] items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-[12.5px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
-          >
-            <Globe className="size-[15px]" strokeWidth={1.8} />
-            العربية
-          </button>
-          <button
-            title="Notifications"
+            title={t("notifications")}
             className="relative flex size-[38px] items-center justify-center rounded-[10px] border border-border bg-card text-secondary-foreground transition-colors hover:border-accent"
           >
             <Bell className="size-[17px]" strokeWidth={1.8} />
@@ -98,8 +95,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2.5 ps-1.5">
             <UserButton />
             <div className="leading-[1.15]">
-              <div className="text-[12.5px] font-semibold">Faisal Al-Otaibi</div>
-              <div className="text-[10.5px] text-muted-foreground">Business Owner</div>
+              <div className="text-[12.5px] font-semibold">{t("userName")}</div>
+              <div className="text-[10.5px] text-muted-foreground">{t("userRole")}</div>
             </div>
           </div>
           <ThemeToggle />

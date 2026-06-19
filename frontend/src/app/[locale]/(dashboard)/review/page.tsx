@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, UploadCloud, FileCheck2, Loader2, AlertTriangle } from "lucide-react";
@@ -21,17 +22,18 @@ function fileTypeFromName(name: string): FileType {
   return "pdf";
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: ReturnType<typeof useTranslations>): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("timeJustNow");
+  if (mins < 60) return t("timeMinutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t("timeHoursAgo", { count: hrs });
+  return t("timeDaysAgo", { count: Math.floor(hrs / 24) });
 }
 
 export default function ReviewPage() {
+  const t = useTranslations("Review");
   const { getToken } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ export default function ReviewPage() {
       const docs = await api.documents.list(tokenFn);
       setDocuments(docs);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load documents.");
+      setError(err instanceof ApiError ? err.message : t("errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ export default function ReviewPage() {
       );
       await loadDocuments();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Upload failed.");
+      setError(err instanceof ApiError ? err.message : t("errorUpload"));
     } finally {
       setUploading(false);
     }
@@ -88,7 +90,7 @@ export default function ReviewPage() {
       await api.documents.analyze(docId, tokenFn);
       await loadDocuments();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to start analysis.");
+      setError(err instanceof ApiError ? err.message : t("errorAnalyze"));
     } finally {
       setAnalyzingId(null);
     }
@@ -126,17 +128,16 @@ export default function ReviewPage() {
           )}
         </div>
         <div className="mb-1.5 text-lg font-bold">
-          {uploading ? "Uploading…" : "Drag & drop a contract to analyze"}
+          {uploading ? t("uploading") : t("dropzoneTitle")}
         </div>
         <div className="mb-[18px] text-[13.5px] text-muted-foreground">
-          or <span className="font-semibold text-accent">browse your files</span> — we&apos;ll extract text, run
-          OCR if needed, and review it
+          {t("dropzoneSubtitlePrefix")} <span className="font-semibold text-accent">{t("dropzoneBrowse")}</span> {t("dropzoneSubtitleSuffix")}
         </div>
         <div className="flex flex-wrap justify-center gap-2">
-          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">PDF</span>
-          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">DOCX</span>
-          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">TXT</span>
-          <span className="rounded-full bg-risk-low-bg px-3 py-1 text-[11.5px] font-semibold text-accent">OCR enabled</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">{t("badgePdf")}</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">{t("badgeDocx")}</span>
+          <span className="rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-secondary-foreground/70">{t("badgeTxt")}</span>
+          <span className="rounded-full bg-risk-low-bg px-3 py-1 text-[11.5px] font-semibold text-accent">{t("badgeOcr")}</span>
         </div>
       </div>
 
@@ -149,17 +150,17 @@ export default function ReviewPage() {
 
       {/* recent uploads */}
       <div className="mt-6">
-        <div className="mb-3 text-sm font-bold">Recent uploads</div>
+        <div className="mb-3 text-sm font-bold">{t("recentUploads")}</div>
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           {loading ? (
             <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" strokeWidth={1.8} />
-              Loading documents…
+              {t("loadingDocuments")}
             </div>
           ) : documents.length === 0 ? (
             <div className="flex flex-col items-center gap-2 p-10 text-center text-sm text-muted-foreground">
               <FileCheck2 className="size-6" aria-hidden="true" />
-              No documents uploaded yet.
+              {t("noDocuments")}
             </div>
           ) : (
             documents.map((doc, i) => {
@@ -186,15 +187,15 @@ export default function ReviewPage() {
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">{doc.filename}</div>
                     <div className="font-mono-data text-[11px] text-muted-foreground">
-                      {doc.file_type.toUpperCase()} · {timeAgo(doc.created_at)} · {doc.status}
+                      {doc.file_type.toUpperCase()} · {timeAgo(doc.created_at, t)} · {doc.status}
                     </div>
                   </div>
                   {score !== null ? (
-                    <RiskBadge level={risk} score={score} label={risk === "high" ? "High" : risk === "medium" ? "Medium" : "Low"} />
+                    <RiskBadge level={risk} score={score} label={risk === "high" ? t("riskHigh") : risk === "medium" ? t("riskMedium") : t("riskLow")} />
                   ) : doc.status === "processing" ? (
                     <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11.5px] font-semibold text-muted-foreground">
                       <Loader2 className="size-3 animate-spin" strokeWidth={2} />
-                      Processing
+                      {t("processing")}
                     </span>
                   ) : (
                     <button
@@ -202,7 +203,7 @@ export default function ReviewPage() {
                       disabled={analyzingId === doc.id}
                       className="rounded-full bg-primary px-3 py-1 text-[11.5px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:opacity-60"
                     >
-                      {analyzingId === doc.id ? "Starting…" : "Analyze with AI"}
+                      {analyzingId === doc.id ? t("starting") : t("analyzeWithAi")}
                     </button>
                   )}
                 </Link>

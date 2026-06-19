@@ -1,26 +1,28 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, Check, FileDown, FileText, AlertTriangle, Loader2 } from "lucide-react";
 import { api, ApiError, type GeneratedDocType } from "@/lib/api";
 
-const TEMPLATES: { name: string; docType: GeneratedDocType; desc: string; bg: string; color: string }[] = [
-  { name: "Mutual NDA", docType: "nda", desc: "Two-way confidentiality agreement", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
-  { name: "Employment Contract", docType: "employment", desc: "Labor-Law compliant employment", bg: "bg-[#EEF3FF]", color: "#2A6FDB" },
-  { name: "Freelance Agreement", docType: "freelance", desc: "Independent contractor terms", bg: "bg-[#F3EEFF]", color: "#7C5CFF" },
-  { name: "Vendor Contract", docType: "vendor", desc: "Supplier / procurement MSA", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
-  { name: "Service Agreement", docType: "service", desc: "Scope, SLA & payment terms", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
-  { name: "Non-Compete", docType: "non_compete", desc: "Restrictive covenant (≤2 yrs)", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
-  { name: "Warning Letter", docType: "warning_letter", desc: "Disciplinary notice (HR)", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
-  { name: "Termination Letter", docType: "termination_letter", desc: "End-of-service notice", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
+const TEMPLATE_KEYS: { key: string; docType: GeneratedDocType; bg: string; color: string }[] = [
+  { key: "nda", docType: "nda", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
+  { key: "employment", docType: "employment", bg: "bg-[#EEF3FF]", color: "#2A6FDB" },
+  { key: "freelance", docType: "freelance", bg: "bg-[#F3EEFF]", color: "#7C5CFF" },
+  { key: "vendor", docType: "vendor", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
+  { key: "service", docType: "service", bg: "bg-risk-low-bg", color: "var(--risk-low)" },
+  { key: "nonCompete", docType: "non_compete", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
+  { key: "warningLetter", docType: "warning_letter", bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
+  { key: "terminationLetter", docType: "termination_letter", bg: "bg-risk-high-bg", color: "var(--risk-high)" },
 ];
 
-const STEP_LABELS = ["Parties", "Terms", "Review"];
+const STEP_KEYS = ["0", "1", "2"] as const;
 
 export default function GeneratePage() {
+  const t = useTranslations("Generate");
   const { getToken } = useAuth();
-  const [template, setTemplate] = useState<(typeof TEMPLATES)[number] | null>(null);
+  const [template, setTemplate] = useState<(typeof TEMPLATE_KEYS)[number] | null>(null);
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
@@ -41,7 +43,7 @@ export default function GeneratePage() {
       await api.generatedDocuments.create({ doc_type: template.docType, questionnaire_answers: answers }, tokenFn);
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to save generated document.");
+      setError(err instanceof ApiError ? err.message : t("step3.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -51,17 +53,17 @@ export default function GeneratePage() {
     return (
       <div className="mx-auto max-w-[1080px] px-7 py-[26px] pb-10">
         <div className="mb-[18px]">
-          <div className="text-[15px] font-bold">Choose a template</div>
+          <div className="text-[15px] font-bold">{t("chooseTemplate")}</div>
           <div className="mt-0.5 text-[12.5px] text-muted-foreground">
-            AI drafts a Saudi-compliant document from a short questionnaire — exportable as PDF or DOCX.
+            {t("chooseTemplateDesc")}
           </div>
         </div>
         <div className="grid grid-cols-4 gap-3.5">
-          {TEMPLATES.map((t) => (
+          {TEMPLATE_KEYS.map((tpl) => (
             <button
-              key={t.name}
+              key={tpl.key}
               onClick={() => {
-                setTemplate(t);
+                setTemplate(tpl);
                 setStep(1);
                 setAnswers({});
                 setSaved(false);
@@ -69,11 +71,11 @@ export default function GeneratePage() {
               }}
               className="rounded-[14px] border border-border bg-card p-[18px] text-start transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
             >
-              <div className={`mb-3 flex size-[38px] items-center justify-center rounded-[10px] ${t.bg}`}>
-                <FileText className="size-[19px]" style={{ color: t.color }} strokeWidth={1.7} />
+              <div className={`mb-3 flex size-[38px] items-center justify-center rounded-[10px] ${tpl.bg}`}>
+                <FileText className="size-[19px]" style={{ color: tpl.color }} strokeWidth={1.7} />
               </div>
-              <div className="text-[13.5px] font-bold">{t.name}</div>
-              <div className="mt-0.5 text-[11.5px] leading-[1.4] text-muted-foreground">{t.desc}</div>
+              <div className="text-[13.5px] font-bold">{t(`templates.${tpl.key}.name`)}</div>
+              <div className="mt-0.5 text-[11.5px] leading-[1.4] text-muted-foreground">{t(`templates.${tpl.key}.desc`)}</div>
             </button>
           ))}
         </div>
@@ -90,17 +92,18 @@ export default function GeneratePage() {
           className="mb-3.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-accent"
         >
           <ArrowLeft className="size-3.5" strokeWidth={2} />
-          All templates
+          {t("allTemplates")}
         </button>
-        <div className="text-[17px] font-bold tracking-tight">{template.name}</div>
+        <div className="text-[17px] font-bold tracking-tight">{t(`templates.${template.key}.name`)}</div>
 
         {/* steps indicator */}
         <div className="my-5 flex items-center">
-          {STEP_LABELS.map((label, i) => {
+          {STEP_KEYS.map((key, i) => {
             const n = i + 1;
             const done = step >= n;
+            const label = t(`stepLabels.${key}`);
             return (
-              <div key={label} className="flex items-center">
+              <div key={key} className="flex items-center">
                 {i > 0 && <div className="mx-2.5 h-px w-10 bg-border" />}
                 <div className="flex items-center gap-2">
                   <div
@@ -119,21 +122,21 @@ export default function GeneratePage() {
         {step === 1 && (
           <div className="flex flex-col gap-4">
             <TextField
-              label="Disclosing party (your company)"
-              defaultValue="Najd Solutions LLC"
+              label={t("step1.disclosingParty")}
+              defaultValue={t("defaults.disclosingParty")}
               onChange={(v) => updateAnswer("disclosing_party", v)}
             />
             <TextField
-              label="Receiving party"
-              placeholder="e.g. Tahaluf Technologies"
+              label={t("step1.receivingParty")}
+              placeholder={t("step1.receivingPartyPlaceholder")}
               onChange={(v) => updateAnswer("receiving_party", v)}
             />
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="CR number" placeholder="1010XXXXXX" onChange={(v) => updateAnswer("cr_number", v)} />
-              <TextField label="City" defaultValue="Riyadh" onChange={(v) => updateAnswer("city", v)} />
+              <TextField label={t("step1.crNumber")} placeholder={t("defaults.crNumberPlaceholder")} onChange={(v) => updateAnswer("cr_number", v)} />
+              <TextField label={t("step1.city")} defaultValue={t("defaults.city")} onChange={(v) => updateAnswer("city", v)} />
             </div>
             <div className="rounded-[11px] border border-[#DCEFE6] bg-[#F4FAF7] p-[12px_14px] text-[11.5px] leading-[1.4] text-secondary-foreground/80">
-              <b>Bilingual output</b> — generate this document in English + Arabic side by side.
+              <b>{t("step1.bilingualTitle")}</b> {t("step1.bilingualDesc")}
             </div>
           </div>
         )}
@@ -141,23 +144,23 @@ export default function GeneratePage() {
         {step === 2 && (
           <div className="flex flex-col gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground/80">Purpose of disclosure</label>
+              <label className="mb-1.5 block text-xs font-semibold text-secondary-foreground/80">{t("step2.purpose")}</label>
               <textarea
-                defaultValue="Evaluation of a potential software integration partnership."
+                defaultValue={t("defaults.purpose")}
                 onChange={(e) => updateAnswer("purpose", e.target.value)}
                 className="h-[78px] w-full resize-none rounded-[10px] border border-border p-3 text-[13px] outline-none focus:border-accent"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="Confidentiality term" defaultValue="3 years" onChange={(v) => updateAnswer("confidentiality_term", v)} />
-              <TextField label="Governing law" defaultValue="Saudi Arabia" onChange={(v) => updateAnswer("governing_law", v)} />
+              <TextField label={t("step2.confidentialityTerm")} defaultValue={t("defaults.confidentialityTerm")} onChange={(v) => updateAnswer("confidentiality_term", v)} />
+              <TextField label={t("step2.governingLaw")} defaultValue={t("defaults.governingLaw")} onChange={(v) => updateAnswer("governing_law", v)} />
             </div>
             <div>
-              <label className="mb-2 block text-xs font-semibold text-secondary-foreground/80">Include clauses</label>
+              <label className="mb-2 block text-xs font-semibold text-secondary-foreground/80">{t("step2.includeClauses")}</label>
               <div className="flex flex-col gap-2">
-                <CheckRow label="Return / destruction of materials" checked />
-                <CheckRow label="Dispute resolution (SCCA arbitration)" checked />
-                <CheckRow label="Non-solicitation of employees" />
+                <CheckRow label={t("step2.returnMaterials")} checked />
+                <CheckRow label={t("step2.disputeResolution")} checked />
+                <CheckRow label={t("step2.nonSolicitation")} />
               </div>
             </div>
           </div>
@@ -168,22 +171,17 @@ export default function GeneratePage() {
             <div className="rounded-xl border border-[#D7EEE3] bg-risk-low-bg p-[14px_16px]">
               <div className="mb-1 flex items-center gap-2">
                 <Check className="size-4 text-accent" strokeWidth={2.4} />
-                <span className="text-[13px] font-bold text-primary">Draft ready</span>
+                <span className="text-[13px] font-bold text-primary">{t("step3.draftReady")}</span>
               </div>
               <div className="text-xs leading-[1.5] text-secondary-foreground/80">
-                AI generated a 4-page Mutual NDA with all selected clauses, validated against Saudi commercial
-                standards. Review the live preview, then export.
+                {t("step3.draftReadyDesc")}
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              {[
-                "Governing law set to Kingdom of Saudi Arabia",
-                "Mutual obligations balanced for both parties",
-                "Bilingual (EN + AR) ready",
-              ].map((line) => (
-                <div key={line} className="flex items-center gap-2 text-[12.5px] text-secondary-foreground/80">
+              {(["0", "1", "2"] as const).map((key) => (
+                <div key={key} className="flex items-center gap-2 text-[12.5px] text-secondary-foreground/80">
                   <Check className="size-3.5 text-accent" strokeWidth={2.2} />
-                  {line}
+                  {t(`step3.checklist.${key}`)}
                 </div>
               ))}
             </div>
@@ -196,7 +194,7 @@ export default function GeneratePage() {
             {saved && (
               <div className="flex items-center gap-2 rounded-[10px] border border-[#D7EEE3] bg-risk-low-bg px-3.5 py-2.5 text-[12.5px] text-primary">
                 <Check className="size-3.5 flex-none" strokeWidth={2} />
-                Saved to your generated documents. PDF/DOCX export isn&apos;t wired up yet (no export pipeline server-side).
+                {t("step3.savedNotice")}
               </div>
             )}
             <div className="mt-1 flex gap-2.5">
@@ -206,10 +204,10 @@ export default function GeneratePage() {
                 className="flex h-[42px] flex-1 items-center justify-center gap-[7px] rounded-[10px] bg-primary text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:opacity-60"
               >
                 {saving ? <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} /> : <FileDown className="size-[15px]" strokeWidth={1.8} />}
-                {saved ? "Saved" : "Save draft"}
+                {saved ? t("step3.saved") : t("step3.saveDraft")}
               </button>
               <button disabled className="h-[42px] flex-1 rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground opacity-60">
-                Export DOCX (coming soon)
+                {t("step3.exportDocx")}
               </button>
             </div>
           </div>
@@ -221,7 +219,7 @@ export default function GeneratePage() {
             onClick={() => setStep((s) => Math.max(1, s - 1))}
             className="h-10 rounded-[10px] border border-border bg-card px-[18px] text-[13px] font-semibold text-secondary-foreground"
           >
-            Back
+            {t("back")}
           </button>
           <div className="flex-1" />
           {step < 3 && (
@@ -229,7 +227,7 @@ export default function GeneratePage() {
               onClick={() => setStep((s) => Math.min(3, s + 1))}
               className="h-10 rounded-[10px] bg-accent px-[22px] text-[13px] font-semibold text-accent-foreground transition-colors hover:bg-[#1A7A50]"
             >
-              Continue →
+              {t("continue")}
             </button>
           )}
         </div>
@@ -239,41 +237,39 @@ export default function GeneratePage() {
       <div className="ca-scroll overflow-y-auto bg-muted/40 p-6">
         <div className="mx-auto max-w-[480px] rounded-md bg-white p-[46px_44px] shadow-lg" style={{ minHeight: 600 }}>
           <div className="mb-[26px] text-center">
-            <div className="text-base font-bold tracking-wide text-[#10201A]">MUTUAL NON-DISCLOSURE AGREEMENT</div>
+            <div className="text-base font-bold tracking-wide text-[#10201A]">{t("preview.documentTitle")}</div>
             <div className="mt-1.5 text-[11px] text-[#9AA8A2]" dir="rtl">
-              اتفاقية عدم إفصاح متبادلة
+              {t("preview.documentTitleAr")}
             </div>
           </div>
           <div className="text-[11.5px] leading-[1.85] text-[#3A4A44]" style={{ fontFamily: "Georgia, serif" }}>
             <p className="mb-3.5">
-              This Mutual Non-Disclosure Agreement (&quot;Agreement&quot;) is entered into in <b>Riyadh</b>, Kingdom of
-              Saudi Arabia by and between <b>Najd Solutions LLC</b> (&quot;Disclosing Party&quot;) and the{" "}
-              <b>Receiving Party</b>.
+              {t("preview.intro", {
+                city: (answers.city as string) || t("defaults.city"),
+                disclosingParty: (answers.disclosing_party as string) || t("defaults.disclosingParty"),
+                receivingParty: t("preview.receivingPartySignature"),
+              })}
             </p>
-            <p className="mb-1 font-bold">1. Purpose</p>
+            <p className="mb-1 font-bold">{t("preview.section1Title")}</p>
             <p className="mb-3.5">
-              The parties wish to explore a potential software integration partnership and may disclose certain
-              confidential information for that purpose.
+              {t("preview.section1Body")}
             </p>
-            <p className="mb-1 font-bold">2. Confidential Information</p>
+            <p className="mb-1 font-bold">{t("preview.section2Title")}</p>
             <p className="mb-3.5">
-              Each party shall protect the other&apos;s Confidential Information using no less than a reasonable
-              standard of care and shall not disclose it to third parties.
+              {t("preview.section2Body")}
             </p>
-            <p className="mb-1 font-bold">3. Term</p>
+            <p className="mb-1 font-bold">{t("preview.section3Title")}</p>
             <p className="mb-3.5">
-              Confidentiality obligations shall survive for a period of <b>three (3) years</b> from the date of
-              disclosure.
+              {t("preview.section3Body")}
             </p>
-            <p className="mb-1 font-bold">4. Governing Law</p>
+            <p className="mb-1 font-bold">{t("preview.section4Title")}</p>
             <p className="mb-2">
-              This Agreement shall be governed by the laws of the <b>Kingdom of Saudi Arabia</b>; disputes shall be
-              referred to SCCA arbitration in Riyadh.
+              {t("preview.section4Body")}
             </p>
           </div>
           <div className="mt-[30px] flex justify-between">
-            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">Disclosing Party</div>
-            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">Receiving Party</div>
+            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t("preview.disclosingPartySignature")}</div>
+            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t("preview.receivingPartySignature")}</div>
           </div>
         </div>
       </div>
