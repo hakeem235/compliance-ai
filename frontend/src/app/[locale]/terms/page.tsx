@@ -1,57 +1,10 @@
 import { Link } from "@/i18n/navigation";
-
-const SECTIONS = [
-  {
-    title: "1. Acceptance of terms",
-    body: "By accessing or using ComplianceAI, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service.",
-  },
-  {
-    title: "2. Description of service",
-    body: "ComplianceAI provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice.",
-  },
-  {
-    title: "3. Not legal advice",
-    body: "AI-generated analysis, recommendations, drafts and chat responses are provided for informational purposes only. You should consult a licensed lawyer before relying on any output for a legal decision.",
-  },
-  {
-    title: "4. Accounts and organizations",
-    body: "You are responsible for maintaining the confidentiality of your account credentials and for all activity under your organization. You must provide accurate information when registering.",
-  },
-  {
-    title: "5. Acceptable use",
-    body: "You agree not to use the service to upload unlawful content, infringe third-party rights, attempt to reverse-engineer the platform, or interfere with its security or availability.",
-  },
-  {
-    title: "6. Subscriptions and billing",
-    body: "Paid plans are billed in advance on a recurring basis as described at checkout. You may cancel at any time; cancellation takes effect at the end of the current billing period.",
-  },
-  {
-    title: "7. Intellectual property",
-    body: "The platform, its design and underlying technology are owned by ComplianceAI. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service.",
-  },
-  {
-    title: "8. Limitation of liability",
-    body: "ComplianceAI is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service.",
-  },
-  {
-    title: "9. Termination",
-    body: "We may suspend or terminate access to the service for violation of these terms. You may stop using the service and close your account at any time.",
-  },
-  {
-    title: "10. Governing law",
-    body: "These terms are governed by the laws of the Kingdom of Saudi Arabia. Any dispute shall be subject to the exclusive jurisdiction of the competent Saudi courts.",
-  },
-  {
-    title: "11. Changes to these terms",
-    body: "We may update these terms from time to time. Continued use of the service after changes take effect constitutes acceptance of the revised terms.",
-  },
-  {
-    title: "12. Contact",
-    body: "For questions about these Terms and Conditions, contact us at legal@complianceai.sa.",
-  },
-];
+import { useTranslations } from "next-intl";
 
 export default function TermsPage() {
+  const t = useTranslations("Terms");
+  const sections = t.raw("sections") as { title: string; body: string }[];
+
   return (
     <main className="min-h-screen bg-white text-[#10201A]">
       <nav className="mx-auto flex h-[66px] max-w-[1200px] items-center gap-3.5 border-b border-[#EEF2F0] px-10">
@@ -71,19 +24,19 @@ export default function TermsPage() {
         </Link>
         <div className="flex-1" />
         <Link href="/privacy" className="text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
-          Privacy
+          {t("nav.privacy")}
         </Link>
         <Link href="/" className="text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
-          Back to home
+          {t("nav.backToHome")}
         </Link>
       </nav>
 
       <div className="mx-auto max-w-[760px] px-10 py-16">
-        <h1 className="mb-2 text-[32px] font-bold tracking-tight">Terms and Conditions</h1>
-        <p className="mb-10 text-[13px] text-[#7C8B85]">Last updated: 18 June 2026</p>
+        <h1 className="mb-2 text-[32px] font-bold tracking-tight">{t("title")}</h1>
+        <p className="mb-10 text-[13px] text-[#7C8B85]">{t("lastUpdated")}</p>
 
         <div className="flex flex-col gap-8">
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <div key={s.title}>
               <h2 className="mb-2 text-base font-bold">{s.title}</h2>
               <p className="text-[14px] leading-[1.7] text-[#3A4A44]">{s.body}</p>

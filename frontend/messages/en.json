@@ -25,10 +25,22 @@
       "heading": "Everything your legal workflow needs",
       "subheading": "One platform for review, generation, deadlines and questions.",
       "features": {
-        "review": { "title": "AI contract review", "desc": "Risk score, clause-by-clause findings and fixes in seconds." },
-        "generate": { "title": "Document generator", "desc": "Draft NDAs, contracts & letters from a short questionnaire." },
-        "calendar": { "title": "Compliance calendar", "desc": "Never miss a license renewal, GOSI or tax deadline." },
-        "assistant": { "title": "AI legal assistant", "desc": "Ask anything — answers cite the exact Saudi regulation." }
+        "review": {
+          "title": "AI contract review",
+          "desc": "Risk score, clause-by-clause findings and fixes in seconds."
+        },
+        "generate": {
+          "title": "Document generator",
+          "desc": "Draft NDAs, contracts & letters from a short questionnaire."
+        },
+        "calendar": {
+          "title": "Compliance calendar",
+          "desc": "Never miss a license renewal, GOSI or tax deadline."
+        },
+        "assistant": {
+          "title": "AI legal assistant",
+          "desc": "Ask anything — answers cite the exact Saudi regulation."
+        }
       }
     },
     "pricing": {
@@ -105,10 +117,22 @@
       "2": "Summarize the key risks in my CloudServe MSA."
     },
     "sources": {
-      "saudiLaborLaw": { "name": "Saudi Labor Law", "meta": "245 articles indexed · updated 2024" },
-      "pdplRegs": { "name": "PDPL & SDAIA Regs", "meta": "Personal Data Protection Law + implementing regs" },
-      "commercialRegs": { "name": "Commercial Regulations", "meta": "Companies Law, CR & SME rules" },
-      "yourDocuments": { "name": "Your documents", "meta": "Embedded & searchable once uploaded" }
+      "saudiLaborLaw": {
+        "name": "Saudi Labor Law",
+        "meta": "245 articles indexed · updated 2024"
+      },
+      "pdplRegs": {
+        "name": "PDPL & SDAIA Regs",
+        "meta": "Personal Data Protection Law + implementing regs"
+      },
+      "commercialRegs": {
+        "name": "Commercial Regulations",
+        "meta": "Companies Law, CR & SME rules"
+      },
+      "yourDocuments": {
+        "name": "Your documents",
+        "meta": "Embedded & searchable once uploaded"
+      }
     },
     "heroTitle": "How can I help with your compliance today?",
     "heroSubtitleLine1": "Ask about contracts, Saudi regulations, or your uploaded documents.",
@@ -147,14 +171,38 @@
   },
   "Generate": {
     "templates": {
-      "nda": { "name": "Mutual NDA", "desc": "Two-way confidentiality agreement" },
-      "employment": { "name": "Employment Contract", "desc": "Labor-Law compliant employment" },
-      "freelance": { "name": "Freelance Agreement", "desc": "Independent contractor terms" },
-      "vendor": { "name": "Vendor Contract", "desc": "Supplier / procurement MSA" },
-      "service": { "name": "Service Agreement", "desc": "Scope, SLA & payment terms" },
-      "nonCompete": { "name": "Non-Compete", "desc": "Restrictive covenant (≤2 yrs)" },
-      "warningLetter": { "name": "Warning Letter", "desc": "Disciplinary notice (HR)" },
-      "terminationLetter": { "name": "Termination Letter", "desc": "End-of-service notice" }
+      "nda": {
+        "name": "Mutual NDA",
+        "desc": "Two-way confidentiality agreement"
+      },
+      "employment": {
+        "name": "Employment Contract",
+        "desc": "Labor-Law compliant employment"
+      },
+      "freelance": {
+        "name": "Freelance Agreement",
+        "desc": "Independent contractor terms"
+      },
+      "vendor": {
+        "name": "Vendor Contract",
+        "desc": "Supplier / procurement MSA"
+      },
+      "service": {
+        "name": "Service Agreement",
+        "desc": "Scope, SLA & payment terms"
+      },
+      "nonCompete": {
+        "name": "Non-Compete",
+        "desc": "Restrictive covenant (≤2 yrs)"
+      },
+      "warningLetter": {
+        "name": "Warning Letter",
+        "desc": "Disciplinary notice (HR)"
+      },
+      "terminationLetter": {
+        "name": "Termination Letter",
+        "desc": "End-of-service notice"
+      }
     },
     "stepLabels": {
       "0": "Parties",
@@ -409,5 +457,105 @@
       "qatar": "Qatar",
       "ukUsa": "UK · USA"
     }
+  },
+  "Privacy": {
+    "nav": {
+      "terms": "Terms",
+      "backToHome": "Back to home"
+    },
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: 18 June 2026",
+    "sections": [
+      {
+        "title": "1. Information we collect",
+        "body": "We collect account information (name, email, organization), documents you upload for review or generation, and usage data needed to operate the service (logs, device/browser metadata)."
+      },
+      {
+        "title": "2. How we use your information",
+        "body": "We use your data to provide contract review, document generation, compliance tracking and the AI assistant; to maintain and secure the platform; and to communicate with you about your account."
+      },
+      {
+        "title": "3. AI processing",
+        "body": "Documents and questions you submit may be processed by third-party AI providers to generate analysis, drafts, or answers. AI output is informational only and does not constitute legal advice."
+      },
+      {
+        "title": "4. Data storage and retention",
+        "body": "Your data is stored on infrastructure located in or accessible from Saudi Arabia and retained for as long as your account is active, or as required by applicable law, including the Personal Data Protection Law (PDPL)."
+      },
+      {
+        "title": "5. Data sharing",
+        "body": "We do not sell your data. We share data only with service providers that help us operate the platform (e.g. hosting, AI processing), under contractual confidentiality obligations, or when required by law."
+      },
+      {
+        "title": "6. Your rights",
+        "body": "Under the PDPL, you may request access to, correction of, or deletion of your personal data, and may withdraw consent to processing where applicable. Contact us to exercise these rights."
+      },
+      {
+        "title": "7. Security",
+        "body": "We apply industry-standard technical and organizational measures, including encryption in transit and access controls, to protect your data against unauthorized access, loss, or misuse."
+      },
+      {
+        "title": "8. Contact",
+        "body": "For questions about this policy or to exercise your data rights, contact us at privacy@complianceai.sa."
+      }
+    ]
+  },
+  "Terms": {
+    "nav": {
+      "privacy": "Privacy",
+      "backToHome": "Back to home"
+    },
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: 18 June 2026",
+    "sections": [
+      {
+        "title": "1. Acceptance of terms",
+        "body": "By accessing or using ComplianceAI, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
+      },
+      {
+        "title": "2. Description of service",
+        "body": "ComplianceAI provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
+      },
+      {
+        "title": "3. Not legal advice",
+        "body": "AI-generated analysis, recommendations, drafts and chat responses are provided for informational purposes only. You should consult a licensed lawyer before relying on any output for a legal decision."
+      },
+      {
+        "title": "4. Accounts and organizations",
+        "body": "You are responsible for maintaining the confidentiality of your account credentials and for all activity under your organization. You must provide accurate information when registering."
+      },
+      {
+        "title": "5. Acceptable use",
+        "body": "You agree not to use the service to upload unlawful content, infringe third-party rights, attempt to reverse-engineer the platform, or interfere with its security or availability."
+      },
+      {
+        "title": "6. Subscriptions and billing",
+        "body": "Paid plans are billed in advance on a recurring basis as described at checkout. You may cancel at any time; cancellation takes effect at the end of the current billing period."
+      },
+      {
+        "title": "7. Intellectual property",
+        "body": "The platform, its design and underlying technology are owned by ComplianceAI. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
+      },
+      {
+        "title": "8. Limitation of liability",
+        "body": "ComplianceAI is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
+      },
+      {
+        "title": "9. Termination",
+        "body": "We may suspend or terminate access to the service for violation of these terms. You may stop using the service and close your account at any time."
+      },
+      {
+        "title": "10. Governing law",
+        "body": "These terms are governed by the laws of the Kingdom of Saudi Arabia. Any dispute shall be subject to the exclusive jurisdiction of the competent Saudi courts."
+      },
+      {
+        "title": "11. Changes to these terms",
+        "body": "We may update these terms from time to time. Continued use of the service after changes take effect constitutes acceptance of the revised terms."
+      },
+      {
+        "title": "12. Contact",
+        "body": "For questions about these Terms and Conditions, contact us at legal@complianceai.sa."
+      }
+    ]
   }
 }
