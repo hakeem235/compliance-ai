@@ -203,35 +203,59 @@
     "templates": {
       "nda": {
         "name": "Mutual NDA",
-        "desc": "Two-way confidentiality agreement"
+        "desc": "Two-way confidentiality agreement",
+        "partyALabel": "Disclosing party (your company)",
+        "partyBLabel": "Receiving party",
+        "partyBPlaceholder": "e.g. Tahaluf Technologies"
       },
       "employment": {
         "name": "Employment Contract",
-        "desc": "Labor-Law compliant employment"
+        "desc": "Labor-Law compliant employment",
+        "partyALabel": "Employer (your company)",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Sara Al-Harbi"
       },
       "freelance": {
         "name": "Freelance Agreement",
-        "desc": "Independent contractor terms"
+        "desc": "Independent contractor terms",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Freelancer name",
+        "partyBPlaceholder": "e.g. Mishari Khan"
       },
       "vendor": {
         "name": "Vendor Contract",
-        "desc": "Supplier / procurement MSA"
+        "desc": "Supplier / procurement MSA",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Vendor / supplier",
+        "partyBPlaceholder": "e.g. Khaleej Logistics"
       },
       "service": {
         "name": "Service Agreement",
-        "desc": "Scope, SLA & payment terms"
+        "desc": "Scope, SLA & payment terms",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Service provider",
+        "partyBPlaceholder": "e.g. Tahaluf Technologies"
       },
       "nonCompete": {
         "name": "Non-Compete",
-        "desc": "Restrictive covenant (≤2 yrs)"
+        "desc": "Restrictive covenant (≤2 yrs)",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
       },
       "warningLetter": {
         "name": "Warning Letter",
-        "desc": "Disciplinary notice (HR)"
+        "desc": "Disciplinary notice (HR)",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
       },
       "terminationLetter": {
         "name": "Termination Letter",
-        "desc": "End-of-service notice"
+        "desc": "End-of-service notice",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
       }
     },
     "stepLabels": {
@@ -249,7 +273,8 @@
       "crNumber": "CR number",
       "city": "City",
       "bilingualTitle": "Bilingual output",
-      "bilingualDesc": "— generate this document in English + Arabic side by side."
+      "bilingualDesc": "— generate this document in English + Arabic side by side.",
+      "partyAFallback": "Najd Solutions LLC"
     },
     "step2": {
       "purpose": "Purpose of disclosure",
@@ -262,34 +287,142 @@
     },
     "step3": {
       "draftReady": "Draft ready",
-      "draftReadyDesc": "AI generated a 4-page Mutual NDA with all selected clauses, validated against Saudi commercial standards. Review the live preview, then export.",
+      "draftReadyDesc": "AI generated a draft {docName} with all selected clauses, validated against Saudi commercial standards. Review the live preview, then export.",
       "checklist": {
         "0": "Governing law set to Kingdom of Saudi Arabia",
         "1": "Mutual obligations balanced for both parties",
         "2": "Bilingual (EN + AR) ready"
       },
-      "savedNotice": "Saved to your generated documents. PDF/DOCX export isn't wired up yet (no export pipeline server-side).",
+      "savedNotice": "Saved to your generated documents.",
       "saveDraft": "Save draft",
       "saved": "Saved",
-      "exportDocx": "Export DOCX (coming soon)",
-      "errorSave": "Failed to save generated document."
+      "exportDocx": "Export Word",
+      "errorSave": "Failed to save generated document.",
+      "exportPdf": "Export PDF"
     },
     "back": "Back",
     "continue": "Continue →",
     "preview": {
-      "documentTitle": "MUTUAL NON-DISCLOSURE AGREEMENT",
-      "documentTitleAr": "اتفاقية عدم إفصاح متبادلة",
-      "intro": "This Mutual Non-Disclosure Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {disclosingParty} (\"Disclosing Party\") and the {receivingParty}.",
-      "section1Title": "1. Purpose",
-      "section1Body": "The parties wish to explore a potential software integration partnership and may disclose certain confidential information for that purpose.",
-      "section2Title": "2. Confidential Information",
-      "section2Body": "Each party shall protect the other's Confidential Information using no less than a reasonable standard of care and shall not disclose it to third parties.",
-      "section3Title": "3. Term",
-      "section3Body": "Confidentiality obligations shall survive for a period of three (3) years from the date of disclosure.",
-      "section4Title": "4. Governing Law",
-      "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
-      "disclosingPartySignature": "Disclosing Party",
-      "receivingPartySignature": "Receiving Party"
+      "nda": {
+        "documentTitle": "MUTUAL NON-DISCLOSURE AGREEMENT",
+        "documentTitleAr": "اتفاقية عدم إفصاح متبادلة",
+        "intro": "This Mutual Non-Disclosure Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Disclosing Party\") and {partyB} (\"Receiving Party\").",
+        "section1Title": "1. Purpose",
+        "section1Body": "The parties wish to explore a potential business relationship and may disclose certain confidential information for that purpose.",
+        "section2Title": "2. Confidential Information",
+        "section2Body": "Each party shall protect the other's Confidential Information using no less than a reasonable standard of care and shall not disclose it to third parties.",
+        "section3Title": "3. Term",
+        "section3Body": "Confidentiality obligations shall survive for a period of three (3) years from the date of disclosure.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Disclosing Party",
+        "partyBSignature": "Receiving Party"
+      },
+      "employment": {
+        "documentTitle": "EMPLOYMENT CONTRACT",
+        "documentTitleAr": "عقد عمل",
+        "intro": "This Employment Contract (\"Contract\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Employer\") and {partyB} (\"Employee\"), in accordance with the Saudi Labor Law.",
+        "section1Title": "1. Position and Duties",
+        "section1Body": "The Employee is engaged in the position agreed between the parties and shall perform the duties assigned by the Employer in good faith.",
+        "section2Title": "2. Compensation",
+        "section2Body": "The Employer shall pay the Employee a monthly wage as agreed, payable by the end of each Gregorian month, in addition to statutory benefits (GOSI, end-of-service award).",
+        "section3Title": "3. Probation and Term",
+        "section3Body": "The Employee shall be subject to a probationary period not exceeding ninety (90) days, after which the Contract continues for the term agreed by the parties.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Contract is governed by the Saudi Labor Law and the laws of the Kingdom of Saudi Arabia; disputes are referred to the competent labor courts.",
+        "partyASignature": "Employer",
+        "partyBSignature": "Employee"
+      },
+      "freelance": {
+        "documentTitle": "FREELANCE AGREEMENT",
+        "documentTitleAr": "اتفاقية عمل مستقل",
+        "intro": "This Freelance Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Freelancer\"), engaged as an independent contractor.",
+        "section1Title": "1. Scope of Work",
+        "section1Body": "The Freelancer shall perform the services described in the agreed statement of work, exercising independent professional judgment.",
+        "section2Title": "2. Independent Contractor Status",
+        "section2Body": "The Freelancer is not an employee of the Client and is solely responsible for their own taxes, GOSI (if applicable), and Freelance Certificate compliance.",
+        "section3Title": "3. Payment",
+        "section3Body": "The Client shall pay the agreed fee upon completion of milestones or on the schedule set out in the statement of work.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Freelancer"
+      },
+      "vendor": {
+        "documentTitle": "VENDOR CONTRACT",
+        "documentTitleAr": "عقد مورّد",
+        "intro": "This Vendor Contract (\"Contract\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Vendor\").",
+        "section1Title": "1. Supply of Goods/Services",
+        "section1Body": "The Vendor shall supply the goods and/or services described in the agreed purchase order or statement of work, meeting the specified quality standards.",
+        "section2Title": "2. Pricing and Payment Terms",
+        "section2Body": "Pricing is as set out in the agreed schedule; payment is due within the agreed period following delivery and acceptance.",
+        "section3Title": "3. Delivery and Acceptance",
+        "section3Body": "The Vendor shall deliver per the agreed timeline; the Client may inspect and reject non-conforming goods or services within a reasonable period.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Contract shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Vendor"
+      },
+      "service": {
+        "documentTitle": "SERVICE AGREEMENT",
+        "documentTitleAr": "اتفاقية تقديم خدمات",
+        "intro": "This Service Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Service Provider\").",
+        "section1Title": "1. Services and Scope",
+        "section1Body": "The Service Provider shall perform the services described in the agreed scope of work to a professional standard.",
+        "section2Title": "2. Service Levels",
+        "section2Body": "The Service Provider shall meet the service levels (SLA) set out in the agreed schedule, including response and resolution times.",
+        "section3Title": "3. Fees and Payment",
+        "section3Body": "The Client shall pay the agreed fees on the billing schedule set out in this Agreement.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Service Provider"
+      },
+      "nonCompete": {
+        "documentTitle": "NON-COMPETE AGREEMENT",
+        "documentTitleAr": "اتفاقية عدم منافسة",
+        "intro": "This Non-Compete Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Company\") and {partyB} (\"Employee\").",
+        "section1Title": "1. Restricted Activity",
+        "section1Body": "The Employee agrees not to engage in any business that directly competes with the Company within the agreed scope.",
+        "section2Title": "2. Duration",
+        "section2Body": "This restriction shall apply for a period not exceeding two (2) years following termination of employment, in line with Saudi Labor Law limits.",
+        "section3Title": "3. Geographic Scope",
+        "section3Body": "The restriction applies within the Kingdom of Saudi Arabia, limited to the markets in which the Company actively operates.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes are referred to the competent Saudi courts.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      },
+      "warningLetter": {
+        "documentTitle": "DISCIPLINARY WARNING LETTER",
+        "documentTitleAr": "خطاب إنذار تأديبي",
+        "intro": "This letter is issued in {city}, Kingdom of Saudi Arabia by {partyA} (\"Company\") to {partyB} (\"Employee\") regarding the conduct described below.",
+        "section1Title": "1. Description of Conduct",
+        "section1Body": "The Employee's conduct on the relevant date did not meet the standards set out in the Company's internal work regulations.",
+        "section2Title": "2. Prior Notice",
+        "section2Body": "This is a formal written warning issued in accordance with the Company's internal disciplinary policy and the Saudi Labor Law.",
+        "section3Title": "3. Required Corrective Action",
+        "section3Body": "The Employee is required to correct the conduct described above immediately; failure to do so may result in further disciplinary action.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This notice is issued in accordance with the Saudi Labor Law and the Company's internal regulations.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      },
+      "terminationLetter": {
+        "documentTitle": "END-OF-SERVICE / TERMINATION LETTER",
+        "documentTitleAr": "خطاب إنهاء خدمة",
+        "intro": "This letter is issued in {city}, Kingdom of Saudi Arabia by {partyA} (\"Company\") to {partyB} (\"Employee\") to notify the termination of employment.",
+        "section1Title": "1. Termination Date",
+        "section1Body": "The Employee's employment with the Company shall end on the agreed termination date, in accordance with the notice period set out in the Contract.",
+        "section2Title": "2. End-of-Service Benefits",
+        "section2Body": "The Employee is entitled to the end-of-service award and any accrued but unused leave, calculated per the Saudi Labor Law.",
+        "section3Title": "3. Return of Property",
+        "section3Body": "The Employee shall return all Company property, documents, and access credentials by the termination date.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This notice is issued in accordance with the Saudi Labor Law and the laws of the Kingdom of Saudi Arabia.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      }
     },
     "defaults": {
       "disclosingParty": "Najd Solutions LLC",
@@ -587,5 +720,17 @@
         "body": "For questions about these Terms and Conditions, contact us at legal@complianceai.sa."
       }
     ]
+  },
+  "Sidebar": {
+    "workspace": "WORKSPACE",
+    "manage": "MANAGE",
+    "dashboard": "Dashboard",
+    "documentsReviews": "Documents & Reviews",
+    "generate": "Generate",
+    "calendar": "Calendar",
+    "aiAssistant": "AI Assistant",
+    "billing": "Billing",
+    "settings": "Settings",
+    "admin": "Admin"
   }
 }

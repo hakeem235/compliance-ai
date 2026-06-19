@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
-import { ArrowLeft, Check, FileDown, FileText, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, FileDown, FileText, Printer, AlertTriangle, Loader2 } from "lucide-react";
 import { api, ApiError, type GeneratedDocType } from "@/lib/api";
 
 const TEMPLATE_KEYS: { key: string; docType: GeneratedDocType; bg: string; color: string }[] = [
@@ -30,9 +30,29 @@ export default function GeneratePage() {
   const [error, setError] = useState<string | null>(null);
 
   const tokenFn = useCallback(() => getToken(), [getToken]);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   function updateAnswer(key: string, value: string) {
     setAnswers((a) => ({ ...a, [key]: value }));
+  }
+
+  function exportDocx() {
+    if (!template || !previewRef.current) return;
+    const title = t(`preview.${template.key}.documentTitle`);
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${title}</title></head><body>${previewRef.current.innerHTML}</body></html>`;
+    const blob = new Blob(["﻿", html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPdf() {
+    window.print();
   }
 
   async function finishAndPersist() {
@@ -122,13 +142,13 @@ export default function GeneratePage() {
         {step === 1 && (
           <div className="flex flex-col gap-4">
             <TextField
-              label={t("step1.disclosingParty")}
+              label={t(`templates.${template.key}.partyALabel`)}
               defaultValue={t("defaults.disclosingParty")}
               onChange={(v) => updateAnswer("disclosing_party", v)}
             />
             <TextField
-              label={t("step1.receivingParty")}
-              placeholder={t("step1.receivingPartyPlaceholder")}
+              label={t(`templates.${template.key}.partyBLabel`)}
+              placeholder={t(`templates.${template.key}.partyBPlaceholder`)}
               onChange={(v) => updateAnswer("receiving_party", v)}
             />
             <div className="grid grid-cols-2 gap-3">
@@ -174,7 +194,7 @@ export default function GeneratePage() {
                 <span className="text-[13px] font-bold text-primary">{t("step3.draftReady")}</span>
               </div>
               <div className="text-xs leading-[1.5] text-secondary-foreground/80">
-                {t("step3.draftReadyDesc")}
+                {t("step3.draftReadyDesc", { docName: t(`templates.${template.key}.name`) })}
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -206,8 +226,19 @@ export default function GeneratePage() {
                 {saving ? <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} /> : <FileDown className="size-[15px]" strokeWidth={1.8} />}
                 {saved ? t("step3.saved") : t("step3.saveDraft")}
               </button>
-              <button disabled className="h-[42px] flex-1 rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground opacity-60">
+              <button
+                onClick={exportDocx}
+                className="flex h-[42px] flex-1 items-center justify-center gap-[7px] rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+              >
+                <FileDown className="size-[15px]" strokeWidth={1.8} />
                 {t("step3.exportDocx")}
+              </button>
+              <button
+                onClick={exportPdf}
+                className="flex h-[42px] flex-1 items-center justify-center gap-[7px] rounded-[10px] border border-border bg-card text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+              >
+                <Printer className="size-[15px]" strokeWidth={1.8} />
+                {t("step3.exportPdf")}
               </button>
             </div>
           </div>
@@ -235,41 +266,38 @@ export default function GeneratePage() {
 
       {/* live preview */}
       <div className="ca-scroll overflow-y-auto bg-muted/40 p-6">
-        <div className="mx-auto max-w-[480px] rounded-md bg-white p-[46px_44px] shadow-lg" style={{ minHeight: 600 }}>
+        <div
+          ref={previewRef}
+          id="doc-preview-print"
+          className="mx-auto max-w-[480px] rounded-md bg-white p-[46px_44px] shadow-lg"
+          style={{ minHeight: 600 }}
+        >
           <div className="mb-[26px] text-center">
-            <div className="text-base font-bold tracking-wide text-[#10201A]">{t("preview.documentTitle")}</div>
+            <div className="text-base font-bold tracking-wide text-[#10201A]">{t(`preview.${template.key}.documentTitle`)}</div>
             <div className="mt-1.5 text-[11px] text-[#9AA8A2]" dir="rtl">
-              {t("preview.documentTitleAr")}
+              {t(`preview.${template.key}.documentTitleAr`)}
             </div>
           </div>
           <div className="text-[11.5px] leading-[1.85] text-[#3A4A44]" style={{ fontFamily: "Georgia, serif" }}>
             <p className="mb-3.5">
-              {t("preview.intro", {
+              {t(`preview.${template.key}.intro`, {
                 city: (answers.city as string) || t("defaults.city"),
-                disclosingParty: (answers.disclosing_party as string) || t("defaults.disclosingParty"),
-                receivingParty: t("preview.receivingPartySignature"),
+                partyA: (answers.disclosing_party as string) || t("step1.partyAFallback"),
+                partyB: (answers.receiving_party as string) || t(`preview.${template.key}.partyBSignature`),
               })}
             </p>
-            <p className="mb-1 font-bold">{t("preview.section1Title")}</p>
-            <p className="mb-3.5">
-              {t("preview.section1Body")}
-            </p>
-            <p className="mb-1 font-bold">{t("preview.section2Title")}</p>
-            <p className="mb-3.5">
-              {t("preview.section2Body")}
-            </p>
-            <p className="mb-1 font-bold">{t("preview.section3Title")}</p>
-            <p className="mb-3.5">
-              {t("preview.section3Body")}
-            </p>
-            <p className="mb-1 font-bold">{t("preview.section4Title")}</p>
-            <p className="mb-2">
-              {t("preview.section4Body")}
-            </p>
+            <p className="mb-1 font-bold">{t(`preview.${template.key}.section1Title`)}</p>
+            <p className="mb-3.5">{t(`preview.${template.key}.section1Body`)}</p>
+            <p className="mb-1 font-bold">{t(`preview.${template.key}.section2Title`)}</p>
+            <p className="mb-3.5">{t(`preview.${template.key}.section2Body`)}</p>
+            <p className="mb-1 font-bold">{t(`preview.${template.key}.section3Title`)}</p>
+            <p className="mb-3.5">{t(`preview.${template.key}.section3Body`)}</p>
+            <p className="mb-1 font-bold">{t(`preview.${template.key}.section4Title`)}</p>
+            <p className="mb-2">{t(`preview.${template.key}.section4Body`)}</p>
           </div>
           <div className="mt-[30px] flex justify-between">
-            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t("preview.disclosingPartySignature")}</div>
-            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t("preview.receivingPartySignature")}</div>
+            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t(`preview.${template.key}.partyASignature`)}</div>
+            <div className="w-[42%] border-t border-[#D6DEDA] pt-1.5 text-[10px] text-[#9AA8A2]">{t(`preview.${template.key}.partyBSignature`)}</div>
           </div>
         </div>
       </div>

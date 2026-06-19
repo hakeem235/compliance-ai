@@ -139,6 +139,22 @@
   }
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #doc-preview-print,
+  #doc-preview-print * {
+    visibility: visible;
+  }
+  #doc-preview-print {
+    position: absolute;
+    inset: 0;
+    box-shadow: none !important;
+    max-width: none !important;
+  }
+}
+
 .ca-scroll::-webkit-scrollbar {
   width: 10px;
   height: 10px;
