@@ -61,7 +61,8 @@ export default function AskPage() {
     setSystemNote(null);
     setError(null);
     try {
-      await api.chatSessions.ask(sessionId, trimmed, tokenFn);
+      const reply = await api.chatSessions.ask(sessionId, trimmed, tokenFn);
+      setMessages((m) => [...m, reply]);
     } catch (err) {
       if (err instanceof ApiError && err.status === 503) {
         setSystemNote(err.message);

@@ -118,7 +118,10 @@ CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "")
 
-# OpenAI / Pinecone — AI review, generation, RAG
+# OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
 PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "")
+
+# Anthropic — AI Legal Assistant (direct model call, no retrieval/RAG pipeline yet)
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")

@@ -230,7 +230,7 @@ export const api = {
     list: (getToken: GetTokenFn) => apiGet<ChatSession[]>("/api/chat-sessions/", getToken),
     create: (body: { title?: string }, getToken: GetTokenFn) => apiPost<ChatSession>("/api/chat-sessions/", body, getToken),
     ask: (id: string, content: string, getToken: GetTokenFn) =>
-      apiPost<{ detail: string }>(`/api/chat-sessions/${id}/ask/`, { content }, getToken),
+      apiPost<ChatMessage>(`/api/chat-sessions/${id}/ask/`, { content }, getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
