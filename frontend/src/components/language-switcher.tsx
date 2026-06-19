@@ -17,7 +17,7 @@ export function LanguageSwitcher() {
     <button
       aria-label={t("label")}
       onClick={() => {
-        router.replace(pathname, { locale: nextLocale });
+        router.replace(pathname || "/", { locale: nextLocale });
         router.refresh();
       }}
       className="flex h-[38px] items-center gap-1.5 rounded-[10px] border border-border bg-card px-3 text-[12.5px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
