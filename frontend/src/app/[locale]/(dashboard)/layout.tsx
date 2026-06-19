@@ -1,5 +1,5 @@
 import { UserButton } from "@clerk/nextjs";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Search, Bell, Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "@/components/sidebar-nav";

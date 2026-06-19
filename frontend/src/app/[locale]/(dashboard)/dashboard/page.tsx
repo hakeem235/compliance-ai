@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, AlertTriangle, Clock, ShieldCheck, Loader2 } from "lucide-react";
 import { RiskGauge } from "@/components/risk-gauge";

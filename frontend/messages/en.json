@@ -1,0 +1,55 @@
+{
+  "Landing": {
+    "nav": {
+      "product": "Product",
+      "pricing": "Pricing",
+      "dashboard": "Dashboard",
+      "signIn": "Sign in"
+    },
+    "hero": {
+      "badge": "🇸🇦 Built for Saudi Arabia · PDPL ready",
+      "titleLine1": "Legal & compliance,",
+      "titleLine2": "powered by AI.",
+      "subtitle": "Review contracts, catch legal risks, track compliance deadlines and generate documents — grounded in Saudi regulations, with a citation for every recommendation.",
+      "startTrial": "Start free trial",
+      "viewDemo": "View live demo →",
+      "goToDashboard": "Go to dashboard",
+      "trustedBy": "Trusted by SMEs, startups & legal teams across the Kingdom"
+    },
+    "riskCard": {
+      "orgRisk": "Organization Risk",
+      "moderateExposure": "Moderate exposure",
+      "flaggedClauses": "7 high-risk clauses flagged"
+    },
+    "product": {
+      "heading": "Everything your legal workflow needs",
+      "subheading": "One platform for review, generation, deadlines and questions.",
+      "features": {
+        "review": { "title": "AI contract review", "desc": "Risk score, clause-by-clause findings and fixes in seconds." },
+        "generate": { "title": "Document generator", "desc": "Draft NDAs, contracts & letters from a short questionnaire." },
+        "calendar": { "title": "Compliance calendar", "desc": "Never miss a license renewal, GOSI or tax deadline." },
+        "assistant": { "title": "AI legal assistant", "desc": "Ask anything — answers cite the exact Saudi regulation." }
+      }
+    },
+    "pricing": {
+      "heading": "Simple, transparent pricing",
+      "subheading": "Cancel anytime. Prices in Saudi riyals, billed monthly.",
+      "mostPopular": "MOST POPULAR",
+      "startTrial": "Start free trial",
+      "contactSales": "Contact sales",
+      "managePlan": "Manage plan"
+    },
+    "clients": {
+      "heading": "Trusted by teams across the Kingdom"
+    },
+    "footer": {
+      "terms": "Terms & Conditions",
+      "privacy": "Privacy Policy"
+    }
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

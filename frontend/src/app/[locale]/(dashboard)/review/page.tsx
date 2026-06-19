@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, UploadCloud, FileCheck2, Loader2, AlertTriangle } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";

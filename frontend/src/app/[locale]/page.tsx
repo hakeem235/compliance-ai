@@ -1,39 +1,17 @@
-import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AiDisclaimer } from "@/components/citation-chip";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { Link } from "@/i18n/navigation";
 import { PLANS } from "@/lib/plans";
 
-const FEATURES = [
-  {
-    icon: ShieldCheck,
-    bg: "bg-risk-low-bg",
-    color: "var(--risk-low)",
-    title: "AI contract review",
-    desc: "Risk score, clause-by-clause findings and fixes in seconds.",
-  },
-  {
-    icon: Sparkles,
-    bg: "bg-[#EEF3FF]",
-    color: "#2A6FDB",
-    title: "Document generator",
-    desc: "Draft NDAs, contracts & letters from a short questionnaire.",
-  },
-  {
-    icon: CalendarDays,
-    bg: "bg-risk-medium-bg",
-    color: "var(--risk-medium)",
-    title: "Compliance calendar",
-    desc: "Never miss a license renewal, GOSI or tax deadline.",
-  },
-  {
-    icon: MessagesSquare,
-    bg: "bg-[#F3EEFF]",
-    color: "#7C5CFF",
-    title: "AI legal assistant",
-    desc: "Ask anything — answers cite the exact Saudi regulation.",
-  },
-];
+const FEATURE_ICONS = [
+  { key: "review", icon: ShieldCheck, bg: "bg-risk-low-bg", color: "var(--risk-low)" },
+  { key: "generate", icon: Sparkles, bg: "bg-[#EEF3FF]", color: "#2A6FDB" },
+  { key: "calendar", icon: CalendarDays, bg: "bg-risk-medium-bg", color: "var(--risk-medium)" },
+  { key: "assistant", icon: MessagesSquare, bg: "bg-[#F3EEFF]", color: "#7C5CFF" },
+] as const;
 
 const CLIENTS = ["Najd Solutions", "Riyadh Capital Partners", "Khaleej Logistics", "Tabuk Health Group", "Dammam Retail Co."];
 
@@ -44,6 +22,8 @@ const RISK_ITEMS = [
 ];
 
 export default function LandingPage() {
+  const t = useTranslations("Landing");
+
   return (
     <main className="min-h-screen bg-white text-[#10201A]">
       <nav className="mx-auto flex h-[66px] max-w-[1200px] items-center gap-3.5 border-b border-[#EEF2F0] px-10">
@@ -61,55 +41,53 @@ export default function LandingPage() {
         </div>
         <div className="flex-1" />
         <a href="#product" className="cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
-          Product
+          {t("nav.product")}
         </a>
         <a href="#pricing" className="mx-1 cursor-pointer text-[13px] font-medium text-[#5B6B66] hover:text-[#2A4A3E]">
-          Pricing
+          {t("nav.pricing")}
         </a>
         <SignedIn>
           <Link
             href="/dashboard"
             className="flex h-[38px] items-center rounded-[9px] border border-[#E2E9E6] bg-white px-[18px] text-[13px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
           >
-            Dashboard
+            {t("nav.dashboard")}
           </Link>
           <UserButton />
         </SignedIn>
         <SignedOut>
           <SignInButton>
             <button className="flex h-[38px] items-center rounded-[9px] bg-primary px-[18px] text-[13px] font-semibold text-white transition-colors hover:bg-[#0E4A38]">
-              Sign in
+              {t("nav.signIn")}
             </button>
           </SignInButton>
         </SignedOut>
+        <LanguageSwitcher />
       </nav>
 
       <div className="mx-auto grid max-w-[1100px] grid-cols-2 items-center gap-12 px-10 py-16 pb-10">
         <div>
           <div className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-risk-low-bg px-[13px] py-[5px] text-xs font-semibold text-primary">
-            🇸🇦 Built for Saudi Arabia · PDPL ready
+            {t("hero.badge")}
           </div>
           <h1 className="mb-[18px] text-[46px] font-bold leading-[1.08] tracking-tight">
-            Legal &amp; compliance,
+            {t("hero.titleLine1")}
             <br />
-            <span className="text-accent">powered by AI.</span>
+            <span className="text-accent">{t("hero.titleLine2")}</span>
           </h1>
-          <p className="mb-7 max-w-[440px] text-base leading-[1.6] text-[#5B6B66]">
-            Review contracts, catch legal risks, track compliance deadlines and generate documents — grounded in
-            Saudi regulations, with a citation for every recommendation.
-          </p>
+          <p className="mb-7 max-w-[440px] text-base leading-[1.6] text-[#5B6B66]">{t("hero.subtitle")}</p>
           <div className="mb-[18px] flex gap-3">
             <SignedOut>
               <SignUpButton>
                 <button className="h-12 rounded-[11px] bg-primary px-[26px] text-[14.5px] font-semibold text-white transition-colors hover:bg-[#0E4A38]">
-                  Start free trial
+                  {t("hero.startTrial")}
                 </button>
               </SignUpButton>
               <Link
                 href="/dashboard"
                 className="flex h-12 items-center gap-2 rounded-[11px] border border-[#E2E9E6] px-6 text-[14.5px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
               >
-                View live demo →
+                {t("hero.viewDemo")}
               </Link>
             </SignedOut>
             <SignedIn>
@@ -117,11 +95,11 @@ export default function LandingPage() {
                 href="/dashboard"
                 className="flex h-12 items-center rounded-[11px] bg-primary px-[26px] text-[14.5px] font-semibold text-white transition-colors hover:bg-[#0E4A38]"
               >
-                Go to dashboard
+                {t("hero.goToDashboard")}
               </Link>
             </SignedIn>
           </div>
-          <div className="text-[12.5px] text-[#9AA8A2]">Trusted by SMEs, startups &amp; legal teams across the Kingdom</div>
+          <div className="text-[12.5px] text-[#9AA8A2]">{t("hero.trustedBy")}</div>
         </div>
 
         <div
@@ -154,9 +132,9 @@ export default function LandingPage() {
                 </div>
               </div>
               <div>
-                <div className="text-[13px] text-white/60">Organization Risk</div>
-                <div className="mt-0.5 text-lg font-bold">Moderate exposure</div>
-                <div className="mt-1 text-xs text-[#9FE6C4]">7 high-risk clauses flagged</div>
+                <div className="text-[13px] text-white/60">{t("riskCard.orgRisk")}</div>
+                <div className="mt-0.5 text-lg font-bold">{t("riskCard.moderateExposure")}</div>
+                <div className="mt-1 text-xs text-[#9FE6C4]">{t("riskCard.flaggedClauses")}</div>
               </div>
             </div>
             <div className="flex flex-col gap-2.5">
@@ -175,17 +153,17 @@ export default function LandingPage() {
       <div id="product" className="border-t border-[#EEF2F0] px-10 py-[72px]">
         <div className="mx-auto max-w-[1100px]">
           <div className="mb-10 text-center">
-            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">Everything your legal workflow needs</h2>
-            <p className="text-[14.5px] text-[#7C8B85]">One platform for review, generation, deadlines and questions.</p>
+            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">{t("product.heading")}</h2>
+            <p className="text-[14.5px] text-[#7C8B85]">{t("product.subheading")}</p>
           </div>
           <div className="grid grid-cols-4 gap-[18px]">
-            {FEATURES.map((f) => (
-              <div key={f.title}>
+            {FEATURE_ICONS.map((f) => (
+              <div key={f.key}>
                 <div className={`mb-3 flex size-10 items-center justify-center rounded-[11px] ${f.bg}`}>
                   <f.icon className="size-5" style={{ color: f.color }} strokeWidth={1.7} />
                 </div>
-                <div className="mb-1.5 text-sm font-bold">{f.title}</div>
-                <div className="text-[12.5px] leading-[1.5] text-[#7C8B85]">{f.desc}</div>
+                <div className="mb-1.5 text-sm font-bold">{t(`product.features.${f.key}.title`)}</div>
+                <div className="text-[12.5px] leading-[1.5] text-[#7C8B85]">{t(`product.features.${f.key}.desc`)}</div>
               </div>
             ))}
           </div>
@@ -195,8 +173,8 @@ export default function LandingPage() {
       <div id="pricing" className="border-t border-[#EEF2F0] bg-[#FAFBFB] px-10 py-[72px]">
         <div className="mx-auto max-w-[1100px]">
           <div className="mb-10 text-center">
-            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">Simple, transparent pricing</h2>
-            <p className="text-[14.5px] text-[#7C8B85]">Cancel anytime. Prices in Saudi riyals, billed monthly.</p>
+            <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">{t("pricing.heading")}</h2>
+            <p className="text-[14.5px] text-[#7C8B85]">{t("pricing.subheading")}</p>
           </div>
           <div className="grid grid-cols-3 gap-5">
             {PLANS.map((plan) => (
@@ -207,7 +185,7 @@ export default function LandingPage() {
               >
                 {plan.name === "Growth" && (
                   <span className="absolute -top-3 start-7 rounded-full bg-accent px-3 py-1 text-[10.5px] font-bold text-accent-foreground">
-                    MOST POPULAR
+                    {t("pricing.mostPopular")}
                   </span>
                 )}
                 <div className="text-sm font-bold">{plan.name}</div>
@@ -233,7 +211,7 @@ export default function LandingPage() {
                           : "w-full rounded-[10px] border border-[#E2E9E6] bg-white py-3 text-[13.5px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
                       }
                     >
-                      {plan.name === "Enterprise" ? "Contact sales" : "Start free trial"}
+                      {plan.name === "Enterprise" ? t("pricing.contactSales") : t("pricing.startTrial")}
                     </button>
                   </SignUpButton>
                 </SignedOut>
@@ -246,7 +224,7 @@ export default function LandingPage() {
                         : "flex w-full items-center justify-center rounded-[10px] border border-[#E2E9E6] bg-white py-3 text-[13.5px] font-semibold text-[#2A4A3E] transition-colors hover:border-accent"
                     }
                   >
-                    {plan.name === "Enterprise" ? "Contact sales" : "Manage plan"}
+                    {plan.name === "Enterprise" ? t("pricing.contactSales") : t("pricing.managePlan")}
                   </Link>
                 </SignedIn>
               </div>
@@ -258,7 +236,7 @@ export default function LandingPage() {
       <div className="border-t border-[#EEF2F0] px-10 py-10">
         <div className="mx-auto max-w-[1100px]">
           <div className="mb-6 text-center text-[12px] font-semibold uppercase tracking-wide text-[#9AA8A2]">
-            Trusted by teams across the Kingdom
+            {t("clients.heading")}
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
             {CLIENTS.map((name) => (
@@ -275,10 +253,10 @@ export default function LandingPage() {
           <AiDisclaimer />
           <div className="flex items-center gap-4">
             <Link href="/terms" className="text-[12.5px] font-medium text-[#7C8B85] hover:text-[#2A4A3E]">
-              Terms &amp; Conditions
+              {t("footer.terms")}
             </Link>
             <Link href="/privacy" className="text-[12.5px] font-medium text-[#7C8B85] hover:text-[#2A4A3E]">
-              Privacy Policy
+              {t("footer.privacy")}
             </Link>
           </div>
         </div>
