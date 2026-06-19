@@ -149,6 +149,7 @@ export type ComplianceEventStatus = "upcoming" | "due" | "overdue" | "resolved";
 export interface ComplianceEvent {
   id: string;
   type: ComplianceEventType;
+  category: string;
   related_document: string | null;
   due_date: string; // YYYY-MM-DD
   status: ComplianceEventStatus;

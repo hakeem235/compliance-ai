@@ -23,6 +23,12 @@ class ComplianceEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="compliance_events")
     type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    category = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Free-text obligation category for deadlines that don't fit the fixed type choices, "
+        "e.g. 'CMA Disclosure', 'ESG Reporting', 'Internal Audit'.",
+    )
     related_document = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True)
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="upcoming")

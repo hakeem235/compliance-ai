@@ -44,7 +44,7 @@ function buildCalendar(viewDate: Date, events: ComplianceEvent[]): CalDay[] {
   for (const ev of events) {
     const d = new Date(ev.due_date + "T00:00:00");
     if (d.getFullYear() === year && d.getMonth() === month) {
-      eventsByDay.set(d.getDate(), { color: TYPE_COLOR[ev.type], label: TYPE_LABEL[ev.type] });
+      eventsByDay.set(d.getDate(), { color: TYPE_COLOR[ev.type], label: ev.category || TYPE_LABEL[ev.type] });
     }
   }
 
@@ -205,7 +205,7 @@ export default function StayCompliantPage() {
                       <div className="text-[9px] text-muted-foreground">{d.toLocaleDateString("en-US", { month: "short" }).toUpperCase()}</div>
                     </div>
                     <div className="flex-1 ps-[11px]" style={{ borderInlineStart: `2px solid ${color}33` }}>
-                      <div className="text-[12.5px] font-semibold">{TYPE_LABEL[item.type]}</div>
+                      <div className="text-[12.5px] font-semibold">{item.category || TYPE_LABEL[item.type]}</div>
                       <div className="text-[11px] text-muted-foreground">Status: {item.status}</div>
                     </div>
                   </div>
