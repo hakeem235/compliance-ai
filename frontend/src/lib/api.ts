@@ -97,6 +97,10 @@ export function apiPatch<T>(path: string, body: unknown, getToken: GetTokenFn): 
   return request<T>(path, { method: "PATCH", body, getToken });
 }
 
+export function apiPut<T>(path: string, body: unknown, getToken: GetTokenFn): Promise<T> {
+  return request<T>(path, { method: "PUT", body, getToken });
+}
+
 export function apiDelete<T>(path: string, getToken: GetTokenFn): Promise<T> {
   return request<T>(path, { method: "DELETE", getToken });
 }
@@ -149,11 +153,60 @@ export type ComplianceEventStatus = "upcoming" | "due" | "overdue" | "resolved";
 export interface ComplianceEvent {
   id: string;
   type: ComplianceEventType;
+  category: string;
   related_document: string | null;
   due_date: string; // YYYY-MM-DD
   status: ComplianceEventStatus;
   notify_emails: string[];
   created_at: string;
+}
+
+export interface EmailConfig {
+  configured: boolean;
+  host?: string;
+  port?: number;
+  username?: string;
+  from_email?: string;
+  use_tls?: boolean;
+  has_password?: boolean;
+  updated_at?: string;
+}
+
+export interface EmailConfigInput {
+  host: string;
+  port: number;
+  username: string;
+  from_email: string;
+  use_tls: boolean;
+  password?: string;
+}
+
+export type PlanKey = "starter" | "growth" | "enterprise";
+
+export interface Subscription {
+  plan: string; // "" = no paid plan
+  status: "none" | "active" | "past_due" | "canceled";
+  current_period_end: string | null;
+  updated_at: string | null;
+}
+
+export interface PlanCatalogItem {
+  key: PlanKey;
+  name: string;
+  price_sar: number | null;
+  checkout: boolean;
+}
+
+export interface BillingState {
+  subscription: Subscription;
+  plans: PlanCatalogItem[];
+  stripe_enabled: boolean;
+}
+
+export interface Usage {
+  reviews_used: number;
+  reviews_limit: number | null; // null = unlimited
+  plan: string;
 }
 
 export interface ChatMessage {
@@ -200,6 +253,27 @@ export interface OrgUser {
   created_at: string;
 }
 
+export interface CurrentUser extends OrgUser {
+  organization_name: string;
+}
+
+export interface AdminStats {
+  active_users: number;
+  docs_analyzed: number;
+  ai_calls: number;
+  storage_bytes: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  actor_name: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoint helpers
 // ---------------------------------------------------------------------------
@@ -208,7 +282,7 @@ export const api = {
   documents: {
     list: (getToken: GetTokenFn) => apiGet<Document[]>("/api/documents/", getToken),
     get: (id: string, getToken: GetTokenFn) => apiGet<Document>(`/api/documents/${id}/`, getToken),
-    create: (body: { filename: string; file_type: FileType; s3_key: string }, getToken: GetTokenFn) =>
+    create: (body: { filename: string; file_type: FileType; s3_key: string; content_text?: string }, getToken: GetTokenFn) =>
       apiPost<Document>("/api/documents/", body, getToken),
     analyze: (id: string, getToken: GetTokenFn) =>
       apiPost<{ detail: string; document_id: string }>(`/api/documents/${id}/analyze/`, {}, getToken),
@@ -221,17 +295,41 @@ export const api = {
   complianceEvents: {
     list: (getToken: GetTokenFn) => apiGet<ComplianceEvent[]>("/api/compliance-events/", getToken),
     create: (
-      body: { type: ComplianceEventType; related_document?: string | null; due_date: string; status?: ComplianceEventStatus; notify_emails?: string[] },
+      body: { type: ComplianceEventType; category?: string; related_document?: string | null; due_date: string; status?: ComplianceEventStatus; notify_emails?: string[] },
       getToken: GetTokenFn
     ) => apiPost<ComplianceEvent>("/api/compliance-events/", body, getToken),
+  },
+  emailConfig: {
+    get: (getToken: GetTokenFn) => apiGet<EmailConfig>("/api/email-config/", getToken),
+    save: (body: EmailConfigInput, getToken: GetTokenFn) => apiPut<EmailConfig>("/api/email-config/", body, getToken),
+    test: (getToken: GetTokenFn, to?: string) => apiPost<{ detail: string }>("/api/email-config/test/", { to }, getToken),
   },
   chatSessions: {
     list: (getToken: GetTokenFn) => apiGet<ChatSession[]>("/api/chat-sessions/", getToken),
     create: (body: { title?: string }, getToken: GetTokenFn) => apiPost<ChatSession>("/api/chat-sessions/", body, getToken),
-    ask: (id: string, content: string, getToken: GetTokenFn) =>
-      apiPost<{ detail: string }>(`/api/chat-sessions/${id}/ask/`, { content }, getToken),
+    ask: (id: string, content: string, getToken: GetTokenFn, documentId?: string) =>
+      apiPost<ChatMessage>(`/api/chat-sessions/${id}/ask/`, { content, document_id: documentId }, getToken),
+  },
+  me: {
+    get: (getToken: GetTokenFn) => apiGet<CurrentUser>("/api/me/", getToken),
+  },
+  admin: {
+    stats: (getToken: GetTokenFn) => apiGet<AdminStats>("/api/admin/stats/", getToken),
+    auditLogs: (getToken: GetTokenFn) => apiGet<AuditLogEntry[]>("/api/audit-logs/", getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
+  },
+  plans: {
+    // Public — used by the marketing/landing page (no auth).
+    list: () => apiGet<{ plans: PlanCatalogItem[] }>("/api/plans/", () => Promise.resolve(null)),
+  },
+  usage: {
+    get: (getToken: GetTokenFn) => apiGet<Usage>("/api/usage/", getToken),
+  },
+  billing: {
+    get: (getToken: GetTokenFn) => apiGet<BillingState>("/api/billing/", getToken),
+    checkout: (plan: PlanKey, getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/checkout/", { plan }, getToken),
+    portal: (getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/portal/", {}, getToken),
   },
 };

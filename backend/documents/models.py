@@ -20,6 +20,11 @@ class Document(models.Model):
     filename = models.CharField(max_length=512)
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES)
     s3_key = models.CharField(max_length=1024)
+    # Extracted plain text, sent up by the client at upload time (currently
+    # only for .txt — no PDF/DOCX parsing pipeline is wired up). Used as the
+    # input for AI analysis since no S3/OCR pipeline persists or extracts the
+    # original file content server-side.
+    content_text = models.TextField(blank=True, default="")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="uploaded")
     version = models.PositiveIntegerField(default=1)
     parent_document = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="versions")

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 import {
   LayoutGrid,
   FileText,
@@ -14,23 +14,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: typeof LayoutGrid };
+type NavItem = { href: string; labelKey: string; icon: typeof LayoutGrid };
 
 const WORK_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/review", label: "Documents & Reviews", icon: FileText },
-  { href: "/generate", label: "Generate", icon: Sparkles },
-  { href: "/stay-compliant", label: "Calendar", icon: CalendarDays },
-  { href: "/ask", label: "AI Assistant", icon: MessagesSquare },
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutGrid },
+  { href: "/review", labelKey: "documentsReviews", icon: FileText },
+  { href: "/generate", labelKey: "generate", icon: Sparkles },
+  { href: "/stay-compliant", labelKey: "calendar", icon: CalendarDays },
+  { href: "/ask", labelKey: "aiAssistant", icon: MessagesSquare },
 ];
 
 const MANAGE_NAV: NavItem[] = [
-  { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: SettingsIcon },
-  { href: "/admin", label: "Admin", icon: Users },
+  { href: "/billing", labelKey: "billing", icon: CreditCard },
+  { href: "/settings", labelKey: "settings", icon: SettingsIcon },
+  { href: "/admin", labelKey: "admin", icon: Users },
 ];
 
 function NavLink({ item }: { item: NavItem }) {
+  const t = useTranslations("Sidebar");
   const pathname = usePathname();
   const active = pathname === item.href || pathname?.startsWith(`${item.href}/`);
   const Icon = item.icon;
@@ -45,7 +46,7 @@ function NavLink({ item }: { item: NavItem }) {
       )}
     >
       <Icon className="size-[18px] flex-none" strokeWidth={1.8} />
-      {item.label}
+      {t(item.labelKey)}
     </Link>
   );
 }
@@ -55,17 +56,18 @@ function NavLink({ item }: { item: NavItem }) {
  * .map() on an array exported from a "use client" module, and a component reference
  * (icon) cannot be passed as a prop across the server→client boundary. */
 export function SidebarNav() {
+  const t = useTranslations("Sidebar");
   return (
     <>
       <div className="px-2.5 py-[10px] pb-[5px] text-[10px] font-semibold tracking-[0.08em] text-white/30">
-        WORKSPACE
+        {t("workspace")}
       </div>
       {WORK_NAV.map((item) => (
         <NavLink key={item.href} item={item} />
       ))}
 
       <div className="px-2.5 pt-3.5 pb-[5px] text-[10px] font-semibold tracking-[0.08em] text-white/30">
-        MANAGE
+        {t("manage")}
       </div>
       {MANAGE_NAV.map((item) => (
         <NavLink key={item.href} item={item} />

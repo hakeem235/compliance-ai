@@ -1,0 +1,773 @@
+{
+  "Landing": {
+    "nav": {
+      "product": "Product",
+      "pricing": "Pricing",
+      "dashboard": "Dashboard",
+      "signIn": "Sign in",
+      "faq": "FAQ"
+    },
+    "hero": {
+      "badge": "🇸🇦 Built for Saudi Arabia · PDPL ready",
+      "titleLine1": "Legal & compliance,",
+      "titleLine2": "powered by AI.",
+      "subtitle": "Review contracts, catch legal risks, track compliance deadlines and generate documents — grounded in Saudi regulations, with a citation for every recommendation.",
+      "startTrial": "Start free trial",
+      "viewDemo": "View live demo →",
+      "goToDashboard": "Go to dashboard",
+      "trustedBy": "Trusted by SMEs, startups & legal teams across the Kingdom"
+    },
+    "riskCard": {
+      "orgRisk": "Organization Risk",
+      "moderateExposure": "Moderate exposure",
+      "flaggedClauses": "7 high-risk clauses flagged"
+    },
+    "product": {
+      "heading": "Everything your legal workflow needs",
+      "subheading": "One platform for review, generation, deadlines and questions.",
+      "features": {
+        "review": {
+          "title": "AI contract review",
+          "desc": "Risk score, clause-by-clause findings and fixes in seconds."
+        },
+        "generate": {
+          "title": "Document generator",
+          "desc": "Draft NDAs, contracts & letters from a short questionnaire."
+        },
+        "calendar": {
+          "title": "Compliance calendar",
+          "desc": "Never miss a license renewal, GOSI or tax deadline."
+        },
+        "assistant": {
+          "title": "AI legal assistant",
+          "desc": "Ask anything — answers cite the exact Saudi regulation."
+        }
+      }
+    },
+    "pricing": {
+      "heading": "Simple, transparent pricing",
+      "subheading": "Cancel anytime. Prices in Saudi riyals, billed monthly.",
+      "mostPopular": "MOST POPULAR",
+      "startTrial": "Start free trial",
+      "contactSales": "Contact sales",
+      "managePlan": "Manage plan"
+    },
+    "clients": {
+      "heading": "Trusted by teams across the Kingdom"
+    },
+    "footer": {
+      "terms": "Terms & Conditions",
+      "privacy": "Privacy Policy"
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "items": [
+        {
+          "q": "Is ComplianceAI a substitute for a lawyer?",
+          "a": "No. ComplianceAI's contract analysis, risk scoring, and assistant answers are informational only and do not constitute legal advice. Always consult a licensed lawyer before acting on AI output."
+        },
+        {
+          "q": "Is my data stored in Saudi Arabia?",
+          "a": "Yes. Your data is stored on infrastructure located in or accessible from Saudi Arabia and handled in line with the Personal Data Protection Law (PDPL)."
+        },
+        {
+          "q": "Which languages does the platform support?",
+          "a": "ComplianceAI is fully bilingual — English and Arabic, including right-to-left layout — across the marketing site and the product."
+        },
+        {
+          "q": "Can I cancel my subscription at any time?",
+          "a": "Yes. You can cancel at any time from billing settings; cancellation takes effect at the end of your current billing period."
+        },
+        {
+          "q": "How does the AI cite its sources?",
+          "a": "Every AI-generated analysis, recommendation, or assistant answer includes an inline citation chip referencing the source clause or regulation it's based on."
+        },
+        {
+          "q": "Do you offer an Enterprise plan?",
+          "a": "Yes — contact sales for custom seats, SSO, and dedicated support."
+        }
+      ]
+    }
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "DashboardLayout": {
+    "brandSubtitle": "Legal & Compliance",
+    "aiCredits": "AI Review Credits",
+    "upgradePlan": "Upgrade plan",
+    "searchPlaceholder": "Search documents, clauses, regulations…",
+    "switchLanguage": "Switch language",
+    "languageButtonLabel": "العربية",
+    "notifications": "Notifications",
+    "userName": "Faisal Al-Otaibi",
+    "userRole": "Business Owner"
+  },
+  "Dashboard": {
+    "loading": "Loading dashboard…",
+    "orgRiskScore": "Organization Risk Score",
+    "needsAttention": "Needs attention",
+    "onTrack": "On track",
+    "highRiskSummary_one": "{highCount} high-risk document across {documentsCount} reviewed.",
+    "highRiskSummary_other": "{highCount} high-risk documents across {documentsCount} reviewed.",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "statDocumentsReviewed": "Documents reviewed",
+    "statActiveAlerts": "Active alerts",
+    "statExpiringContracts": "Expiring contracts",
+    "statComplianceEvents": "Compliance events",
+    "recentReviews": "Recent reviews",
+    "viewAll": "View all →",
+    "noDocuments": "No documents uploaded yet.",
+    "tableDocument": "Document",
+    "tableType": "Type",
+    "tableRisk": "Risk",
+    "tableDate": "Date",
+    "complianceAlerts": "Compliance alerts",
+    "noActiveAlerts": "No active compliance alerts.",
+    "due": "Due {date} · {status}",
+    "expiringContracts": "Expiring contracts",
+    "calendarLink": "Calendar →",
+    "noExpiringContracts": "No contracts expiring within 30 days.",
+    "expiringSummary_one": "{count} contract expiring within 30 days — see the calendar for dates.",
+    "expiringSummary_other": "{count} contracts expiring within 30 days — see the calendar for dates.",
+    "timeJustNow": "just now",
+    "timeMinutesAgo": "{count}m ago",
+    "timeHoursAgo": "{count}h ago",
+    "timeDaysAgo": "{count}d ago",
+    "errorLoad": "Failed to load dashboard data."
+  },
+  "Ask": {
+    "suggestions": {
+      "0": "Is a non-compete clause enforceable under Saudi Labor Law?",
+      "1": "What must a PDPL-compliant privacy notice include?",
+      "2": "Summarize the key risks in my CloudServe MSA."
+    },
+    "sources": {
+      "saudiLaborLaw": {
+        "name": "Saudi Labor Law",
+        "meta": "General knowledge, no document-level retrieval yet"
+      },
+      "pdplRegs": {
+        "name": "PDPL & SDAIA Regs",
+        "meta": "General knowledge, no document-level retrieval yet"
+      },
+      "commercialRegs": {
+        "name": "Commercial Regulations",
+        "meta": "General knowledge, no document-level retrieval yet"
+      },
+      "yourDocuments": {
+        "name": "Your documents",
+        "meta": "Coming soon — document-aware search not yet wired up"
+      }
+    },
+    "heroTitle": "How can I help with your compliance today?",
+    "heroSubtitleLine1": "Ask about contracts, Saudi regulations, or your uploaded documents.",
+    "heroSubtitleLine2": "Answers come from a general AI model — not yet grounded in retrieved source documents.",
+    "inputPlaceholder": "Ask about a clause, regulation, or document…",
+    "footerDisclaimer": "AI-generated guidance, not yet grounded in retrieved sources · not a substitute for licensed legal counsel",
+    "knowledgeSources": "KNOWLEDGE SOURCES",
+    "ragTitle": "No document retrieval yet",
+    "ragDesc": "Answers are generated by a general AI model, not retrieved from indexed regulations or your documents. Treat them as a starting point, not a cited source.",
+    "errorStartSession": "Failed to start a chat session.",
+    "errorSendMessage": "Failed to send message."
+  },
+  "Billing": {
+    "usage": {
+      "aiReviews": "AI document reviews",
+      "generatedDocuments": "Generated documents",
+      "teamSeats": "Team seats"
+    },
+    "currentPlan": "CURRENT PLAN",
+    "renews": "Renews 1 July 2026 · billed annually",
+    "renewsOn": "Renews {date}",
+    "noPlan": "No plan",
+    "noActiveSubscription": "No active subscription",
+    "choosePlan": "Choose plan",
+    "paymentManagedByStripe": "Your payment method and invoices are managed securely in the Stripe billing portal.",
+    "manageBilling": "Manage billing",
+    "invoicesInPortal": "Full history in portal",
+    "errorLoad": "Failed to load billing information.",
+    "errorCheckout": "Couldn't start checkout. Please try again.",
+    "errorPortal": "Couldn't open the billing portal. Please try again.",
+    "upgrade": "Upgrade",
+    "manage": "Manage",
+    "usageThisCycle": "Usage this cycle",
+    "plans": "Plans",
+    "current": "CURRENT",
+    "yourPlan": "Your plan",
+    "contactSales": "Contact sales",
+    "downgrade": "Downgrade",
+    "perMonth": "/mo",
+    "paymentMethod": "Payment method",
+    "expires": "Expires 09/27",
+    "updateCard": "Update card",
+    "invoices": "Invoices",
+    "paid": "Paid",
+    "pdf": "PDF"
+  },
+  "Generate": {
+    "templates": {
+      "nda": {
+        "name": "Mutual NDA",
+        "desc": "Two-way confidentiality agreement",
+        "partyALabel": "Disclosing party (your company)",
+        "partyBLabel": "Receiving party",
+        "partyBPlaceholder": "e.g. Tahaluf Technologies"
+      },
+      "employment": {
+        "name": "Employment Contract",
+        "desc": "Labor-Law compliant employment",
+        "partyALabel": "Employer (your company)",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Sara Al-Harbi"
+      },
+      "freelance": {
+        "name": "Freelance Agreement",
+        "desc": "Independent contractor terms",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Freelancer name",
+        "partyBPlaceholder": "e.g. Mishari Khan"
+      },
+      "vendor": {
+        "name": "Vendor Contract",
+        "desc": "Supplier / procurement MSA",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Vendor / supplier",
+        "partyBPlaceholder": "e.g. Khaleej Logistics"
+      },
+      "service": {
+        "name": "Service Agreement",
+        "desc": "Scope, SLA & payment terms",
+        "partyALabel": "Client (your company)",
+        "partyBLabel": "Service provider",
+        "partyBPlaceholder": "e.g. Tahaluf Technologies"
+      },
+      "nonCompete": {
+        "name": "Non-Compete",
+        "desc": "Restrictive covenant (≤2 yrs)",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
+      },
+      "warningLetter": {
+        "name": "Warning Letter",
+        "desc": "Disciplinary notice (HR)",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
+      },
+      "terminationLetter": {
+        "name": "Termination Letter",
+        "desc": "End-of-service notice",
+        "partyALabel": "Company",
+        "partyBLabel": "Employee name",
+        "partyBPlaceholder": "e.g. Faisal Al-Otaibi"
+      }
+    },
+    "stepLabels": {
+      "0": "Parties",
+      "1": "Terms",
+      "2": "Review"
+    },
+    "chooseTemplate": "Choose a template",
+    "chooseTemplateDesc": "AI drafts a Saudi-compliant document from a short questionnaire — exportable as PDF or DOCX.",
+    "allTemplates": "All templates",
+    "step1": {
+      "disclosingParty": "Disclosing party (your company)",
+      "receivingParty": "Receiving party",
+      "receivingPartyPlaceholder": "e.g. Tahaluf Technologies",
+      "crNumber": "CR number",
+      "city": "City",
+      "bilingualTitle": "Bilingual output",
+      "bilingualDesc": "— generate this document in English + Arabic side by side.",
+      "partyAFallback": "Najd Solutions LLC"
+    },
+    "step2": {
+      "purpose": "Purpose of disclosure",
+      "confidentialityTerm": "Confidentiality term",
+      "governingLaw": "Governing law",
+      "includeClauses": "Include clauses",
+      "returnMaterials": "Return / destruction of materials",
+      "disputeResolution": "Dispute resolution (SCCA arbitration)",
+      "nonSolicitation": "Non-solicitation of employees"
+    },
+    "step3": {
+      "draftReady": "Draft ready",
+      "draftReadyDesc": "AI generated a draft {docName} with all selected clauses, validated against Saudi commercial standards. Review the live preview, then export.",
+      "checklist": {
+        "0": "Governing law set to Kingdom of Saudi Arabia",
+        "1": "Mutual obligations balanced for both parties",
+        "2": "Bilingual (EN + AR) ready"
+      },
+      "savedNotice": "Saved to your generated documents.",
+      "saveDraft": "Save draft",
+      "saved": "Saved",
+      "exportDocx": "Export Word",
+      "errorSave": "Failed to save generated document.",
+      "exportPdf": "Export PDF"
+    },
+    "back": "Back",
+    "continue": "Continue →",
+    "preview": {
+      "nda": {
+        "documentTitle": "MUTUAL NON-DISCLOSURE AGREEMENT",
+        "documentTitleAr": "اتفاقية عدم إفصاح متبادلة",
+        "intro": "This Mutual Non-Disclosure Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Disclosing Party\") and {partyB} (\"Receiving Party\").",
+        "section1Title": "1. Purpose",
+        "section1Body": "The parties wish to explore a potential business relationship and may disclose certain confidential information for that purpose.",
+        "section2Title": "2. Confidential Information",
+        "section2Body": "Each party shall protect the other's Confidential Information using no less than a reasonable standard of care and shall not disclose it to third parties.",
+        "section3Title": "3. Term",
+        "section3Body": "Confidentiality obligations shall survive for a period of three (3) years from the date of disclosure.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Disclosing Party",
+        "partyBSignature": "Receiving Party"
+      },
+      "employment": {
+        "documentTitle": "EMPLOYMENT CONTRACT",
+        "documentTitleAr": "عقد عمل",
+        "intro": "This Employment Contract (\"Contract\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Employer\") and {partyB} (\"Employee\"), in accordance with the Saudi Labor Law.",
+        "section1Title": "1. Position and Duties",
+        "section1Body": "The Employee is engaged in the position agreed between the parties and shall perform the duties assigned by the Employer in good faith.",
+        "section2Title": "2. Compensation",
+        "section2Body": "The Employer shall pay the Employee a monthly wage as agreed, payable by the end of each Gregorian month, in addition to statutory benefits (GOSI, end-of-service award).",
+        "section3Title": "3. Probation and Term",
+        "section3Body": "The Employee shall be subject to a probationary period not exceeding ninety (90) days, after which the Contract continues for the term agreed by the parties.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Contract is governed by the Saudi Labor Law and the laws of the Kingdom of Saudi Arabia; disputes are referred to the competent labor courts.",
+        "partyASignature": "Employer",
+        "partyBSignature": "Employee"
+      },
+      "freelance": {
+        "documentTitle": "FREELANCE AGREEMENT",
+        "documentTitleAr": "اتفاقية عمل مستقل",
+        "intro": "This Freelance Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Freelancer\"), engaged as an independent contractor.",
+        "section1Title": "1. Scope of Work",
+        "section1Body": "The Freelancer shall perform the services described in the agreed statement of work, exercising independent professional judgment.",
+        "section2Title": "2. Independent Contractor Status",
+        "section2Body": "The Freelancer is not an employee of the Client and is solely responsible for their own taxes, GOSI (if applicable), and Freelance Certificate compliance.",
+        "section3Title": "3. Payment",
+        "section3Body": "The Client shall pay the agreed fee upon completion of milestones or on the schedule set out in the statement of work.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Freelancer"
+      },
+      "vendor": {
+        "documentTitle": "VENDOR CONTRACT",
+        "documentTitleAr": "عقد مورّد",
+        "intro": "This Vendor Contract (\"Contract\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Vendor\").",
+        "section1Title": "1. Supply of Goods/Services",
+        "section1Body": "The Vendor shall supply the goods and/or services described in the agreed purchase order or statement of work, meeting the specified quality standards.",
+        "section2Title": "2. Pricing and Payment Terms",
+        "section2Body": "Pricing is as set out in the agreed schedule; payment is due within the agreed period following delivery and acceptance.",
+        "section3Title": "3. Delivery and Acceptance",
+        "section3Body": "The Vendor shall deliver per the agreed timeline; the Client may inspect and reject non-conforming goods or services within a reasonable period.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Contract shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Vendor"
+      },
+      "service": {
+        "documentTitle": "SERVICE AGREEMENT",
+        "documentTitleAr": "اتفاقية تقديم خدمات",
+        "intro": "This Service Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Client\") and {partyB} (\"Service Provider\").",
+        "section1Title": "1. Services and Scope",
+        "section1Body": "The Service Provider shall perform the services described in the agreed scope of work to a professional standard.",
+        "section2Title": "2. Service Levels",
+        "section2Body": "The Service Provider shall meet the service levels (SLA) set out in the agreed schedule, including response and resolution times.",
+        "section3Title": "3. Fees and Payment",
+        "section3Body": "The Client shall pay the agreed fees on the billing schedule set out in this Agreement.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes shall be referred to SCCA arbitration in Riyadh.",
+        "partyASignature": "Client",
+        "partyBSignature": "Service Provider"
+      },
+      "nonCompete": {
+        "documentTitle": "NON-COMPETE AGREEMENT",
+        "documentTitleAr": "اتفاقية عدم منافسة",
+        "intro": "This Non-Compete Agreement (\"Agreement\") is entered into in {city}, Kingdom of Saudi Arabia by and between {partyA} (\"Company\") and {partyB} (\"Employee\").",
+        "section1Title": "1. Restricted Activity",
+        "section1Body": "The Employee agrees not to engage in any business that directly competes with the Company within the agreed scope.",
+        "section2Title": "2. Duration",
+        "section2Body": "This restriction shall apply for a period not exceeding two (2) years following termination of employment, in line with Saudi Labor Law limits.",
+        "section3Title": "3. Geographic Scope",
+        "section3Body": "The restriction applies within the Kingdom of Saudi Arabia, limited to the markets in which the Company actively operates.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This Agreement shall be governed by the laws of the Kingdom of Saudi Arabia; disputes are referred to the competent Saudi courts.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      },
+      "warningLetter": {
+        "documentTitle": "DISCIPLINARY WARNING LETTER",
+        "documentTitleAr": "خطاب إنذار تأديبي",
+        "intro": "This letter is issued in {city}, Kingdom of Saudi Arabia by {partyA} (\"Company\") to {partyB} (\"Employee\") regarding the conduct described below.",
+        "section1Title": "1. Description of Conduct",
+        "section1Body": "The Employee's conduct on the relevant date did not meet the standards set out in the Company's internal work regulations.",
+        "section2Title": "2. Prior Notice",
+        "section2Body": "This is a formal written warning issued in accordance with the Company's internal disciplinary policy and the Saudi Labor Law.",
+        "section3Title": "3. Required Corrective Action",
+        "section3Body": "The Employee is required to correct the conduct described above immediately; failure to do so may result in further disciplinary action.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This notice is issued in accordance with the Saudi Labor Law and the Company's internal regulations.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      },
+      "terminationLetter": {
+        "documentTitle": "END-OF-SERVICE / TERMINATION LETTER",
+        "documentTitleAr": "خطاب إنهاء خدمة",
+        "intro": "This letter is issued in {city}, Kingdom of Saudi Arabia by {partyA} (\"Company\") to {partyB} (\"Employee\") to notify the termination of employment.",
+        "section1Title": "1. Termination Date",
+        "section1Body": "The Employee's employment with the Company shall end on the agreed termination date, in accordance with the notice period set out in the Contract.",
+        "section2Title": "2. End-of-Service Benefits",
+        "section2Body": "The Employee is entitled to the end-of-service award and any accrued but unused leave, calculated per the Saudi Labor Law.",
+        "section3Title": "3. Return of Property",
+        "section3Body": "The Employee shall return all Company property, documents, and access credentials by the termination date.",
+        "section4Title": "4. Governing Law",
+        "section4Body": "This notice is issued in accordance with the Saudi Labor Law and the laws of the Kingdom of Saudi Arabia.",
+        "partyASignature": "Company",
+        "partyBSignature": "Employee"
+      }
+    },
+    "defaults": {
+      "disclosingParty": "Najd Solutions LLC",
+      "city": "Riyadh",
+      "crNumberPlaceholder": "1010XXXXXX",
+      "purpose": "Evaluation of a potential software integration partnership.",
+      "confidentialityTerm": "3 years",
+      "governingLaw": "Saudi Arabia"
+    }
+  },
+  "Review": {
+    "uploading": "Uploading…",
+    "dropzoneTitle": "Drag & drop a contract to analyze",
+    "dropzoneSubtitlePrefix": "or",
+    "dropzoneBrowse": "browse your files",
+    "dropzoneSubtitleSuffix": "— text is extracted in your browser (PDF, DOCX, TXT); scanned image-only PDFs aren't supported yet",
+    "badgePdf": "PDF",
+    "badgeDocx": "DOCX",
+    "badgeTxt": "TXT",
+    "badgeOcr": "OCR-enabled (scanned PDFs supported)",
+    "recentUploads": "Recent uploads",
+    "loadingDocuments": "Loading documents…",
+    "noDocuments": "No documents uploaded yet.",
+    "processing": "Processing",
+    "analyzeWithAi": "Analyze with AI",
+    "starting": "Starting…",
+    "timeJustNow": "just now",
+    "timeMinutesAgo": "{count}m ago",
+    "timeHoursAgo": "{count}h ago",
+    "timeDaysAgo": "{count}d ago",
+    "errorLoad": "Failed to load documents.",
+    "errorUpload": "Upload failed.",
+    "errorAnalyze": "Failed to start analysis.",
+    "riskHigh": "High",
+    "riskMedium": "Medium",
+    "riskLow": "Low",
+    "analysisFailed": "Couldn't analyze"
+  },
+  "ReviewDetail": {
+    "loading": "Loading document…",
+    "loadErrorTitle": "Couldn't load this document",
+    "documentNotFound": "Document not found.",
+    "errorLoad": "Failed to load document.",
+    "version": "v{version}",
+    "idLabel": "{status} · ID {id}",
+    "askAssistant": "Ask Assistant",
+    "exportReport": "Export Report",
+    "askAboutPrompt": "I have a question about my document \"{filename}\": ",
+    "reportTitle": "Contract Analysis Report",
+    "findingsHeading": "Findings ({count})",
+    "reportDisclaimer": "This report is generated by AI for informational purposes only and does not constitute legal advice. Always consult a licensed lawyer before acting on it.",
+    "pendingTitle": "Analysis pending",
+    "pendingProcessing": "Analysis is running — this can take a few seconds. Refresh in a moment.",
+    "pendingNotAnalyzed": "This document hasn't been analyzed yet. Click \"Analyze with AI\" from the review list to run it.",
+    "illustrativeNotice": "The risk score, findings, and document viewer below are an <b>illustrative example</b> of what a completed analysis will look like — not real data for this document.",
+    "riskScore": "RISK SCORE",
+    "highRisk": "High Risk",
+    "severityHigh": "High severity",
+    "severityMedium": "Medium severity",
+    "severityLow": "Low / advisory",
+    "aiRiskSummary": "AI Risk Summary",
+    "noSummary": "No summary text was generated for this analysis.",
+    "noFindingsTitle": "No issues flagged",
+    "noFindingsBody": "The AI review completed without flagging any clause-level risks in this document.",
+    "exampleSummary": "This Master Services Agreement carries high overall risk, driven primarily by an uncapped liability clause and a unilateral termination right favoring the supplier. The agreement also lacks a data-protection clause aligned with Saudi PDPL requirements and omits a governing-law provision, which defaults dispute resolution outside the Kingdom. (Example text — not generated for this document.)",
+    "document": "Document",
+    "legendHigh": "High",
+    "legendMedium": "Medium",
+    "legendLow": "Low",
+    "docTextUnavailableReal": "Full document text rendering is not yet implemented — this view will show the document body with inline highlights once available.",
+    "docTextUnavailableExample": "Document text preview is unavailable until the AI pipeline runs. This area illustrates inline clause highlighting once real analysis exists.",
+    "recommendation": "RECOMMENDATION",
+    "findings": {
+      "indemnity": {
+        "title": "Uncapped client indemnity / unlimited liability",
+        "note": "Clause 9.2 requires the Client to indemnify the Supplier \"without limitation,\" exposing your business to unlimited and consequential damages while the Supplier's liability stays capped at 12 months' fees.",
+        "recommendation": "Make the indemnity mutual and cap aggregate liability for both parties at 12 months' fees. Exclude consequential and indirect damages on both sides.",
+        "citation": "Saudi Civil Transactions Law, Art. 174 · Commercial best practice"
+      },
+      "termination": {
+        "title": "One-sided termination for convenience",
+        "note": "The Supplier can terminate on 7 days' notice with no reciprocal right for the Client, creating service-continuity and switching risk.",
+        "recommendation": "Grant both parties symmetric termination rights with a minimum 30–60 day notice period and a transition-assistance obligation.",
+        "citation": "Contract fairness · balanced-risk principle"
+      },
+      "ipOwnership": {
+        "title": "IP ownership tied to payment milestones",
+        "note": "Deliverables remain Supplier property until \"full and final payment,\" leaving ownership ambiguous during disputes or staged payments.",
+        "recommendation": "Define IP assignment on a per-milestone basis and grant an interim licence to avoid work stoppage.",
+        "citation": "Saudi Copyright Law · IP best practice"
+      },
+      "governingLaw": {
+        "title": "Governing law not specified",
+        "note": "The jurisdiction placeholder is unfilled. For a Saudi entity, disputes should be resolved under KSA law.",
+        "recommendation": "Specify the laws of the Kingdom of Saudi Arabia and Riyadh courts / SCCA arbitration."
+      },
+      "dataProtection": {
+        "title": "No personal data protection clause",
+        "note": "The contract involves processing of customer personal data but contains no PDPL-compliant data processing terms, retention limits, or breach notification obligations.",
+        "recommendation": "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL."
+      }
+    },
+    "extractionFailedTitle": "Couldn't analyze this document"
+  },
+  "StayCompliant": {
+    "weekdays": {
+      "sun": "SUN",
+      "mon": "MON",
+      "tue": "TUE",
+      "wed": "WED",
+      "thu": "THU",
+      "fri": "FRI",
+      "sat": "SAT"
+    },
+    "typeLabels": {
+      "licenseRenewal": "License Renewal",
+      "contractExpiry": "Contract Expiry",
+      "taxDeadline": "Tax Deadline",
+      "hrObligation": "HR Obligation"
+    },
+    "legendRenewals": "Renewals / Contracts",
+    "legendTax": "Tax",
+    "legendHr": "HR",
+    "loadingCalendar": "Loading calendar…",
+    "upcomingDeadlines": "Upcoming deadlines",
+    "noUpcomingEvents": "No upcoming compliance events.",
+    "statusLabel": "Status: {status}",
+    "remindersTitle": "Reminders",
+    "remindersDesc": "Email + dashboard alerts are sent via the <code>notify_emails</code> list on each event.",
+    "errorLoad": "Failed to load compliance events.",
+    "errorCreate": "Failed to save the deadline. Please try again.",
+    "addDeadline": "Add deadline",
+    "fieldType": "Type",
+    "fieldCategory": "Category (optional)",
+    "fieldCategoryPlaceholder": "e.g. ZATCA VAT return, CMA disclosure",
+    "fieldDueDate": "Due date",
+    "fieldStatus": "Status",
+    "cancel": "Cancel",
+    "save": "Save deadline",
+    "configureEmail": "Configure email",
+    "emailConfigured": "Configured",
+    "emailConfigTitle": "Email (SMTP) configuration",
+    "emailConfigDesc": "Connect your own mail server so reminder emails are sent from your domain. Your password is encrypted before it's stored and never shown again.",
+    "emailHost": "SMTP host",
+    "emailPort": "Port",
+    "emailUsername": "Username",
+    "emailPassword": "Password",
+    "emailPasswordKept": "•••••••• (unchanged)",
+    "emailFrom": "From address",
+    "emailUseTls": "Use TLS",
+    "emailSendTest": "Send test email",
+    "emailTestHint": "Save your configuration first to send a test.",
+    "emailSaved": "Email configuration saved.",
+    "emailErrorSave": "Failed to save email configuration.",
+    "emailErrorTest": "Failed to send test email."
+  },
+  "Settings": {
+    "profile": "Profile",
+    "changePhoto": "Change photo",
+    "photoHint": "JPG or PNG, max 2MB",
+    "fullName": "Full name",
+    "email": "Email",
+    "role": "Role",
+    "preferredLanguage": "Preferred language",
+    "english": "English",
+    "arabic": "العربية",
+    "security": "Security",
+    "password": "Password",
+    "passwordLastChanged": "Last changed 3 months ago",
+    "change": "Change",
+    "mfa": "Multi-factor authentication",
+    "mfaDetail": "Authenticator app · backup codes generated",
+    "on": "ON",
+    "pending": "Pending",
+    "activeSessions": "Active sessions",
+    "activeSessionsDetail": "2 devices · Riyadh, Jeddah",
+    "signOutAll": "Sign out all",
+    "teamMembers": "Team members",
+    "invite": "+ Invite",
+    "member": "Member",
+    "mfaShort": "MFA",
+    "status": "Status",
+    "active": "Active",
+    "invited": "Invited",
+    "businessOwner": "Business Owner",
+    "legalReviewer": "Legal Reviewer",
+    "teamMember": "Team Member",
+    "admin": "Admin",
+    "manageMfa": "Manage",
+    "teamRestricted": "Only admins and owners can view the full team. Showing your account."
+  },
+  "Admin": {
+    "stats": {
+      "activeUsers": "Active users",
+      "docsAnalyzed": "Docs analyzed (30d)",
+      "aiCalls": "AI calls (30d)",
+      "storageUsed": "Storage used"
+    },
+    "auditLog": "Audit log",
+    "immutableRbac": "Immutable · RBAC enforced",
+    "event": "Event",
+    "actor": "Actor",
+    "time": "Time",
+    "yesterday": "Yesterday",
+    "loading": "Loading…",
+    "noAuditEvents": "No audit events recorded yet.",
+    "verbCreated": "Created",
+    "verbUpdated": "Updated",
+    "verbDeleted": "Deleted",
+    "restrictedTitle": "Admin access only",
+    "restrictedBody": "This area is available to organization admins and owners.",
+    "ragKnowledgeBase": "RAG knowledge base",
+    "addSource": "+ Add source",
+    "ragNotConnectedTitle": "No knowledge base connected",
+    "ragNotConnectedBody": "Retrieval-augmented grounding isn't provisioned yet. The assistant answers from a general model without indexed source documents.",
+    "jurisdictionRoadmap": "Jurisdiction roadmap",
+    "jurisdictions": {
+      "saudiLive": "🇸🇦 Saudi · Live",
+      "uaeQ3": "UAE · Q3",
+      "bahrain": "Bahrain",
+      "kuwait": "Kuwait",
+      "qatar": "Qatar",
+      "ukUsa": "UK · USA"
+    }
+  },
+  "Privacy": {
+    "nav": {
+      "terms": "Terms",
+      "backToHome": "Back to home"
+    },
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: 18 June 2026",
+    "sections": [
+      {
+        "title": "1. Information we collect",
+        "body": "We collect account information (name, email, organization), documents you upload for review or generation, and usage data needed to operate the service (logs, device/browser metadata)."
+      },
+      {
+        "title": "2. How we use your information",
+        "body": "We use your data to provide contract review, document generation, compliance tracking and the AI assistant; to maintain and secure the platform; and to communicate with you about your account."
+      },
+      {
+        "title": "3. AI processing",
+        "body": "Documents and questions you submit may be processed by third-party AI providers to generate analysis, drafts, or answers. AI output is informational only and does not constitute legal advice."
+      },
+      {
+        "title": "4. Data storage and retention",
+        "body": "Your data is stored on infrastructure located in or accessible from Saudi Arabia and retained for as long as your account is active, or as required by applicable law, including the Personal Data Protection Law (PDPL)."
+      },
+      {
+        "title": "5. Data sharing",
+        "body": "We do not sell your data. We share data only with service providers that help us operate the platform (e.g. hosting, AI processing), under contractual confidentiality obligations, or when required by law."
+      },
+      {
+        "title": "6. Your rights",
+        "body": "Under the PDPL, you may request access to, correction of, or deletion of your personal data, and may withdraw consent to processing where applicable. Contact us to exercise these rights."
+      },
+      {
+        "title": "7. Security",
+        "body": "We apply industry-standard technical and organizational measures, including encryption in transit and access controls, to protect your data against unauthorized access, loss, or misuse."
+      },
+      {
+        "title": "8. Contact",
+        "body": "For questions about this policy or to exercise your data rights, contact us at privacy@complianceai.sa."
+      }
+    ]
+  },
+  "Terms": {
+    "nav": {
+      "privacy": "Privacy",
+      "backToHome": "Back to home"
+    },
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: 18 June 2026",
+    "sections": [
+      {
+        "title": "1. Acceptance of terms",
+        "body": "By accessing or using ComplianceAI, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
+      },
+      {
+        "title": "2. Description of service",
+        "body": "ComplianceAI provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
+      },
+      {
+        "title": "3. Not legal advice",
+        "body": "AI-generated analysis, recommendations, drafts and chat responses are provided for informational purposes only. You should consult a licensed lawyer before relying on any output for a legal decision."
+      },
+      {
+        "title": "4. Accounts and organizations",
+        "body": "You are responsible for maintaining the confidentiality of your account credentials and for all activity under your organization. You must provide accurate information when registering."
+      },
+      {
+        "title": "5. Acceptable use",
+        "body": "You agree not to use the service to upload unlawful content, infringe third-party rights, attempt to reverse-engineer the platform, or interfere with its security or availability."
+      },
+      {
+        "title": "6. Subscriptions and billing",
+        "body": "Paid plans are billed in advance on a recurring basis as described at checkout. You may cancel at any time; cancellation takes effect at the end of the current billing period."
+      },
+      {
+        "title": "7. Intellectual property",
+        "body": "The platform, its design and underlying technology are owned by ComplianceAI. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
+      },
+      {
+        "title": "8. Limitation of liability",
+        "body": "ComplianceAI is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
+      },
+      {
+        "title": "9. Termination",
+        "body": "We may suspend or terminate access to the service for violation of these terms. You may stop using the service and close your account at any time."
+      },
+      {
+        "title": "10. Governing law",
+        "body": "These terms are governed by the laws of the Kingdom of Saudi Arabia. Any dispute shall be subject to the exclusive jurisdiction of the competent Saudi courts."
+      },
+      {
+        "title": "11. Changes to these terms",
+        "body": "We may update these terms from time to time. Continued use of the service after changes take effect constitutes acceptance of the revised terms."
+      },
+      {
+        "title": "12. Contact",
+        "body": "For questions about these Terms and Conditions, contact us at legal@complianceai.sa."
+      }
+    ]
+  },
+  "Sidebar": {
+    "workspace": "WORKSPACE",
+    "manage": "MANAGE",
+    "dashboard": "Dashboard",
+    "documentsReviews": "Documents & Reviews",
+    "generate": "Generate",
+    "calendar": "Calendar",
+    "aiAssistant": "AI Assistant",
+    "billing": "Billing",
+    "settings": "Settings",
+    "admin": "Admin"
+  }
+}

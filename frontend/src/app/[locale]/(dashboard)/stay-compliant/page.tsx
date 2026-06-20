@@ -1,0 +1,606 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useAuth } from "@clerk/nextjs";
+import { ChevronLeft, ChevronRight, BellRing, Loader2, AlertTriangle, Plus, X, Settings2, CheckCircle2 } from "lucide-react";
+import {
+  api,
+  ApiError,
+  type ComplianceEvent,
+  type ComplianceEventType,
+  type ComplianceEventStatus,
+  type EmailConfigInput,
+} from "@/lib/api";
+
+const TYPE_OPTIONS: ComplianceEventType[] = ["license_renewal", "contract_expiry", "tax_deadline", "hr_obligation"];
+const STATUS_OPTIONS: ComplianceEventStatus[] = ["upcoming", "due", "overdue", "resolved"];
+
+type DayEvent = { color: string; labelKey: string };
+type CalDay = { day: number; muted: boolean; today?: boolean; date?: Date; event?: DayEvent };
+
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+const TYPE_COLOR: Record<ComplianceEvent["type"], string> = {
+  license_renewal: "#D97706",
+  contract_expiry: "#D97706",
+  tax_deadline: "#2A6FDB",
+  hr_obligation: "#1F8A5B",
+};
+
+const TYPE_LABEL_KEY: Record<ComplianceEvent["type"], string> = {
+  license_renewal: "licenseRenewal",
+  contract_expiry: "contractExpiry",
+  tax_deadline: "taxDeadline",
+  hr_obligation: "hrObligation",
+};
+
+const STATUS_COLOR: Record<ComplianceEvent["status"], string> = {
+  upcoming: "var(--risk-low)",
+  due: "var(--risk-medium)",
+  overdue: "var(--risk-high)",
+  resolved: "var(--muted-foreground)",
+};
+
+function buildCalendar(viewDate: Date, events: ComplianceEvent[]): CalDay[] {
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = firstOfMonth.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+
+  const eventsByDay = new Map<number, DayEvent>();
+  for (const ev of events) {
+    const d = new Date(ev.due_date + "T00:00:00");
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      eventsByDay.set(d.getDate(), { color: TYPE_COLOR[ev.type], labelKey: ev.category || TYPE_LABEL_KEY[ev.type] });
+    }
+  }
+
+  const days: CalDay[] = [];
+  for (let pos = 0; pos < 42; pos++) {
+    let day: number;
+    let muted = false;
+    let date: Date;
+    if (pos < startOffset) {
+      day = daysInPrevMonth - startOffset + pos + 1;
+      muted = true;
+      date = new Date(year, month - 1, day);
+    } else if (pos < startOffset + daysInMonth) {
+      day = pos - startOffset + 1;
+      date = new Date(year, month, day);
+    } else {
+      day = pos - startOffset - daysInMonth + 1;
+      muted = true;
+      date = new Date(year, month + 1, day);
+    }
+    const isToday = !muted && date.toDateString() === today.toDateString();
+    days.push({ day, muted, today: isToday, date, event: !muted ? eventsByDay.get(day) : undefined });
+  }
+  return days;
+}
+
+export default function StayCompliantPage() {
+  const t = useTranslations("StayCompliant");
+  const { getToken } = useAuth();
+  const [events, setEvents] = useState<ComplianceEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<{ type: ComplianceEventType; category: string; due_date: string; status: ComplianceEventStatus }>({
+    type: "tax_deadline",
+    category: "",
+    due_date: "",
+    status: "upcoming",
+  });
+
+  const tokenFn = useCallback(() => getToken(), [getToken]);
+
+  const loadEvents = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return api.complianceEvents
+      .list(tokenFn)
+      .then((evs) => setEvents(evs))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorLoad")))
+      .finally(() => setLoading(false));
+  }, [tokenFn]);
+
+  useEffect(() => {
+    let active = true;
+    api.complianceEvents
+      .list(tokenFn)
+      .then((evs) => {
+        if (active) setEvents(evs);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof ApiError ? err.message : t("errorLoad"));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [tokenFn]);
+
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
+  const [emailConfigured, setEmailConfigured] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailTesting, setEmailTesting] = useState(false);
+  const [emailNote, setEmailNote] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailForm, setEmailForm] = useState<EmailConfigInput & { has_password?: boolean }>({
+    host: "",
+    port: 587,
+    username: "",
+    from_email: "",
+    use_tls: true,
+    password: "",
+  });
+
+  useEffect(() => {
+    api.emailConfig
+      .get(tokenFn)
+      .then((cfg) => {
+        setEmailConfigured(cfg.configured);
+        if (cfg.configured) {
+          setEmailForm({
+            host: cfg.host ?? "",
+            port: cfg.port ?? 587,
+            username: cfg.username ?? "",
+            from_email: cfg.from_email ?? "",
+            use_tls: cfg.use_tls ?? true,
+            password: "",
+            has_password: cfg.has_password,
+          });
+        }
+      })
+      .catch(() => {
+        /* non-fatal: config is optional */
+      });
+  }, [tokenFn]);
+
+  async function handleSaveEmailConfig(e: React.FormEvent) {
+    e.preventDefault();
+    if (emailSaving) return;
+    setEmailSaving(true);
+    setEmailError(null);
+    setEmailNote(null);
+    try {
+      const body: EmailConfigInput = {
+        host: emailForm.host,
+        port: emailForm.port,
+        username: emailForm.username,
+        from_email: emailForm.from_email,
+        use_tls: emailForm.use_tls,
+      };
+      // Only send a password when the user typed one — keeps the stored one otherwise.
+      if (emailForm.password) body.password = emailForm.password;
+      const saved = await api.emailConfig.save(body, tokenFn);
+      setEmailConfigured(saved.configured);
+      setEmailForm((f) => ({ ...f, password: "", has_password: saved.has_password }));
+      setEmailNote(t("emailSaved"));
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err.message : t("emailErrorSave"));
+    } finally {
+      setEmailSaving(false);
+    }
+  }
+
+  async function handleTestEmail() {
+    if (emailTesting) return;
+    setEmailTesting(true);
+    setEmailError(null);
+    setEmailNote(null);
+    try {
+      const res = await api.emailConfig.test(tokenFn);
+      setEmailNote(res.detail);
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err.message : t("emailErrorTest"));
+    } finally {
+      setEmailTesting(false);
+    }
+  }
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.due_date || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.complianceEvents.create(
+        { type: form.type, category: form.category.trim(), due_date: form.due_date, status: form.status },
+        tokenFn
+      );
+      setShowForm(false);
+      setForm({ type: "tax_deadline", category: "", due_date: "", status: "upcoming" });
+      await loadEvents();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("errorCreate"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const days = useMemo(() => buildCalendar(viewDate, events), [viewDate, events]);
+
+  const upcoming = useMemo(() => {
+    return [...events]
+      .filter((e) => e.status !== "resolved")
+      .sort((a, b) => a.due_date.localeCompare(b.due_date))
+      .slice(0, 6);
+  }, [events]);
+
+  const monthLabel = viewDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const typeLabelKeys = Object.values(TYPE_LABEL_KEY);
+  function resolveLabel(labelKey: string): string {
+    return typeLabelKeys.includes(labelKey) ? t(`typeLabels.${labelKey}`) : labelKey;
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_320px] items-start gap-[18px] px-7 py-6 pb-10">
+      {/* month grid */}
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-[18px] py-4">
+          <div className="flex items-center gap-3">
+            <div className="text-base font-bold">{monthLabel}</div>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+                className="flex size-[30px] items-center justify-center rounded-lg border border-border bg-card transition-colors hover:border-accent"
+              >
+                <ChevronLeft className="size-3.5 text-muted-foreground" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+                className="flex size-[30px] items-center justify-center rounded-lg border border-border bg-card transition-colors hover:border-accent"
+              >
+                <ChevronRight className="size-3.5 text-muted-foreground" strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3.5">
+            <div className="flex gap-3 text-[10.5px] text-muted-foreground">
+              <LegendDot color="#D97706" label={t("legendRenewals")} />
+              <LegendDot color="#2A6FDB" label={t("legendTax")} />
+              <LegendDot color="#1F8A5B" label={t("legendHr")} />
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex h-[32px] items-center gap-[6px] rounded-[9px] bg-primary px-[13px] text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38]"
+            >
+              <Plus className="size-[15px]" strokeWidth={2.2} />
+              {t("addDeadline")}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 border-b border-border">
+          {WEEKDAY_KEYS.map((w) => (
+            <div key={w} className="py-2 text-center text-[10.5px] font-semibold text-muted-foreground">
+              {t(`weekdays.${w}`)}
+            </div>
+          ))}
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" strokeWidth={1.8} />
+            {t("loadingCalendar")}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7">
+            {days.map((d, i) => (
+              <div
+                key={i}
+                className="min-h-[84px] border-b border-e border-border/60 p-2"
+                style={{ background: d.today ? "#F4FAF7" : "transparent" }}
+              >
+                <div
+                  className="font-mono-data text-xs font-semibold"
+                  style={{ color: d.muted ? "#C5D0CB" : d.today ? "var(--primary)" : "var(--secondary-foreground)" }}
+                >
+                  {d.day}
+                </div>
+                {d.event && (
+                  <div
+                    className="mt-1.5 truncate rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-semibold leading-tight text-white"
+                    style={{ background: d.event.color }}
+                  >
+                    {resolveLabel(d.event.labelKey)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* upcoming deadlines */}
+      <div className="flex flex-col gap-[18px]">
+        {error && (
+          <div className="flex items-center gap-2 rounded-[10px] border border-[#F8DADA] bg-[#FDF5F5] px-3.5 py-3 text-[12.5px] text-risk-high">
+            <AlertTriangle className="size-3.5 flex-none" strokeWidth={1.8} />
+            {error}
+          </div>
+        )}
+        <div className="rounded-[14px] border border-border bg-card p-[16px_18px]">
+          <div className="mb-3.5 text-sm font-bold">{t("upcomingDeadlines")}</div>
+          {upcoming.length === 0 && !loading ? (
+            <div className="text-[12.5px] text-muted-foreground">{t("noUpcomingEvents")}</div>
+          ) : (
+            <div className="flex flex-col gap-3.5">
+              {upcoming.map((item) => {
+                const d = new Date(item.due_date + "T00:00:00");
+                const color = STATUS_COLOR[item.status];
+                return (
+                  <div key={item.id} className="flex gap-[11px]">
+                    <div className="w-10 flex-none text-center">
+                      <div className="font-mono-data text-base font-bold leading-none" style={{ color }}>
+                        {String(d.getDate()).padStart(2, "0")}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground">{d.toLocaleDateString("en-US", { month: "short" }).toUpperCase()}</div>
+                    </div>
+                    <div className="flex-1 ps-[11px]" style={{ borderInlineStart: `2px solid ${color}33` }}>
+                      <div className="text-[12.5px] font-semibold">{item.category || t(`typeLabels.${TYPE_LABEL_KEY[item.type]}`)}</div>
+                      <div className="text-[11px] text-muted-foreground">{t("statusLabel", { status: item.status })}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="rounded-[14px] bg-sidebar p-[16px_18px] text-sidebar-foreground">
+          <div className="mb-1.5 flex items-center gap-2">
+            <BellRing className="size-4 text-[#5BD6A0]" strokeWidth={1.8} />
+            <span className="text-[13px] font-bold">{t("remindersTitle")}</span>
+          </div>
+          <div className="text-[11.5px] leading-[1.5] text-sidebar-foreground-muted">
+            {t.rich("remindersDesc", { code: (chunks) => <code>{chunks}</code> })}
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={() => {
+                setEmailNote(null);
+                setEmailError(null);
+                setShowEmailConfig(true);
+              }}
+              className="flex h-[32px] items-center gap-[6px] rounded-[9px] bg-[#5BD6A0] px-[12px] text-[12px] font-semibold text-[#0B2E22] transition-opacity hover:opacity-90"
+            >
+              <Settings2 className="size-[14px]" strokeWidth={2} />
+              {t("configureEmail")}
+            </button>
+            {emailConfigured && (
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-[#5BD6A0]">
+                <CheckCircle2 className="size-[13px]" strokeWidth={2} />
+                {t("emailConfigured")}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !saving && setShowForm(false)}
+        >
+          <form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleCreate}
+            className="w-full max-w-[420px] rounded-[16px] border border-border bg-card p-6 shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-base font-bold">{t("addDeadline")}</div>
+              <button type="button" onClick={() => !saving && setShowForm(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="size-[18px]" strokeWidth={1.8} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3.5">
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldType")}
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ComplianceEventType }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                >
+                  {TYPE_OPTIONS.map((ty) => (
+                    <option key={ty} value={ty}>
+                      {t(`typeLabels.${TYPE_LABEL_KEY[ty]}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldCategory")}
+                <input
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                  placeholder={t("fieldCategoryPlaceholder")}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldDueDate")}
+                <input
+                  type="date"
+                  required
+                  value={form.due_date}
+                  onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldStatus")}
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ComplianceEventStatus }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                >
+                  {STATUS_OPTIONS.map((st) => (
+                    <option key={st} value={st}>
+                      {t("statusLabel", { status: st })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => !saving && setShowForm(false)}
+                className="h-[38px] rounded-[10px] border border-border bg-card px-4 text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !form.due_date}
+                className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-primary px-[18px] text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving && <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} />}
+                {t("save")}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showEmailConfig && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !emailSaving && !emailTesting && setShowEmailConfig(false)}
+        >
+          <form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleSaveEmailConfig}
+            className="max-h-[90vh] w-full max-w-[460px] overflow-y-auto rounded-[16px] border border-border bg-card p-6 shadow-xl"
+          >
+            <div className="mb-1 flex items-center justify-between">
+              <div className="text-base font-bold">{t("emailConfigTitle")}</div>
+              <button
+                type="button"
+                onClick={() => !emailSaving && !emailTesting && setShowEmailConfig(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-[18px]" strokeWidth={1.8} />
+              </button>
+            </div>
+            <p className="mb-4 text-[12px] leading-[1.5] text-muted-foreground">{t("emailConfigDesc")}</p>
+
+            {emailError && (
+              <div className="mb-3 flex items-center gap-2 rounded-[9px] border border-[#F8DADA] bg-[#FDF5F5] px-3 py-2 text-[12px] text-risk-high">
+                <AlertTriangle className="size-3.5 flex-none" strokeWidth={1.8} />
+                {emailError}
+              </div>
+            )}
+            {emailNote && (
+              <div className="mb-3 flex items-center gap-2 rounded-[9px] border border-[#CDEBDC] bg-[#F4FAF7] px-3 py-2 text-[12px] text-accent">
+                <CheckCircle2 className="size-3.5 flex-none" strokeWidth={1.8} />
+                {emailNote}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3.5">
+              <div className="grid grid-cols-[1fr_110px] gap-3">
+                <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                  {t("emailHost")}
+                  <input
+                    required
+                    value={emailForm.host}
+                    onChange={(e) => setEmailForm((f) => ({ ...f, host: e.target.value }))}
+                    placeholder="smtp.gmail.com"
+                    className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                  {t("emailPort")}
+                  <input
+                    type="number"
+                    required
+                    value={emailForm.port}
+                    onChange={(e) => setEmailForm((f) => ({ ...f, port: Number(e.target.value) }))}
+                    className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                  />
+                </label>
+              </div>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("emailUsername")}
+                <input
+                  value={emailForm.username}
+                  onChange={(e) => setEmailForm((f) => ({ ...f, username: e.target.value }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("emailPassword")}
+                <input
+                  type="password"
+                  value={emailForm.password ?? ""}
+                  onChange={(e) => setEmailForm((f) => ({ ...f, password: e.target.value }))}
+                  placeholder={emailForm.has_password ? t("emailPasswordKept") : ""}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("emailFrom")}
+                <input
+                  type="email"
+                  required
+                  value={emailForm.from_email}
+                  onChange={(e) => setEmailForm((f) => ({ ...f, from_email: e.target.value }))}
+                  placeholder="compliance@yourcompany.com"
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-[12.5px] font-semibold text-secondary-foreground/80">
+                <input
+                  type="checkbox"
+                  checked={emailForm.use_tls}
+                  onChange={(e) => setEmailForm((f) => ({ ...f, use_tls: e.target.checked }))}
+                  className="size-4 accent-[var(--primary)]"
+                />
+                {t("emailUseTls")}
+              </label>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-2.5">
+              <button
+                type="button"
+                onClick={handleTestEmail}
+                disabled={emailTesting || !emailConfigured}
+                title={!emailConfigured ? t("emailTestHint") : undefined}
+                className="flex h-[38px] items-center gap-[7px] rounded-[10px] border border-border bg-card px-4 text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {emailTesting && <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} />}
+                {t("emailSendTest")}
+              </button>
+              <button
+                type="submit"
+                disabled={emailSaving}
+                className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-primary px-[18px] text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {emailSaving && <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} />}
+                {t("save")}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      <span className="size-2 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
+  );
+}
