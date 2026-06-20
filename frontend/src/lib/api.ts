@@ -97,6 +97,10 @@ export function apiPatch<T>(path: string, body: unknown, getToken: GetTokenFn): 
   return request<T>(path, { method: "PATCH", body, getToken });
 }
 
+export function apiPut<T>(path: string, body: unknown, getToken: GetTokenFn): Promise<T> {
+  return request<T>(path, { method: "PUT", body, getToken });
+}
+
 export function apiDelete<T>(path: string, getToken: GetTokenFn): Promise<T> {
   return request<T>(path, { method: "DELETE", getToken });
 }
@@ -155,6 +159,26 @@ export interface ComplianceEvent {
   status: ComplianceEventStatus;
   notify_emails: string[];
   created_at: string;
+}
+
+export interface EmailConfig {
+  configured: boolean;
+  host?: string;
+  port?: number;
+  username?: string;
+  from_email?: string;
+  use_tls?: boolean;
+  has_password?: boolean;
+  updated_at?: string;
+}
+
+export interface EmailConfigInput {
+  host: string;
+  port: number;
+  username: string;
+  from_email: string;
+  use_tls: boolean;
+  password?: string;
 }
 
 export interface ChatMessage {
@@ -225,6 +249,11 @@ export const api = {
       body: { type: ComplianceEventType; category?: string; related_document?: string | null; due_date: string; status?: ComplianceEventStatus; notify_emails?: string[] },
       getToken: GetTokenFn
     ) => apiPost<ComplianceEvent>("/api/compliance-events/", body, getToken),
+  },
+  emailConfig: {
+    get: (getToken: GetTokenFn) => apiGet<EmailConfig>("/api/email-config/", getToken),
+    save: (body: EmailConfigInput, getToken: GetTokenFn) => apiPut<EmailConfig>("/api/email-config/", body, getToken),
+    test: (getToken: GetTokenFn, to?: string) => apiPost<{ detail: string }>("/api/email-config/test/", { to }, getToken),
   },
   chatSessions: {
     list: (getToken: GetTokenFn) => apiGet<ChatSession[]>("/api/chat-sessions/", getToken),

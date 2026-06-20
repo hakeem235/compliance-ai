@@ -125,3 +125,11 @@ PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "")
 
 # Anthropic — AI Legal Assistant (direct model call, no retrieval/RAG pipeline yet)
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# Fernet key used to encrypt per-org SMTP passwords at rest. In dev this falls
+# back to a key derived from SECRET_KEY (see compliance/crypto.py); production
+# MUST set a dedicated key: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+EMAIL_CONFIG_ENCRYPTION_KEY = os.environ.get("EMAIL_CONFIG_ENCRYPTION_KEY", "")
+
+# How many days ahead of a due date a reminder email is sent.
+COMPLIANCE_REMINDER_WINDOW_DAYS = int(os.environ.get("COMPLIANCE_REMINDER_WINDOW_DAYS", "7"))
