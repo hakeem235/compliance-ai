@@ -190,9 +190,16 @@ export interface Subscription {
   updated_at: string | null;
 }
 
+export interface PlanCatalogItem {
+  key: PlanKey;
+  name: string;
+  price_sar: number | null;
+  checkout: boolean;
+}
+
 export interface BillingState {
   subscription: Subscription;
-  plans: { key: PlanKey; name: string; price_sar: number | null; checkout: boolean }[];
+  plans: PlanCatalogItem[];
   stripe_enabled: boolean;
 }
 
@@ -306,6 +313,10 @@ export const api = {
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
+  },
+  plans: {
+    // Public — used by the marketing/landing page (no auth).
+    list: () => apiGet<{ plans: PlanCatalogItem[] }>("/api/plans/", () => Promise.resolve(null)),
   },
   billing: {
     get: (getToken: GetTokenFn) => apiGet<BillingState>("/api/billing/", getToken),

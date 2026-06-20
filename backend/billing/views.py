@@ -10,6 +10,16 @@ from .plans import PLANS
 from .serializers import SubscriptionSerializer
 
 
+class PublicPlansView(APIView):
+    """Public plan catalog for the marketing/landing page (no auth)."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"plans": list(PLANS.values())})
+
+
 class BillingView(APIView):
     """Current org's subscription state + the plan catalog."""
 

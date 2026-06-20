@@ -1,11 +1,11 @@
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare, Check } from "lucide-react";
+import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AiDisclaimer } from "@/components/citation-chip";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { PricingPlans } from "@/components/pricing-plans";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "@/i18n/navigation";
-import { PLANS } from "@/lib/plans";
 
 const FEATURE_ICONS = [
   { key: "review", icon: ShieldCheck, bg: "bg-risk-low-bg", color: "var(--risk-low)" },
@@ -181,60 +181,7 @@ export default function LandingPage() {
             <h2 className="mb-2.5 text-[32px] font-bold tracking-tight">{t("pricing.heading")}</h2>
             <p className="text-[14.5px] text-muted-foreground">{t("pricing.subheading")}</p>
           </div>
-          <div className="grid grid-cols-3 gap-5">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className="relative rounded-[16px] border bg-card p-7"
-                style={plan.name === "Growth" ? { borderWidth: 2, borderColor: "var(--accent)" } : { borderColor: "var(--border)" }}
-              >
-                {plan.name === "Growth" && (
-                  <span className="absolute -top-3 start-7 rounded-full bg-accent px-3 py-1 text-[10.5px] font-bold text-accent-foreground">
-                    {t("pricing.mostPopular")}
-                  </span>
-                )}
-                <div className="text-sm font-bold">{plan.name}</div>
-                <div className="font-mono-data my-2.5 text-[30px] font-bold">
-                  {plan.price}
-                  {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">/mo</span>}
-                </div>
-                <div className="mb-5 text-[12.5px] text-muted-foreground">{plan.blurb}</div>
-                <div className="mb-6 flex flex-col gap-2.5 text-[13px] text-foreground">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex gap-2.5">
-                      <Check className="size-4 flex-none text-accent" strokeWidth={2.2} />
-                      {f}
-                    </div>
-                  ))}
-                </div>
-                <SignedOut>
-                  <SignUpButton>
-                    <button
-                      className={
-                        plan.name === "Growth"
-                          ? "w-full rounded-[10px] bg-primary py-3 text-[13.5px] font-semibold text-primary-foreground transition-colors hover:opacity-90"
-                          : "w-full rounded-[10px] border border-border bg-card py-3 text-[13.5px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
-                      }
-                    >
-                      {plan.name === "Enterprise" ? t("pricing.contactSales") : t("pricing.startTrial")}
-                    </button>
-                  </SignUpButton>
-                </SignedOut>
-                <SignedIn>
-                  <Link
-                    href="/billing"
-                    className={
-                      plan.name === "Growth"
-                        ? "flex w-full items-center justify-center rounded-[10px] bg-primary py-3 text-[13.5px] font-semibold text-primary-foreground transition-colors hover:opacity-90"
-                        : "flex w-full items-center justify-center rounded-[10px] border border-border bg-card py-3 text-[13.5px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
-                    }
-                  >
-                    {plan.name === "Enterprise" ? t("pricing.contactSales") : t("pricing.managePlan")}
-                  </Link>
-                </SignedIn>
-              </div>
-            ))}
-          </div>
+          <PricingPlans />
         </div>
       </div>
 

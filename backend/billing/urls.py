@@ -1,8 +1,9 @@
 from django.urls import path
 
-from .views import BillingView, CheckoutView, PortalView, WebhookView
+from .views import BillingView, CheckoutView, PortalView, PublicPlansView, WebhookView
 
 urlpatterns = [
+    path("plans/", PublicPlansView.as_view(), name="public-plans"),
     path("billing/", BillingView.as_view(), name="billing"),
     path("billing/checkout/", CheckoutView.as_view(), name="billing-checkout"),
     path("billing/portal/", PortalView.as_view(), name="billing-portal"),
