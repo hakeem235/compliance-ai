@@ -50,6 +50,10 @@ class ClerkJWTAuthentication(authentication.BaseAuthentication):
                 algorithms=["RS256"],
                 issuer=settings.CLERK_JWT_ISSUER,
                 options={"verify_aud": False},
+                # Tolerate small clock skew between Clerk's issuer and this
+                # server — without it, a token whose `iat`/`nbf` is a few
+                # seconds ahead of local time is rejected as "not yet valid".
+                leeway=60,
             )
         except jwt.PyJWTError as exc:
             raise exceptions.AuthenticationFailed(f"Invalid session token: {exc}") from exc
