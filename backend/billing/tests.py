@@ -3,8 +3,19 @@ from django.test import TestCase, override_settings
 from organizations.models import Organization
 
 from .models import Subscription
-from .plans import plan_for_price_id, price_id_for
+from .plans import FREE_REVIEWS_PER_MONTH, plan_for_price_id, price_id_for, reviews_limit_for
 from .services import apply_subscription_event
+
+
+class ReviewsLimitTests(TestCase):
+    def test_known_plans(self):
+        self.assertEqual(reviews_limit_for("starter"), 50)
+        self.assertEqual(reviews_limit_for("growth"), 500)
+        self.assertIsNone(reviews_limit_for("enterprise"))  # unlimited
+
+    def test_no_plan_uses_free_allowance(self):
+        self.assertEqual(reviews_limit_for(""), FREE_REVIEWS_PER_MONTH)
+        self.assertEqual(reviews_limit_for("unknown"), FREE_REVIEWS_PER_MONTH)
 
 
 @override_settings(STRIPE_PRICE_IDS={"starter": "price_starter", "growth": "price_growth"})

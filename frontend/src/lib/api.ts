@@ -203,6 +203,12 @@ export interface BillingState {
   stripe_enabled: boolean;
 }
 
+export interface Usage {
+  reviews_used: number;
+  reviews_limit: number | null; // null = unlimited
+  plan: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -317,6 +323,9 @@ export const api = {
   plans: {
     // Public — used by the marketing/landing page (no auth).
     list: () => apiGet<{ plans: PlanCatalogItem[] }>("/api/plans/", () => Promise.resolve(null)),
+  },
+  usage: {
+    get: (getToken: GetTokenFn) => apiGet<Usage>("/api/usage/", getToken),
   },
   billing: {
     get: (getToken: GetTokenFn) => apiGet<BillingState>("/api/billing/", getToken),

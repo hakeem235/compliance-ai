@@ -7,6 +7,7 @@ import { TopbarTitle } from "@/components/topbar-title";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { LanguageToggleButton } from "@/components/language-toggle-button";
 import { TopbarUser } from "@/components/topbar-user";
+import { SidebarCredits } from "@/components/sidebar-credits";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("DashboardLayout");
@@ -48,27 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarNav />
         </nav>
 
-        {/* AI credits usage meter */}
-        <div className="mx-3.5 mb-2.5 mt-2 rounded-xl border border-white/[0.07] bg-white/5 p-[13px]">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[11.5px] font-semibold text-white/80">{t("aiCredits")}</span>
-            <span className="font-mono-data text-[11px] text-[#5BD6A0]">
-              312<span className="text-white/35">/500</span>
-            </span>
-          </div>
-          <div className="h-[5px] overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full"
-              style={{ width: "62%", background: "linear-gradient(90deg,#1F8A5B,#34D399)" }}
-            />
-          </div>
-          <Link
-            href="/billing"
-            className="mt-[11px] block w-full rounded-lg bg-[#5BD6A0]/[0.16] py-[7px] text-center text-[11.5px] font-semibold text-[#9FE6C4] transition-colors hover:bg-[#5BD6A0]/[0.26]"
-          >
-            {t("upgradePlan")}
-          </Link>
-        </div>
+        {/* AI review credits usage meter */}
+        <SidebarCredits />
       </aside>
 
       {/* Main */}
