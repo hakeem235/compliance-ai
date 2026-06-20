@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { UserButton } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
 import { Search, Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,6 +6,7 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { TopbarTitle } from "@/components/topbar-title";
 import { OrgSwitcher } from "@/components/org-switcher";
 import { LanguageToggleButton } from "@/components/language-toggle-button";
+import { TopbarUser } from "@/components/topbar-user";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("DashboardLayout");
@@ -92,13 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Bell className="size-[17px]" strokeWidth={1.8} />
             <span className="absolute end-2 top-[7px] size-[7px] rounded-full border-[1.5px] border-card bg-destructive" />
           </button>
-          <div className="flex items-center gap-2.5 ps-1.5">
-            <UserButton />
-            <div className="leading-[1.15]">
-              <div className="text-[12.5px] font-semibold">{t("userName")}</div>
-              <div className="text-[10.5px] text-muted-foreground">{t("userRole")}</div>
-            </div>
-          </div>
+          <TopbarUser />
           <ThemeToggle />
         </header>
 
