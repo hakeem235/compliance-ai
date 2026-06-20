@@ -1,0 +1,55 @@
+# Render Blueprint for the ComplianceAI Django backend.
+# Deploy: Render Dashboard → New → Blueprint → connect this repo.
+# Secrets marked `sync: false` must be filled in the Render dashboard after the
+# first apply (they are intentionally NOT stored in git).
+databases:
+  - name: complianceai-db
+    databaseName: complianceai
+    user: complianceai
+    plan: free # NOTE: free Postgres expires after 30 days; upgrade before launch.
+
+services:
+  - type: web
+    name: complianceai-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    preDeployCommand: "python manage.py migrate"
+    startCommand: "gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 3"
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: complianceai-db
+          property: connectionString
+      # ALLOWED_HOSTS is satisfied automatically via RENDER_EXTERNAL_HOSTNAME.
+      # --- fill these in the Render dashboard (sync: false) ---
+      - key: CORS_ALLOWED_ORIGINS # the Vercel frontend URL
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS # same Vercel URL (https)
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_JWT_ISSUER
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: EMAIL_CONFIG_ENCRYPTION_KEY # Fernet key — see backend/.env.example
+        sync: false
+      - key: STRIPE_SECRET_KEY # TEST mode key for this deploy
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET # from the registered dashboard webhook (Phase C)
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_GROWTH
+        sync: false
+      - key: STRIPE_BILLING_RETURN_URL # https://<frontend>/billing
+        sync: false
