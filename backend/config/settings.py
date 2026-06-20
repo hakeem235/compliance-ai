@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "compliance",
     "assistant",
     "audit",
+    "billing",
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,15 @@ EMAIL_CONFIG_ENCRYPTION_KEY = os.environ.get("EMAIL_CONFIG_ENCRYPTION_KEY", "")
 
 # How many days ahead of a due date a reminder email is sent.
 COMPLIANCE_REMINDER_WINDOW_DAYS = int(os.environ.get("COMPLIANCE_REMINDER_WINDOW_DAYS", "7"))
+
+# Stripe — subscription billing. Keys/price IDs are per-environment; without
+# them the billing endpoints return a clear "not configured" error rather than
+# crashing. STRIPE_PRICE_IDS maps internal plan keys → Stripe price IDs.
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_IDS = {
+    "starter": os.environ.get("STRIPE_PRICE_STARTER", ""),
+    "growth": os.environ.get("STRIPE_PRICE_GROWTH", ""),
+}
+# Where Stripe redirects after Checkout / billing portal (frontend billing page).
+STRIPE_BILLING_RETURN_URL = os.environ.get("STRIPE_BILLING_RETURN_URL", "http://localhost:3000/billing")

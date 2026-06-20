@@ -181,6 +181,21 @@ export interface EmailConfigInput {
   password?: string;
 }
 
+export type PlanKey = "starter" | "growth" | "enterprise";
+
+export interface Subscription {
+  plan: string; // "" = no paid plan
+  status: "none" | "active" | "past_due" | "canceled";
+  current_period_end: string | null;
+  updated_at: string | null;
+}
+
+export interface BillingState {
+  subscription: Subscription;
+  plans: { key: PlanKey; name: string; price_sar: number | null; checkout: boolean }[];
+  stripe_enabled: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -263,5 +278,10 @@ export const api = {
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
+  },
+  billing: {
+    get: (getToken: GetTokenFn) => apiGet<BillingState>("/api/billing/", getToken),
+    checkout: (plan: PlanKey, getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/checkout/", { plan }, getToken),
+    portal: (getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/portal/", {}, getToken),
   },
 };
