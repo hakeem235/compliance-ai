@@ -78,6 +78,26 @@ class DocumentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def analyze(self, request, pk=None):
         document = self.get_object()
+
+        # Quota gate: block when the org has used its monthly review allowance.
+        # Checked before any state change so an over-limit request is a no-op.
+        from billing.usage import review_usage
+
+        usage = review_usage(request.user.organization)
+        if usage["limit"] is not None and usage["used"] >= usage["limit"]:
+            return Response(
+                {
+                    "detail": (
+                        f"Monthly AI review limit reached ({usage['used']}/{usage['limit']} on the "
+                        f"{usage['plan'] or 'free'} plan). Upgrade your plan to run more reviews this month."
+                    ),
+                    "code": "review_limit_reached",
+                    "used": usage["used"],
+                    "limit": usage["limit"],
+                },
+                status=402,
+            )
+
         document.status = "processing"
         document.save(update_fields=["status"])
 

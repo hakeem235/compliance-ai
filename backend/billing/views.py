@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .plans import PLANS, reviews_limit_for
+from .plans import PLANS
 from .serializers import SubscriptionSerializer
 
 
@@ -43,21 +43,14 @@ class UsageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.utils import timezone
+        from .usage import review_usage
 
-        from documents.models import DocumentAnalysis
-
-        org_id = request.user.organization_id
-        sub = services.get_or_create_subscription(request.user.organization)
-        month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        used = DocumentAnalysis.objects.filter(
-            document__organization_id=org_id, created_at__gte=month_start
-        ).count()
+        usage = review_usage(request.user.organization)
         return Response(
             {
-                "reviews_used": used,
-                "reviews_limit": reviews_limit_for(sub.plan),  # null = unlimited
-                "plan": sub.plan,
+                "reviews_used": usage["used"],
+                "reviews_limit": usage["limit"],  # null = unlimited
+                "plan": usage["plan"],
             }
         )
 

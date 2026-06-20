@@ -7,6 +7,45 @@ from .plans import FREE_REVIEWS_PER_MONTH, plan_for_price_id, price_id_for, revi
 from .services import apply_subscription_event
 
 
+class ReviewUsageTests(TestCase):
+    def setUp(self):
+        from documents.models import Document, DocumentAnalysis
+
+        self.Document = Document
+        self.DocumentAnalysis = DocumentAnalysis
+        self.org = Organization.objects.create(name="Acme")
+
+    def _run_analyses(self, n):
+        doc = self.Document.objects.create(organization=self.org, filename="c.txt", file_type="txt", s3_key="k")
+        for _ in range(n):
+            self.DocumentAnalysis.objects.create(document=doc, status="completed")
+
+    def test_free_tier_limit_reached(self):
+        from .plans import FREE_REVIEWS_PER_MONTH
+        from .usage import review_limit_reached, review_usage
+
+        self._run_analyses(FREE_REVIEWS_PER_MONTH)
+        usage = review_usage(self.org)
+        self.assertEqual(usage["used"], FREE_REVIEWS_PER_MONTH)
+        self.assertEqual(usage["limit"], FREE_REVIEWS_PER_MONTH)
+        self.assertTrue(review_limit_reached(self.org))
+
+    def test_under_limit_not_reached(self):
+        from .usage import review_limit_reached
+
+        self._run_analyses(2)
+        self.assertFalse(review_limit_reached(self.org))
+
+    def test_unlimited_plan_never_reached(self):
+        from .usage import review_limit_reached
+
+        sub, _ = Subscription.objects.get_or_create(organization=self.org)
+        sub.plan = "enterprise"
+        sub.save()
+        self._run_analyses(50)
+        self.assertFalse(review_limit_reached(self.org))
+
+
 class ReviewsLimitTests(TestCase):
     def test_known_plans(self):
         self.assertEqual(reviews_limit_for("starter"), 50)
