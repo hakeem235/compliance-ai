@@ -637,26 +637,17 @@
     "actor": "Actor",
     "time": "Time",
     "yesterday": "Yesterday",
-    "auditEvents": {
-      "docAnalyzed": "Document analyzed",
-      "roleChanged": "Role changed",
-      "docExported": "Document exported",
-      "mfaEnabled": "MFA enabled",
-      "memberInvited": "Member invited"
-    },
+    "loading": "Loading…",
+    "noAuditEvents": "No audit events recorded yet.",
+    "verbCreated": "Created",
+    "verbUpdated": "Updated",
+    "verbDeleted": "Deleted",
+    "restrictedTitle": "Admin access only",
+    "restrictedBody": "This area is available to organization admins and owners.",
     "ragKnowledgeBase": "RAG knowledge base",
     "addSource": "+ Add source",
-    "knowledgeBase": {
-      "saudiLaborLaw": "Saudi Labor Law",
-      "pdplSdaia": "PDPL + SDAIA regs",
-      "commercialRegs": "Commercial regulations",
-      "companyPolicies": "Company policies"
-    },
-    "meta": {
-      "articlesIndexed": "{count} articles · indexed",
-      "chunksIndexed": "{count} chunks · indexed",
-      "reEmbedding": "re-embedding…"
-    },
+    "ragNotConnectedTitle": "No knowledge base connected",
+    "ragNotConnectedBody": "Retrieval-augmented grounding isn't provisioned yet. The assistant answers from a general model without indexed source documents.",
     "jurisdictionRoadmap": "Jurisdiction roadmap",
     "jurisdictions": {
       "saudiLive": "🇸🇦 Saudi · Live",

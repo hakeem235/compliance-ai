@@ -244,6 +244,23 @@ export interface CurrentUser extends OrgUser {
   organization_name: string;
 }
 
+export interface AdminStats {
+  active_users: number;
+  docs_analyzed: number;
+  ai_calls: number;
+  storage_bytes: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  actor_name: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoint helpers
 // ---------------------------------------------------------------------------
@@ -282,6 +299,10 @@ export const api = {
   },
   me: {
     get: (getToken: GetTokenFn) => apiGet<CurrentUser>("/api/me/", getToken),
+  },
+  admin: {
+    stats: (getToken: GetTokenFn) => apiGet<AdminStats>("/api/admin/stats/", getToken),
+    auditLogs: (getToken: GetTokenFn) => apiGet<AuditLogEntry[]>("/api/audit-logs/", getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),

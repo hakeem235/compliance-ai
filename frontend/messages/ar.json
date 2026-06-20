@@ -637,26 +637,17 @@
     "actor": "المستخدم",
     "time": "الوقت",
     "yesterday": "الأمس",
-    "auditEvents": {
-      "docAnalyzed": "تم تحليل مستند",
-      "roleChanged": "تم تغيير الدور",
-      "docExported": "تم تصدير مستند",
-      "mfaEnabled": "تم تفعيل المصادقة الثنائية",
-      "memberInvited": "تمت دعوة عضو"
-    },
+    "loading": "جارٍ التحميل…",
+    "noAuditEvents": "لم يتم تسجيل أي أحداث تدقيق بعد.",
+    "verbCreated": "إنشاء",
+    "verbUpdated": "تحديث",
+    "verbDeleted": "حذف",
+    "restrictedTitle": "للمسؤولين فقط",
+    "restrictedBody": "هذه المنطقة متاحة لمسؤولي ومالكي المنشأة فقط.",
     "ragKnowledgeBase": "قاعدة المعرفة (RAG)",
     "addSource": "+ إضافة مصدر",
-    "knowledgeBase": {
-      "saudiLaborLaw": "نظام العمل السعودي",
-      "pdplSdaia": "نظام حماية البيانات الشخصية + لوائح سدايا",
-      "commercialRegs": "الأنظمة التجارية",
-      "companyPolicies": "سياسات الشركة"
-    },
-    "meta": {
-      "articlesIndexed": "{count} مادة · مفهرسة",
-      "chunksIndexed": "{count} جزء · مفهرس",
-      "reEmbedding": "إعادة التضمين…"
-    },
+    "ragNotConnectedTitle": "لا توجد قاعدة معرفة متصلة",
+    "ragNotConnectedBody": "لم يتم تفعيل الاسترجاع المعزز (RAG) بعد. يجيب المساعد من نموذج عام دون مستندات مصدرية مفهرسة.",
     "jurisdictionRoadmap": "خريطة الطرح حسب الدول",
     "jurisdictions": {
       "saudiLive": "🇸🇦 السعودية · مُفعّل",
