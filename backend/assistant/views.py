@@ -8,10 +8,16 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from documents.models import Document
+
 from .models import ChatMessage, ChatSession
 from .serializers import ChatMessageSerializer, ChatSessionSerializer
 
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
+
+# Cap the document text injected as context so a large contract can't blow past
+# the model's input budget; the review engine uses the same ceiling.
+MAX_DOCUMENT_CONTEXT_CHARS = 40000
 
 SYSTEM_PROMPT = (
     "You are the AI Legal Assistant inside ComplianceAI, a contract-review and compliance "
@@ -27,13 +33,33 @@ DISCLAIMER = (
 )
 
 
-def _ask_claude(question: str) -> str:
+def _build_system_prompt(document_text: str = "") -> str:
+    """Base system prompt, optionally grounded in an uploaded document.
+
+    When document text is present it's injected (capped) so the assistant can
+    quote/reference real clauses instead of claiming it has no access. This is
+    direct context injection, not RAG retrieval.
+    """
+    if not document_text:
+        return SYSTEM_PROMPT
+    return (
+        SYSTEM_PROMPT
+        + "\n\nThe user is asking about the following document they uploaded. "
+        "Use its actual content to answer; quote or reference specific parts "
+        "where helpful.\n\n--- DOCUMENT START ---\n"
+        + document_text[:MAX_DOCUMENT_CONTEXT_CHARS]
+        + "\n--- DOCUMENT END ---"
+    )
+
+
+def _ask_claude(messages: list[dict], document_text: str = "") -> str:
+    system = _build_system_prompt(document_text)
     body = json.dumps(
         {
             "model": ANTHROPIC_MODEL,
             "max_tokens": 600,
-            "system": SYSTEM_PROMPT,
-            "messages": [{"role": "user", "content": question}],
+            "system": system,
+            "messages": messages,
         }
     ).encode()
     request = urllib.request.Request(
@@ -73,8 +99,27 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 status=503,
             )
 
+        # Optional document context: when the user arrives from a document's
+        # "Ask Assistant" action, feed that document's extracted text to the
+        # model. Scoped to the user's org so one tenant can't read another's.
+        document_text = ""
+        document_id = request.data.get("document_id")
+        if document_id:
+            document = Document.objects.filter(
+                id=document_id, organization_id=request.user.organization_id
+            ).first()
+            if document:
+                document_text = document.content_text or ""
+
+        # Send the full conversation so far so follow-up questions keep context.
+        history = [
+            {"role": m.role, "content": m.content}
+            for m in session.messages.order_by("created_at")
+            if m.role in ("user", "assistant")
+        ]
+
         try:
-            answer = _ask_claude(question)
+            answer = _ask_claude(history, document_text=document_text)
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
             return Response(
                 {"detail": "AI assistant is temporarily unavailable. Please try again."},

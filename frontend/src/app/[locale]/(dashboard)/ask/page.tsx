@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Send, MessagesSquare, BookText, AlertTriangle } from "lucide-react";
 import { api, ApiError, type ChatMessage } from "@/lib/api";
@@ -17,6 +18,7 @@ const SOURCE_KEYS = [
 
 export default function AskPage() {
   const t = useTranslations("Ask");
+  const searchParams = useSearchParams();
   const { getToken } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -27,6 +29,18 @@ export default function AskPage() {
   const [initializing, setInitializing] = useState(true);
 
   const tokenFn = useCallback(() => getToken(), [getToken]);
+
+  // The document the user came from (review detail "Ask Assistant"), if any.
+  // Kept for the whole session so follow-up questions stay grounded in it.
+  const documentId = searchParams.get("doc") ?? undefined;
+
+  // Pre-fill the input when arriving from a document with ?q=… (e.g. the
+  // "Ask Assistant" button on a review detail page). The user reviews and
+  // sends it themselves rather than it auto-firing.
+  useEffect(() => {
+    const initialQuery = searchParams.get("q");
+    if (initialQuery) setInput(initialQuery);
+  }, [searchParams]);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +75,7 @@ export default function AskPage() {
     setSystemNote(null);
     setError(null);
     try {
-      const reply = await api.chatSessions.ask(sessionId, trimmed, tokenFn);
+      const reply = await api.chatSessions.ask(sessionId, trimmed, tokenFn, documentId);
       setMessages((m) => [...m, reply]);
     } catch (err) {
       if (err instanceof ApiError && err.status === 503) {

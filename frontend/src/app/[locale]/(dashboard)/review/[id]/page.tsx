@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
@@ -45,6 +46,7 @@ export default function DocumentAnalysisPage() {
   const t = useTranslations("ReviewDetail");
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const router = useRouter();
   const { getToken } = useAuth();
   const [doc, setDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,12 +94,70 @@ export default function DocumentAnalysisPage() {
   }
 
   const analysis = doc.latest_analysis;
-  const hasRealAnalysis = !!analysis && analysis.findings.length > 0;
   // analyze() creates a DocumentAnalysis with no findings and risk_score=null
-  // when the file's text couldn't be extracted (e.g. PDF/DOCX — no parsing
-  // pipeline yet). Show that real explanation instead of the generic
-  // "pending" banner or the illustrative example data.
+  // when the file's text couldn't be extracted (e.g. scanned PDF with no text
+  // layer). Show that real explanation instead of the generic "pending"
+  // banner or the illustrative example data.
   const extractionFailed = doc.status === "failed" && !!analysis && analysis.risk_score === null;
+  // A real, completed analysis exists whenever risk_score is populated — even
+  // with zero findings (e.g. the document isn't a contract, or is genuinely
+  // clean). That is a real result and must show Claude's actual summary, not
+  // the illustrative placeholder. Only the never-analyzed / extraction-failed
+  // cases fall back to the placeholder/failed states.
+  const hasRealAnalysis = !!analysis && !extractionFailed && analysis.risk_score !== null;
+  const hasFindings = hasRealAnalysis && analysis!.findings.length > 0;
+  const riskScore = hasRealAnalysis ? analysis!.risk_score ?? 0 : 78;
+  const riskLevel: RiskLevel = riskScore >= 67 ? "high" : riskScore >= 34 ? "medium" : "low";
+  const severityCounts = {
+    high: hasRealAnalysis ? analysis!.findings.filter((f) => f.risk_level === "high").length : 4,
+    medium: hasRealAnalysis ? analysis!.findings.filter((f) => f.risk_level === "medium").length : 5,
+    low: hasRealAnalysis ? analysis!.findings.filter((f) => f.risk_level === "low").length : 8,
+  };
+  const maxSeverity = Math.max(severityCounts.high, severityCounts.medium, severityCounts.low, 1);
+
+  function askAboutDocument() {
+    // Hand the AI assistant a starting question plus the document id, so the
+    // backend can feed the document's extracted text to the model as context.
+    const question = t("askAboutPrompt", { filename: doc!.filename });
+    router.push(`/ask?q=${encodeURIComponent(question)}&doc=${encodeURIComponent(doc!.id)}`);
+  }
+
+  function exportReport() {
+    if (!hasRealAnalysis || !analysis) return;
+    // Dependency-free Word export: a self-contained HTML-as-.doc Blob, the
+    // same technique the Generate page uses — no new dependency needed.
+    const findingsHtml = analysis.findings
+      .map(
+        (f) => `
+          <div style="margin:0 0 14px;padding:10px 12px;border-left:3px solid #888;">
+            <p style="margin:0 0 4px;font-weight:bold;text-transform:uppercase;">${f.risk_level} — ${f.category}</p>
+            <p style="margin:0 0 6px;">${escapeHtml(f.clause_text)}</p>
+            <p style="margin:0;"><b>${escapeHtml(t("recommendation"))}:</b> ${escapeHtml(f.recommendation)}</p>
+            ${f.citation_source ? `<p style="margin:4px 0 0;font-style:italic;">${escapeHtml(f.citation_source)}</p>` : ""}
+          </div>`
+      )
+      .join("");
+    const body = `
+      <h1>${escapeHtml(t("reportTitle"))}</h1>
+      <p><b>${escapeHtml(doc!.filename)}</b></p>
+      <p>${escapeHtml(t("riskScore"))}: ${riskScore} / 100</p>
+      <h2>${escapeHtml(t("aiRiskSummary"))}</h2>
+      <p>${escapeHtml(analysis.risk_summary || t("noSummary"))}</p>
+      <h2>${escapeHtml(t("findingsHeading", { count: analysis.findings.length }))}</h2>
+      ${findingsHtml || `<p>${escapeHtml(t("noFindingsBody"))}</p>`}
+      <hr/>
+      <p style="font-size:11px;color:#666;">${escapeHtml(t("reportDisclaimer"))}</p>`;
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${escapeHtml(t("reportTitle"))}</title></head><body>${body}</body></html>`;
+    const blob = new Blob(["﻿", html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${doc!.filename.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-analysis.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="mx-auto max-w-[1340px] px-7 py-[22px] pb-10">
@@ -119,11 +179,15 @@ export default function DocumentAnalysisPage() {
           </div>
         </div>
         <div className="flex gap-2.5">
-          <button className="flex h-[38px] items-center gap-[7px] rounded-[10px] border border-border bg-card px-[15px] text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent">
+          <button
+            onClick={askAboutDocument}
+            className="flex h-[38px] items-center gap-[7px] rounded-[10px] border border-border bg-card px-[15px] text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+          >
             <MessagesSquare className="size-[15px]" strokeWidth={1.8} />
             {t("askAssistant")}
           </button>
           <button
+            onClick={exportReport}
             disabled={!hasRealAnalysis}
             className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-primary px-[18px] text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -159,19 +223,23 @@ export default function DocumentAnalysisPage() {
           {/* risk overview */}
           <div className="mb-[18px] grid grid-cols-[280px_1fr] gap-[18px] opacity-100" style={!hasRealAnalysis ? { opacity: 0.55 } : undefined}>
             <div className="flex flex-col items-center rounded-[14px] border border-border bg-card p-5">
-              <RiskGauge score={hasRealAnalysis ? analysis!.risk_score ?? 0 : 78} size={128} strokeWidth={13} color="#DC2626">
+              <RiskGauge score={riskScore} size={128} strokeWidth={13} color="#DC2626">
                 <div className="font-mono-data text-[40px] font-bold leading-none text-risk-high">
-                  {hasRealAnalysis ? analysis!.risk_score ?? "—" : 78}
+                  {riskScore}
                 </div>
                 <div className="text-[10px] text-muted-foreground">{t("riskScore")}</div>
               </RiskGauge>
               <div className="mt-3.5">
-                <RiskBadge level="high" label={t("highRisk")} className="px-[13px] py-[5px] text-[12.5px] font-bold" />
+                <RiskBadge
+                  level={riskLevel}
+                  label={riskLevel === "high" ? t("highRisk") : riskLevel === "medium" ? t("severityMedium") : t("severityLow")}
+                  className="px-[13px] py-[5px] text-[12.5px] font-bold"
+                />
               </div>
               <div className="mt-4 flex w-full flex-col gap-2.5">
-                <SeverityBar label={t("severityHigh")} value={4} pct={80} color="var(--risk-high)" />
-                <SeverityBar label={t("severityMedium")} value={5} pct={55} color="var(--risk-medium)" />
-                <SeverityBar label={t("severityLow")} value={8} pct={35} color="var(--risk-low)" />
+                <SeverityBar label={t("severityHigh")} value={severityCounts.high} pct={(severityCounts.high / maxSeverity) * 100} color="var(--risk-high)" />
+                <SeverityBar label={t("severityMedium")} value={severityCounts.medium} pct={(severityCounts.medium / maxSeverity) * 100} color="var(--risk-medium)" />
+                <SeverityBar label={t("severityLow")} value={severityCounts.low} pct={(severityCounts.low / maxSeverity) * 100} color="var(--risk-low)" />
               </div>
             </div>
 
@@ -209,7 +277,19 @@ export default function DocumentAnalysisPage() {
             {/* findings */}
             <div>
               <div className="ca-scroll flex max-h-[560px] flex-col gap-3 overflow-y-auto pe-1">
-                {hasRealAnalysis
+                {hasRealAnalysis && !hasFindings ? (
+                  <div className="rounded-[11px] border border-border bg-card p-6 text-center">
+                    <div className="mx-auto mb-2 flex size-9 items-center justify-center rounded-full bg-risk-low-bg">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="m5 13 4 4 10-10" stroke="var(--risk-low)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="text-[13.5px] font-bold">{t("noFindingsTitle")}</div>
+                    <div className="mx-auto mt-1.5 max-w-[420px] text-[12.5px] leading-[1.55] text-muted-foreground">
+                      {analysis!.risk_summary || t("noFindingsBody")}
+                    </div>
+                  </div>
+                ) : hasRealAnalysis
                   ? analysis!.findings.map((f, idx) => (
                   <div key={idx} className="rounded-[11px] border bg-card p-[15px]" style={LEVEL_STYLE[f.risk_level]}>
                     <div className="mb-1.5 flex items-center gap-2">
@@ -269,6 +349,14 @@ export default function DocumentAnalysisPage() {
       )}
     </div>
   );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function SeverityBar({ label, value, pct, color }: { label: string; value: number; pct: number; color: string }) {

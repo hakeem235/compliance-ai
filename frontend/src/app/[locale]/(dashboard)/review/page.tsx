@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { FileText, UploadCloud, FileCheck2, Loader2, AlertTriangle } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
@@ -35,6 +35,7 @@ function timeAgo(iso: string, t: ReturnType<typeof useTranslations>): string {
 
 export default function ReviewPage() {
   const t = useTranslations("Review");
+  const router = useRouter();
   const { getToken } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,10 +104,11 @@ export default function ReviewPage() {
     setError(null);
     try {
       await api.documents.analyze(docId, tokenFn);
-      await loadDocuments();
+      // Take the user straight to the full analysis (risk gauge, findings,
+      // citations) rather than leaving them on the list to hunt for the row.
+      router.push(`/review/${docId}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("errorAnalyze"));
-    } finally {
       setAnalyzingId(null);
     }
   }
