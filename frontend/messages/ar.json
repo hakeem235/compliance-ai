@@ -552,7 +552,16 @@
     "statusLabel": "الحالة: {status}",
     "remindersTitle": "التذكيرات",
     "remindersDesc": "تُرسَل التنبيهات عبر البريد الإلكتروني ولوحة التحكم من خلال قائمة <code>notify_emails</code> الخاصة بكل موعد.",
-    "errorLoad": "تعذّر تحميل مواعيد الامتثال."
+    "errorLoad": "تعذّر تحميل مواعيد الامتثال.",
+    "errorCreate": "تعذّر حفظ الموعد. يُرجى المحاولة مرة أخرى.",
+    "addDeadline": "إضافة موعد",
+    "fieldType": "النوع",
+    "fieldCategory": "الفئة (اختياري)",
+    "fieldCategoryPlaceholder": "مثال: إقرار ضريبة القيمة المضافة (زاتكا)، إفصاح هيئة السوق المالية",
+    "fieldDueDate": "تاريخ الاستحقاق",
+    "fieldStatus": "الحالة",
+    "cancel": "إلغاء",
+    "save": "حفظ الموعد"
   },
   "Settings": {
     "profile": "الملف الشخصي",

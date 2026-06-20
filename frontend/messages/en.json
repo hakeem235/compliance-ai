@@ -552,7 +552,16 @@
     "statusLabel": "Status: {status}",
     "remindersTitle": "Reminders",
     "remindersDesc": "Email + dashboard alerts are sent via the <code>notify_emails</code> list on each event.",
-    "errorLoad": "Failed to load compliance events."
+    "errorLoad": "Failed to load compliance events.",
+    "errorCreate": "Failed to save the deadline. Please try again.",
+    "addDeadline": "Add deadline",
+    "fieldType": "Type",
+    "fieldCategory": "Category (optional)",
+    "fieldCategoryPlaceholder": "e.g. ZATCA VAT return, CMA disclosure",
+    "fieldDueDate": "Due date",
+    "fieldStatus": "Status",
+    "cancel": "Cancel",
+    "save": "Save deadline"
   },
   "Settings": {
     "profile": "Profile",

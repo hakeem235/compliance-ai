@@ -222,7 +222,7 @@ export const api = {
   complianceEvents: {
     list: (getToken: GetTokenFn) => apiGet<ComplianceEvent[]>("/api/compliance-events/", getToken),
     create: (
-      body: { type: ComplianceEventType; related_document?: string | null; due_date: string; status?: ComplianceEventStatus; notify_emails?: string[] },
+      body: { type: ComplianceEventType; category?: string; related_document?: string | null; due_date: string; status?: ComplianceEventStatus; notify_emails?: string[] },
       getToken: GetTokenFn
     ) => apiPost<ComplianceEvent>("/api/compliance-events/", body, getToken),
   },

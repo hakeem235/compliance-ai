@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
-import { ChevronLeft, ChevronRight, BellRing, Loader2, AlertTriangle } from "lucide-react";
-import { api, ApiError, type ComplianceEvent } from "@/lib/api";
+import { ChevronLeft, ChevronRight, BellRing, Loader2, AlertTriangle, Plus, X } from "lucide-react";
+import { api, ApiError, type ComplianceEvent, type ComplianceEventType, type ComplianceEventStatus } from "@/lib/api";
+
+const TYPE_OPTIONS: ComplianceEventType[] = ["license_renewal", "contract_expiry", "tax_deadline", "hr_obligation"];
+const STATUS_OPTIONS: ComplianceEventStatus[] = ["upcoming", "due", "overdue", "resolved"];
 
 type DayEvent = { color: string; labelKey: string };
 type CalDay = { day: number; muted: boolean; today?: boolean; date?: Date; event?: DayEvent };
@@ -79,13 +82,29 @@ export default function StayCompliantPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewDate, setViewDate] = useState(() => new Date());
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<{ type: ComplianceEventType; category: string; due_date: string; status: ComplianceEventStatus }>({
+    type: "tax_deadline",
+    category: "",
+    due_date: "",
+    status: "upcoming",
+  });
 
   const tokenFn = useCallback(() => getToken(), [getToken]);
 
-  useEffect(() => {
-    let active = true;
+  const loadEvents = useCallback(() => {
     setLoading(true);
     setError(null);
+    return api.complianceEvents
+      .list(tokenFn)
+      .then((evs) => setEvents(evs))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorLoad")))
+      .finally(() => setLoading(false));
+  }, [tokenFn]);
+
+  useEffect(() => {
+    let active = true;
     api.complianceEvents
       .list(tokenFn)
       .then((evs) => {
@@ -101,6 +120,26 @@ export default function StayCompliantPage() {
       active = false;
     };
   }, [tokenFn]);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.due_date || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.complianceEvents.create(
+        { type: form.type, category: form.category.trim(), due_date: form.due_date, status: form.status },
+        tokenFn
+      );
+      setShowForm(false);
+      setForm({ type: "tax_deadline", category: "", due_date: "", status: "upcoming" });
+      await loadEvents();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("errorCreate"));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const days = useMemo(() => buildCalendar(viewDate, events), [viewDate, events]);
 
@@ -140,10 +179,19 @@ export default function StayCompliantPage() {
               </button>
             </div>
           </div>
-          <div className="flex gap-3 text-[10.5px] text-muted-foreground">
-            <LegendDot color="#D97706" label={t("legendRenewals")} />
-            <LegendDot color="#2A6FDB" label={t("legendTax")} />
-            <LegendDot color="#1F8A5B" label={t("legendHr")} />
+          <div className="flex items-center gap-3.5">
+            <div className="flex gap-3 text-[10.5px] text-muted-foreground">
+              <LegendDot color="#D97706" label={t("legendRenewals")} />
+              <LegendDot color="#2A6FDB" label={t("legendTax")} />
+              <LegendDot color="#1F8A5B" label={t("legendHr")} />
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex h-[32px] items-center gap-[6px] rounded-[9px] bg-primary px-[13px] text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38]"
+            >
+              <Plus className="size-[15px]" strokeWidth={2.2} />
+              {t("addDeadline")}
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-7 border-b border-border">
@@ -231,6 +279,92 @@ export default function StayCompliantPage() {
           </div>
         </div>
       </div>
+
+      {showForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !saving && setShowForm(false)}
+        >
+          <form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleCreate}
+            className="w-full max-w-[420px] rounded-[16px] border border-border bg-card p-6 shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-base font-bold">{t("addDeadline")}</div>
+              <button type="button" onClick={() => !saving && setShowForm(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="size-[18px]" strokeWidth={1.8} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-3.5">
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldType")}
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ComplianceEventType }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                >
+                  {TYPE_OPTIONS.map((ty) => (
+                    <option key={ty} value={ty}>
+                      {t(`typeLabels.${TYPE_LABEL_KEY[ty]}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldCategory")}
+                <input
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                  placeholder={t("fieldCategoryPlaceholder")}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldDueDate")}
+                <input
+                  type="date"
+                  required
+                  value={form.due_date}
+                  onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-secondary-foreground/80">
+                {t("fieldStatus")}
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ComplianceEventStatus }))}
+                  className="h-[38px] rounded-[9px] border border-border bg-background px-3 text-[13px] font-normal text-foreground"
+                >
+                  {STATUS_OPTIONS.map((st) => (
+                    <option key={st} value={st}>
+                      {t("statusLabel", { status: st })}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => !saving && setShowForm(false)}
+                className="h-[38px] rounded-[10px] border border-border bg-card px-4 text-[13px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !form.due_date}
+                className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-primary px-[18px] text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving && <Loader2 className="size-[15px] animate-spin" strokeWidth={1.8} />}
+                {t("save")}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
