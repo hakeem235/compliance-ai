@@ -442,7 +442,7 @@
     "badgePdf": "PDF",
     "badgeDocx": "DOCX",
     "badgeTxt": "TXT",
-    "badgeOcr": "No OCR (text-layer only)",
+    "badgeOcr": "OCR-enabled (scanned PDFs supported)",
     "recentUploads": "Recent uploads",
     "loadingDocuments": "Loading documents…",
     "noDocuments": "No documents uploaded yet.",

@@ -442,7 +442,7 @@
     "badgePdf": "PDF",
     "badgeDocx": "DOCX",
     "badgeTxt": "TXT",
-    "badgeOcr": "بدون OCR (نص مضمّن فقط)",
+    "badgeOcr": "ميزة OCR مفعّلة (دعم المستندات الممسوحة)",
     "recentUploads": "أحدث الملفات المرفوعة",
     "loadingDocuments": "جارٍ تحميل المستندات…",
     "noDocuments": "لا توجد مستندات مرفوعة حتى الآن.",
