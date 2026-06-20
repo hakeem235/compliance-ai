@@ -1,9 +1,24 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Organization, OrgUser
 from .permissions import HasRole
-from .serializers import OrganizationSerializer, OrgUserSerializer
+from .serializers import OrgUserSerializer, OrganizationSerializer
+
+
+class MeView(APIView):
+    """Current user's own profile + org — readable by any authenticated user
+    (unlike the admin/owner-gated members list)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = OrgUserSerializer(user).data
+        data["organization_name"] = user.organization.name
+        return Response(data)
 
 
 class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):

@@ -619,7 +619,10 @@
     "invited": "تمت الدعوة",
     "businessOwner": "مالك المنشأة",
     "legalReviewer": "مراجع قانوني",
-    "teamMember": "عضو فريق"
+    "teamMember": "عضو فريق",
+    "admin": "مدير",
+    "manageMfa": "إدارة",
+    "teamRestricted": "يمكن للمديرين والمالكين فقط عرض الفريق كاملاً. يتم عرض حسابك."
   },
   "Admin": {
     "stats": {

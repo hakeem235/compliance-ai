@@ -619,7 +619,10 @@
     "invited": "Invited",
     "businessOwner": "Business Owner",
     "legalReviewer": "Legal Reviewer",
-    "teamMember": "Team Member"
+    "teamMember": "Team Member",
+    "admin": "Admin",
+    "manageMfa": "Manage",
+    "teamRestricted": "Only admins and owners can view the full team. Showing your account."
   },
   "Admin": {
     "stats": {

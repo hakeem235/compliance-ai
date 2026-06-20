@@ -240,6 +240,10 @@ export interface OrgUser {
   created_at: string;
 }
 
+export interface CurrentUser extends OrgUser {
+  organization_name: string;
+}
+
 // ---------------------------------------------------------------------------
 // Endpoint helpers
 // ---------------------------------------------------------------------------
@@ -275,6 +279,9 @@ export const api = {
     create: (body: { title?: string }, getToken: GetTokenFn) => apiPost<ChatSession>("/api/chat-sessions/", body, getToken),
     ask: (id: string, content: string, getToken: GetTokenFn, documentId?: string) =>
       apiPost<ChatMessage>(`/api/chat-sessions/${id}/ask/`, { content, document_id: documentId }, getToken),
+  },
+  me: {
+    get: (getToken: GetTokenFn) => apiGet<CurrentUser>("/api/me/", getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
