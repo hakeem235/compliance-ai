@@ -32,6 +32,17 @@ class DocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "status", "created_at", "updated_at"]
 
+    def to_internal_value(self, data):
+        # PDF/DOCX text extraction can emit NUL bytes, which both DRF's
+        # CharField (ProhibitNullCharactersValidator) and PostgreSQL text
+        # fields reject. Strip them up front so a valid extraction isn't
+        # rejected over an unprintable control char.
+        raw = data.get("content_text")
+        if isinstance(raw, str) and "\x00" in raw:
+            data = data.copy()
+            data["content_text"] = raw.replace("\x00", "")
+        return super().to_internal_value(data)
+
     def get_latest_analysis(self, obj):
         analysis = obj.analyses.order_by("-created_at").first()
         return DocumentAnalysisSerializer(analysis).data if analysis else None
