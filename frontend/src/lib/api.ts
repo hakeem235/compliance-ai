@@ -145,6 +145,9 @@ export interface Document {
   created_at: string;
   updated_at: string;
   latest_analysis: DocumentAnalysis | null;
+  // Extracted document text. Only returned by the detail endpoint
+  // (omitted from the list response to keep payloads small).
+  content_text?: string;
 }
 
 export type ComplianceEventType = "license_renewal" | "contract_expiry" | "tax_deadline" | "hr_obligation";

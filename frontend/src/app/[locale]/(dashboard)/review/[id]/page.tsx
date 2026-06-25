@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass } from "lucide-react";
+import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass, Mail, Copy, Check } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 import { CitationChip } from "@/components/citation-chip";
 import { RiskGauge } from "@/components/risk-gauge";
@@ -51,6 +51,10 @@ export default function DocumentAnalysisPage() {
   const [doc, setDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Email draft: null = follow the auto-generated suggestion; a string means
+  // the user has edited it. Reset back to null to regenerate from findings.
+  const [emailEdit, setEmailEdit] = useState<string | null>(null);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   const tokenFn = useCallback(() => getToken(), [getToken]);
 
@@ -106,6 +110,10 @@ export default function DocumentAnalysisPage() {
   // cases fall back to the placeholder/failed states.
   const hasRealAnalysis = !!analysis && !extractionFailed && analysis.risk_score !== null;
   const hasFindings = hasRealAnalysis && analysis!.findings.length > 0;
+  // Actual extracted document text from the detail endpoint. Empty/whitespace
+  // means extraction never produced a text layer (e.g. scanned PDF), in which
+  // case the viewer falls back to the "unavailable" notice.
+  const docText = doc.content_text?.trim() ? doc.content_text : null;
   const riskScore = hasRealAnalysis ? analysis!.risk_score ?? 0 : 78;
   const riskLevel: RiskLevel = riskScore >= 67 ? "high" : riskScore >= 34 ? "medium" : "low";
   const severityCounts = {
@@ -120,6 +128,42 @@ export default function DocumentAnalysisPage() {
     // backend can feed the document's extracted text to the model as context.
     const question = t("askAboutPrompt", { filename: doc!.filename });
     router.push(`/ask?q=${encodeURIComponent(question)}&doc=${encodeURIComponent(doc!.id)}`);
+  }
+
+  // Compose a suggested email to the counterparty from the real findings,
+  // turning each recommendation into a numbered request. Only built when a
+  // real analysis exists (see suggestedEmail guard below).
+  function buildEmailBody(): string {
+    if (!analysis) return "";
+    const lines = analysis.findings.map((f, i) => {
+      const head = `${i + 1}. [${f.risk_level.toUpperCase()}] ${f.category}`;
+      return f.recommendation ? `${head} — ${f.recommendation}` : head;
+    });
+    const intro = analysis.findings.length
+      ? t("emailIntro", { filename: doc!.filename })
+      : t("emailIntroNoFindings", { filename: doc!.filename });
+    return [
+      t("emailGreeting"),
+      "",
+      intro,
+      ...(lines.length ? ["", ...lines] : []),
+      "",
+      t("emailClosing"),
+    ].join("\n");
+  }
+
+  async function copyEmail(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setEmailCopied(true);
+      setTimeout(() => setEmailCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable (e.g. insecure context) — no-op */
+    }
+  }
+
+  function openEmailClient(subject: string, body: string) {
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   function exportReport() {
@@ -268,9 +312,13 @@ export default function DocumentAnalysisPage() {
                 </div>
               </div>
               <div className="ca-scroll max-h-[560px] overflow-y-auto px-[22px] py-5 font-mono-data text-[12.5px] leading-[1.9] text-secondary-foreground/80">
-                <p className="text-secondary-foreground/60">
-                  {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
-                </p>
+                {docText ? (
+                  <p className="whitespace-pre-wrap break-words">{docText}</p>
+                ) : (
+                  <p className="text-secondary-foreground/60">
+                    {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -345,6 +393,64 @@ export default function DocumentAnalysisPage() {
               </div>
             </div>
           </div>
+
+          {/* email draft with recommendations */}
+          {hasRealAnalysis && (() => {
+            const subject = t("emailSubject", { filename: doc.filename });
+            const suggested = buildEmailBody();
+            const body = emailEdit ?? suggested;
+            return (
+              <div className="mt-[18px] overflow-hidden rounded-[14px] border border-border bg-card">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/40 px-5 py-3.5">
+                  <div>
+                    <div className="text-[13px] font-bold">{t("emailDraftTitle")}</div>
+                    <div className="mt-0.5 text-[11.5px] text-muted-foreground">{t("emailDraftSubtitle")}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {emailEdit !== null && (
+                      <button
+                        onClick={() => setEmailEdit(null)}
+                        className="rounded-[9px] border border-border bg-card px-3 py-[7px] text-[12px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+                      >
+                        {t("emailReset")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => copyEmail(`${t("emailSubjectLabel")}: ${subject}\n\n${body}`)}
+                      className="flex items-center gap-1.5 rounded-[9px] border border-border bg-card px-3 py-[7px] text-[12px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
+                    >
+                      {emailCopied ? <Check className="size-[14px] text-accent" strokeWidth={2.2} /> : <Copy className="size-[14px]" strokeWidth={1.8} />}
+                      {emailCopied ? t("emailCopied") : t("emailCopy")}
+                    </button>
+                    <button
+                      onClick={() => openEmailClient(subject, body)}
+                      className="flex items-center gap-1.5 rounded-[9px] bg-primary px-3.5 py-[7px] text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38]"
+                    >
+                      <Mail className="size-[14px]" strokeWidth={1.8} />
+                      {t("emailOpen")}
+                    </button>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("emailSubjectLabel")}
+                  </label>
+                  <div className="mb-4 rounded-[10px] border border-border bg-muted/30 px-3.5 py-2.5 text-[13px] font-semibold">
+                    {subject}
+                  </div>
+                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("emailMessageLabel")}
+                  </label>
+                  <textarea
+                    value={body}
+                    onChange={(e) => setEmailEdit(e.target.value)}
+                    rows={12}
+                    className="ca-scroll w-full resize-y rounded-[10px] border border-border bg-card px-3.5 py-3 text-[13px] leading-[1.7] text-secondary-foreground/90 outline-none transition-colors focus:border-accent"
+                  />
+                </div>
+              </div>
+            );
+          })()}
         </>
       )}
     </div>

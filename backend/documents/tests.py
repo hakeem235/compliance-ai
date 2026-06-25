@@ -2,8 +2,16 @@ import json
 
 from django.test import TestCase
 
+from organizations.models import Organization
+
+from .models import Document
 from .serializers import DocumentSerializer
 from .views import _extract_json
+
+
+class _FakeView:
+    def __init__(self, action):
+        self.action = action
 
 
 class DocumentSerializerNulByteTests(TestCase):
@@ -36,6 +44,28 @@ class DocumentSerializerNulByteTests(TestCase):
             serializer.validated_data["content_text"],
             "Clause 1. The party agrees.",
         )
+
+
+class DocumentContentTextExposureTests(TestCase):
+    def setUp(self):
+        org = Organization.objects.create(name="Acme")
+        self.doc = Document.objects.create(
+            organization=org,
+            filename="contract.pdf",
+            file_type="pdf",
+            s3_key="uploads/contract.pdf",
+            content_text="Clause 1. The party agrees.",
+        )
+
+    def test_detail_includes_content_text(self):
+        # The review viewer reads the full document text from the detail endpoint.
+        data = DocumentSerializer(self.doc, context={"view": _FakeView("retrieve")}).data
+        self.assertEqual(data["content_text"], "Clause 1. The party agrees.")
+
+    def test_list_omits_content_text(self):
+        # List responses must not ship the full text blob for every row.
+        data = DocumentSerializer(self.doc, context={"view": _FakeView("list")}).data
+        self.assertNotIn("content_text", data)
 
 
 class ExtractJsonTests(TestCase):

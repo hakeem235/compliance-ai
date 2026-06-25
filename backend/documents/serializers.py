@@ -22,7 +22,11 @@ class DocumentAnalysisSerializer(serializers.ModelSerializer):
 
 class DocumentSerializer(serializers.ModelSerializer):
     latest_analysis = serializers.SerializerMethodField()
-    content_text = serializers.CharField(write_only=True, required=False, allow_blank=True, default="")
+    # Writable on create (client-side extracted text) and readable on the
+    # detail endpoint so the review viewer can render the actual document.
+    # Stripped from the list response (see to_representation) to keep list
+    # payloads small — the full text is only needed when viewing one document.
+    content_text = serializers.CharField(required=False, allow_blank=True, default="")
 
     class Meta:
         model = Document
@@ -42,6 +46,15 @@ class DocumentSerializer(serializers.ModelSerializer):
             data = data.copy()
             data["content_text"] = raw.replace("\x00", "")
         return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Only the retrieve (detail) endpoint needs the full document text;
+        # drop it from list responses to avoid shipping large blobs per row.
+        view = self.context.get("view")
+        if view is not None and getattr(view, "action", None) != "retrieve":
+            data.pop("content_text", None)
+        return data
 
     def get_latest_analysis(self, obj):
         analysis = obj.analyses.order_by("-created_at").first()

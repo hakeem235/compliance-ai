@@ -535,7 +535,20 @@
         "recommendation": "Add a data processing addendum specifying lawful basis, retention period, and breach notification timelines consistent with the PDPL."
       }
     },
-    "extractionFailedTitle": "Couldn't analyze this document"
+    "extractionFailedTitle": "Couldn't analyze this document",
+    "emailDraftTitle": "Email draft — recommended revisions",
+    "emailDraftSubtitle": "An editable draft you can send to the counterparty requesting the recommended changes.",
+    "emailSubjectLabel": "Subject",
+    "emailMessageLabel": "Message",
+    "emailSubject": "Proposed revisions to {filename}",
+    "emailGreeting": "Dear Counterparty,",
+    "emailIntro": "Following our review of {filename}, we would like to propose the following revisions before proceeding:",
+    "emailIntroNoFindings": "Following our review of {filename}, we have no material revisions to propose at this time.",
+    "emailClosing": "We would appreciate your consideration of the points above and look forward to your response.\n\nKind regards,",
+    "emailCopy": "Copy draft",
+    "emailCopied": "Copied",
+    "emailOpen": "Open in email client",
+    "emailReset": "Reset to suggested"
   },
   "StayCompliant": {
     "weekdays": {
