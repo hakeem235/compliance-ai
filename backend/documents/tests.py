@@ -68,6 +68,64 @@ class DocumentContentTextExposureTests(TestCase):
         self.assertNotIn("content_text", data)
 
 
+class SendEmailActionTests(TestCase):
+    def setUp(self):
+        from compliance.models import OrgEmailConfig
+        from documents.views import DocumentViewSet
+
+        self.org = Organization.objects.create(name="Acme")
+        self.doc = Document.objects.create(
+            organization=self.org, filename="contract.pdf", file_type="pdf", s3_key="k",
+        )
+        self.view = DocumentViewSet()
+        self.view.kwargs = {"pk": str(self.doc.pk)}
+        self.view.format_kwarg = None
+        # request.user only needs organization_id; get_object() is patched per-test.
+        self.user = type("U", (), {"organization_id": self.org.id, "organization": self.org})()
+        self.view.get_object = lambda: self.doc
+        self.OrgEmailConfig = OrgEmailConfig
+
+    def _request(self, data):
+        return type("R", (), {"data": data, "user": self.user})()
+
+    def test_rejects_when_no_smtp_config(self):
+        self.view.request = self._request({"subject": "Hi", "body": "Body", "recipients": ["a@b.com"]})
+        resp = self.view.send_email(self.view.request, pk=str(self.doc.pk))
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data["code"], "email_not_configured")
+
+    def test_rejects_invalid_recipient(self):
+        self.OrgEmailConfig.objects.create(organization=self.org, host="smtp.x", from_email="n@x.com")
+        self.view.request = self._request({"subject": "Hi", "body": "Body", "recipients": ["not-an-email"]})
+        resp = self.view.send_email(self.view.request, pk=str(self.doc.pk))
+        self.assertEqual(resp.status_code, 400)
+
+    def test_sends_via_org_smtp(self):
+        import documents.views as views_mod
+
+        self.OrgEmailConfig.objects.create(organization=self.org, host="smtp.x", from_email="n@x.com")
+        sent_args = {}
+
+        def fake_send(config, subject, body, recipients):
+            sent_args.update(subject=subject, body=body, recipients=recipients)
+            return len(recipients)
+
+        # Patch the symbol imported lazily inside the action.
+        from compliance import mailer
+        orig = mailer.send_email
+        mailer.send_email = fake_send
+        try:
+            self.view.request = self._request(
+                {"subject": "Revisions", "body": "Please update", "recipients": ["a@b.com", " c@d.com "]}
+            )
+            resp = self.view.send_email(self.view.request, pk=str(self.doc.pk))
+        finally:
+            mailer.send_email = orig
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["sent"], 2)
+        self.assertEqual(sent_args["recipients"], ["a@b.com", "c@d.com"])
+
+
 class ExtractJsonTests(TestCase):
     def test_parses_raw_json(self):
         result = _extract_json('{"risk_score": 50, "findings": []}')

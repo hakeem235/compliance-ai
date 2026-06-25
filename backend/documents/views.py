@@ -156,6 +156,55 @@ class DocumentViewSet(viewsets.ModelViewSet):
         document.save(update_fields=["status"])
         return Response({"detail": "Analysis complete.", "document_id": document.id}, status=200)
 
+    @action(detail=True, methods=["post"], url_path="send-email")
+    def send_email(self, request, pk=None):
+        """Send the (edited) recommendation email draft via the org's SMTP config."""
+        import smtplib
+
+        from django.core.exceptions import ValidationError
+        from django.core.validators import validate_email
+
+        from compliance.mailer import send_email as smtp_send_email
+        from compliance.models import OrgEmailConfig
+
+        self.get_object()  # enforces tenant scoping (404 for other orgs' docs)
+
+        config = OrgEmailConfig.objects.filter(organization_id=request.user.organization_id).first()
+        if config is None:
+            return Response(
+                {
+                    "detail": "No email (SMTP) configuration set for this organization. Configure it in Settings first.",
+                    "code": "email_not_configured",
+                },
+                status=400,
+            )
+
+        subject = (request.data.get("subject") or "").strip()
+        body = (request.data.get("body") or "").strip()
+        raw_recipients = request.data.get("recipients") or []
+        if not subject:
+            return Response({"detail": "Subject is required."}, status=400)
+        if not body:
+            return Response({"detail": "Message body is required."}, status=400)
+        if not isinstance(raw_recipients, list) or not raw_recipients:
+            return Response({"detail": "At least one recipient is required."}, status=400)
+
+        recipients = []
+        for entry in raw_recipients:
+            email = str(entry).strip()
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({"detail": f"Invalid recipient email: {email}"}, status=400)
+            recipients.append(email)
+
+        try:
+            sent = smtp_send_email(config, subject, body, recipients)
+        except (smtplib.SMTPException, OSError):
+            return Response({"detail": "Failed to send email. Check your SMTP settings."}, status=502)
+
+        return Response({"detail": "Email sent.", "sent": sent, "recipients": recipients}, status=200)
+
 
 class GeneratedDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = GeneratedDocumentSerializer

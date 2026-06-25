@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass, Mail, Copy, Check } from "lucide-react";
+import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass, Mail, Copy, Check, Send } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 import { CitationChip } from "@/components/citation-chip";
 import { RiskGauge } from "@/components/risk-gauge";
@@ -55,6 +55,9 @@ export default function DocumentAnalysisPage() {
   // the user has edited it. Reset back to null to regenerate from findings.
   const [emailEdit, setEmailEdit] = useState<string | null>(null);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [recipients, setRecipients] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const tokenFn = useCallback(() => getToken(), [getToken]);
 
@@ -163,7 +166,26 @@ export default function DocumentAnalysisPage() {
   }
 
   function openEmailClient(subject: string, body: string) {
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const to = recipients.trim() ? encodeURIComponent(recipients.split(/[,\s]+/).filter(Boolean).join(",")) : "";
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
+  async function sendEmail(subject: string, body: string) {
+    const to = recipients.split(/[,\s]+/).map((r) => r.trim()).filter(Boolean);
+    if (to.length === 0) {
+      setSendResult({ ok: false, message: t("emailErrorRecipients") });
+      return;
+    }
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await api.documents.sendEmail(doc!.id, { subject, body, recipients: to }, tokenFn);
+      setSendResult({ ok: true, message: t("emailSent", { count: res.recipients.length }) });
+    } catch (err) {
+      setSendResult({ ok: false, message: err instanceof ApiError ? err.message : t("emailSendFailed") });
+    } finally {
+      setSending(false);
+    }
   }
 
   function exportReport() {
@@ -313,7 +335,9 @@ export default function DocumentAnalysisPage() {
               </div>
               <div className="ca-scroll max-h-[560px] overflow-y-auto px-[22px] py-5 font-mono-data text-[12.5px] leading-[1.9] text-secondary-foreground/80">
                 {docText ? (
-                  <p className="whitespace-pre-wrap break-words">{docText}</p>
+                  <p className="whitespace-pre-wrap break-words">
+                    {hasFindings ? highlightDocText(docText, analysis!.findings) : docText}
+                  </p>
                 ) : (
                   <p className="text-secondary-foreground/60">
                     {hasRealAnalysis ? t("docTextUnavailableReal") : t("docTextUnavailableExample")}
@@ -424,14 +448,44 @@ export default function DocumentAnalysisPage() {
                     </button>
                     <button
                       onClick={() => openEmailClient(subject, body)}
-                      className="flex items-center gap-1.5 rounded-[9px] bg-primary px-3.5 py-[7px] text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38]"
+                      className="flex items-center gap-1.5 rounded-[9px] border border-border bg-card px-3 py-[7px] text-[12px] font-semibold text-secondary-foreground transition-colors hover:border-accent"
                     >
                       <Mail className="size-[14px]" strokeWidth={1.8} />
                       {t("emailOpen")}
                     </button>
+                    <button
+                      onClick={() => sendEmail(subject, body)}
+                      disabled={sending}
+                      className="flex items-center gap-1.5 rounded-[9px] bg-primary px-3.5 py-[7px] text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-[#0E4A38] disabled:opacity-60"
+                    >
+                      {sending ? <Loader2 className="size-[14px] animate-spin" strokeWidth={2} /> : <Send className="size-[14px]" strokeWidth={1.8} />}
+                      {sending ? t("emailSending") : t("emailSend")}
+                    </button>
                   </div>
                 </div>
                 <div className="p-5">
+                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("emailRecipientsLabel")}
+                  </label>
+                  <input
+                    type="text"
+                    value={recipients}
+                    onChange={(e) => setRecipients(e.target.value)}
+                    placeholder={t("emailRecipientsPlaceholder")}
+                    className="mb-1 w-full rounded-[10px] border border-border bg-card px-3.5 py-2.5 text-[13px] outline-none transition-colors focus:border-accent"
+                  />
+                  <div className="mb-4 text-[11px] text-muted-foreground">{t("emailRecipientsHint")}</div>
+                  {sendResult && (
+                    <div
+                      className={`mb-4 rounded-[10px] border px-3.5 py-2.5 text-[12.5px] ${
+                        sendResult.ok
+                          ? "border-[#CDEBDC] bg-[#F4FAF7] text-accent"
+                          : "border-[#F2D4D4] bg-[#FDF5F5] text-risk-high"
+                      }`}
+                    >
+                      {sendResult.message}
+                    </div>
+                  )}
                   <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                     {t("emailSubjectLabel")}
                   </label>
@@ -455,6 +509,53 @@ export default function DocumentAnalysisPage() {
       )}
     </div>
   );
+}
+
+const HIGHLIGHT_BG: Record<RiskLevel, string> = {
+  high: "#FBD5D5",
+  medium: "#FBE4C0",
+  low: "#CDEBDC",
+};
+
+// Highlight each finding's clause_text inside the document body. Findings whose
+// clause_text was paraphrased (not a verbatim substring) simply aren't matched
+// — no false highlights. Earlier/longer matches win on overlap.
+function highlightDocText(
+  text: string,
+  findings: { clause_text: string; risk_level: RiskLevel }[]
+): React.ReactNode {
+  const lower = text.toLowerCase();
+  const ranges: { start: number; end: number; level: RiskLevel }[] = [];
+  for (const f of findings) {
+    const needle = f.clause_text?.trim().toLowerCase();
+    if (!needle || needle.length < 6) continue;
+    const idx = lower.indexOf(needle);
+    if (idx === -1) continue;
+    ranges.push({ start: idx, end: idx + needle.length, level: f.risk_level });
+  }
+  if (ranges.length === 0) return text;
+  ranges.sort((a, b) => a.start - b.start || b.end - a.end);
+  const merged: typeof ranges = [];
+  let cursor = -1;
+  for (const r of ranges) {
+    if (r.start >= cursor) {
+      merged.push(r);
+      cursor = r.end;
+    }
+  }
+  const out: React.ReactNode[] = [];
+  let pos = 0;
+  merged.forEach((r, i) => {
+    if (r.start > pos) out.push(text.slice(pos, r.start));
+    out.push(
+      <mark key={i} style={{ background: HIGHLIGHT_BG[r.level], color: "inherit", borderRadius: 3, padding: "0 2px" }}>
+        {text.slice(r.start, r.end)}
+      </mark>
+    );
+    pos = r.end;
+  });
+  if (pos < text.length) out.push(text.slice(pos));
+  return out;
 }
 
 function escapeHtml(value: string): string {

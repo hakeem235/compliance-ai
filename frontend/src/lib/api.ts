@@ -289,6 +289,11 @@ export const api = {
       apiPost<Document>("/api/documents/", body, getToken),
     analyze: (id: string, getToken: GetTokenFn) =>
       apiPost<{ detail: string; document_id: string }>(`/api/documents/${id}/analyze/`, {}, getToken),
+    sendEmail: (
+      id: string,
+      body: { subject: string; body: string; recipients: string[] },
+      getToken: GetTokenFn
+    ) => apiPost<{ detail: string; sent: number; recipients: string[] }>(`/api/documents/${id}/send-email/`, body, getToken),
   },
   generatedDocuments: {
     list: (getToken: GetTokenFn) => apiGet<GeneratedDocument[]>("/api/generated-documents/", getToken),

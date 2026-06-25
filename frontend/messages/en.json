@@ -548,7 +548,15 @@
     "emailCopy": "Copy draft",
     "emailCopied": "Copied",
     "emailOpen": "Open in email client",
-    "emailReset": "Reset to suggested"
+    "emailReset": "Reset to suggested",
+    "emailRecipientsLabel": "To",
+    "emailRecipientsPlaceholder": "counterparty@example.com, legal@company.com",
+    "emailRecipientsHint": "Separate multiple addresses with commas.",
+    "emailSend": "Send email",
+    "emailSending": "Sending…",
+    "emailSent": "Sent to {count} recipient(s)",
+    "emailErrorRecipients": "Enter at least one recipient email address.",
+    "emailSendFailed": "Couldn't send the email. Check the address and your SMTP settings."
   },
   "StayCompliant": {
     "weekdays": {

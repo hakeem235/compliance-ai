@@ -548,7 +548,15 @@
     "emailCopy": "نسخ المسودة",
     "emailCopied": "تم النسخ",
     "emailOpen": "فتح في تطبيق البريد",
-    "emailReset": "إعادة تعيين إلى المقترح"
+    "emailReset": "إعادة تعيين إلى المقترح",
+    "emailRecipientsLabel": "إلى",
+    "emailRecipientsPlaceholder": "counterparty@example.com, legal@company.com",
+    "emailRecipientsHint": "افصل بين العناوين المتعددة بفواصل.",
+    "emailSend": "إرسال البريد",
+    "emailSending": "جارٍ الإرسال…",
+    "emailSent": "تم الإرسال إلى {count} مستلم",
+    "emailErrorRecipients": "أدخل عنوان بريد إلكتروني واحدًا على الأقل.",
+    "emailSendFailed": "تعذّر إرسال البريد. تحقق من العنوان ومن إعدادات SMTP."
   },
   "StayCompliant": {
     "weekdays": {
