@@ -592,23 +592,7 @@
     "fieldDueDate": "Due date",
     "fieldStatus": "Status",
     "cancel": "Cancel",
-    "save": "Save deadline",
-    "configureEmail": "Configure email",
-    "emailConfigured": "Configured",
-    "emailConfigTitle": "Email (SMTP) configuration",
-    "emailConfigDesc": "Connect your own mail server so reminder emails are sent from your domain. Your password is encrypted before it's stored and never shown again.",
-    "emailHost": "SMTP host",
-    "emailPort": "Port",
-    "emailUsername": "Username",
-    "emailPassword": "Password",
-    "emailPasswordKept": "•••••••• (unchanged)",
-    "emailFrom": "From address",
-    "emailUseTls": "Use TLS",
-    "emailSendTest": "Send test email",
-    "emailTestHint": "Save your configuration first to send a test.",
-    "emailSaved": "Email configuration saved.",
-    "emailErrorSave": "Failed to save email configuration.",
-    "emailErrorTest": "Failed to send test email."
+    "save": "Save deadline"
   },
   "Settings": {
     "profile": "Profile",
@@ -790,5 +774,25 @@
     "billing": "Billing",
     "settings": "Settings",
     "admin": "Admin"
+  },
+  "EmailConfig": {
+    "configureButton": "Configure email",
+    "configured": "Configured",
+    "title": "Email (SMTP) configuration",
+    "desc": "Connect your own mail server so reminder emails are sent from your domain. Your password is encrypted before it's stored and never shown again.",
+    "host": "SMTP host",
+    "port": "Port",
+    "username": "Username",
+    "password": "Password",
+    "passwordKept": "•••••••• (unchanged)",
+    "from": "From address",
+    "useTls": "Use TLS",
+    "testHint": "Save your configuration first to send a test.",
+    "sendTest": "Send test email",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Email configuration saved.",
+    "errorSave": "Failed to save email configuration.",
+    "errorTest": "Failed to send test email."
   }
 }
