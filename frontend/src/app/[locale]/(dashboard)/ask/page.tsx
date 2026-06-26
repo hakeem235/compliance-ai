@@ -151,6 +151,22 @@ export default function AskPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13.5px] leading-[1.65]">{m.content}</div>
+                    {m.citations.length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[11px] font-semibold text-muted-foreground">{t("sources")}</span>
+                        {m.citations.map((c) => (
+                          <span
+                            key={c.index}
+                            title={`${c.source_ref}${c.is_synthetic ? " · " + t("synthetic") : ""}`}
+                            className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground/80"
+                          >
+                            <span className="font-mono-data text-[10px] text-muted-foreground">[{c.index}]</span>
+                            {c.source_title}
+                            {c.is_synthetic && <span className="text-[9.5px] uppercase text-risk-medium">{t("synthetic")}</span>}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )

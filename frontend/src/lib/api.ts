@@ -212,11 +212,19 @@ export interface Usage {
   plan: string;
 }
 
+export interface Citation {
+  index: number;
+  source_title: string;
+  source_ref: string;
+  score: number;
+  is_synthetic: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  citations: unknown[];
+  citations: Citation[];
   created_at: string;
 }
 
