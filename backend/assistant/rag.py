@@ -12,12 +12,19 @@ index lands with the real corpus.
 """
 
 import hashlib
+import json
 import math
 import re
+import urllib.error
+import urllib.request
 
 from django.conf import settings
 
 from .models import KnowledgeChunk
+
+
+class EmbeddingError(Exception):
+    """Raised when a real embeddings provider is configured but fails."""
 
 # Placeholder embedding dimension. A real provider will define its own; the
 # `embedder` column on each chunk records which one produced the vector so a
@@ -32,10 +39,16 @@ DEFAULT_TOP_K = 3
 MIN_SCORE = 0.10
 
 
+def voyage_enabled() -> bool:
+    """True when a Voyage API key is configured. Until then the credential-free
+    placeholder embedder is used, keeping the synthetic pipeline + CI green."""
+    return bool(getattr(settings, "VOYAGE_API_KEY", ""))
+
+
 def active_embedder() -> str:
-    """Name of the configured embedder. Only `placeholder` is implemented; any
-    other value is treated as not-yet-wired by callers that need a real one."""
-    return getattr(settings, "EMBEDDINGS_PROVIDER", "") or PLACEHOLDER_NAME
+    """Name of the embedder currently producing vectors. Recorded on each chunk
+    so a provider switch re-embeds rather than mixing incompatible spaces."""
+    return settings.VOYAGE_MODEL if voyage_enabled() else PLACEHOLDER_NAME
 
 
 def _tokens(text: str) -> list[str]:
@@ -43,7 +56,7 @@ def _tokens(text: str) -> list[str]:
     return re.findall(r"\w+", text.lower(), flags=re.UNICODE)
 
 
-def embed_text(text: str) -> list[float]:
+def _placeholder_embed(text: str) -> list[float]:
     """Deterministic placeholder embedding: hashed bag-of-words, L2-normalized.
 
     Not semantic — but stable and locality-preserving (texts sharing words get
@@ -57,6 +70,36 @@ def embed_text(text: str) -> list[float]:
     if norm == 0.0:
         return vec
     return [v / norm for v in vec]
+
+
+def _voyage_embed(text: str) -> list[float]:
+    """Embed via Voyage AI (stdlib REST, no SDK). Raises EmbeddingError on
+    failure so callers don't persist a bad/empty vector."""
+    body = json.dumps({"input": [text], "model": settings.VOYAGE_MODEL}).encode()
+    request = urllib.request.Request(
+        "https://api.voyageai.com/v1/embeddings",
+        data=body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {settings.VOYAGE_API_KEY}",
+            "content-type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read())
+        return payload["data"][0]["embedding"]
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, KeyError, IndexError, ValueError) as exc:
+        raise EmbeddingError(f"Voyage embedding failed: {exc}") from exc
+
+
+def embed_text(text: str) -> list[float]:
+    """Embed text with the active embedder: Voyage when configured, otherwise
+    the deterministic placeholder. The same function embeds both corpus chunks
+    and queries, so they always share a vector space."""
+    if voyage_enabled():
+        return _voyage_embed(text)
+    return _placeholder_embed(text)
 
 
 def cosine(a: list[float], b: list[float]) -> float:
@@ -95,6 +138,10 @@ def retrieve(query: str, top_k: int = DEFAULT_TOP_K, min_score: float = MIN_SCOR
     query_vec = embed_text(query)
     embedder = active_embedder()
     scored = []
+    # TODO(pgvector): swap this Python-side cosine over a full-table scan to a
+    # native pgvector VectorField + IVFFlat/HNSW index when the real corpus
+    # lands. Fine for the small synthetic set; won't scale to vector retrieval.
+    # The embedder/retrieval interface is storage-agnostic so this is localized.
     for chunk in KnowledgeChunk.objects.filter(embedder=embedder):
         score = cosine(query_vec, chunk.embedding)
         if score >= min_score:
