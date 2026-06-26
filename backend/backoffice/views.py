@@ -450,15 +450,26 @@ class ClientExportView(APIView):
             row["organization_id"]: row["n"]
             for row in OrgUser.objects.values("organization_id").annotate(n=Count("id"))
         }
+        def _csv_safe(value):
+            # Defuse spreadsheet formula injection: a cell beginning with a
+            # formula trigger (e.g. an org name like "=HYPERLINK(...)") is
+            # prefixed with a single quote so Excel/Sheets treat it as text.
+            text = "" if value is None else str(value)
+            if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
+                text = "'" + text
+            return text
+
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow(["id", "name", "jurisdiction", "plan", "status", "comped", "suspended", "members", "created_at"])
         for o in orgs:
             s = _client_summary(o, sub_by_org, member_counts)
             writer.writerow([
-                s["id"], s["name"], s["jurisdiction"], s["plan"] or "free", s["subscription_status"],
-                s["comped"], s["is_suspended"], s["members"], s["created_at"],
+                _csv_safe(v) for v in (
+                    s["id"], s["name"], s["jurisdiction"], s["plan"] or "free", s["subscription_status"],
+                    s["comped"], s["is_suspended"], s["members"], s["created_at"],
+                )
             ])
-        resp = HttpResponse(buf.getvalue(), content_type="text/csv")
+        resp = HttpResponse(buf.getvalue(), content_type="text/csv; charset=utf-8")
         resp["Content-Disposition"] = "attachment; filename=clients.csv"
         return resp

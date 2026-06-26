@@ -80,8 +80,17 @@ class BackofficeApiSecurityTests(TestCase):
         self.client.force_authenticate(user=self.admin)
         resp = self.client.get("/api/backoffice/clients/export/")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp["Content-Type"], "text/csv")
+        self.assertIn("text/csv", resp["Content-Type"])
         self.assertIn("Alpha Corp", resp.content.decode())
+
+    def test_csv_export_neutralizes_formula_injection(self):
+        Organization.objects.create(name="=HYPERLINK(\"http://evil\")")
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.get("/api/backoffice/clients/export/")
+        body = resp.content.decode()
+        # The dangerous name must be quoted/escaped so it can't start with '='.
+        self.assertIn("'=HYPERLINK", body)
+        self.assertNotRegex(body, r"(^|,)=HYPERLINK")
 
     def test_stats_counts_clients(self):
         self.client.force_authenticate(user=self.admin)
