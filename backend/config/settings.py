@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "assistant",
     "audit",
     "billing",
+    "backoffice",
 ]
 
 MIDDLEWARE = [
@@ -160,6 +161,11 @@ CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
 # claim, so audience is only enforced when this is set (e.g. a custom JWT
 # template). When set, a token with a missing/wrong `aud` is rejected.
 CLERK_JWT_AUDIENCE = os.environ.get("CLERK_JWT_AUDIENCE", "")
+
+# Platform back-office: bootstrap allowlist of Clerk user ids granted
+# cross-tenant platform-admin access before any PlatformAdmin row exists.
+# Comma-separated. Prefer the `add_platform_admin` command for the durable list.
+PLATFORM_ADMIN_CLERK_IDS = os.environ.get("PLATFORM_ADMIN_CLERK_IDS", "")
 
 # AWS S3 — document storage. Uploads/downloads use short-lived presigned URLs;
 # the app holds these credentials, the browser never sees them. Inert until all

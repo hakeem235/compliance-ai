@@ -1,6 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@clerk/nextjs";
 import { Link, usePathname } from "@/i18n/navigation";
 import {
   LayoutGrid,
@@ -11,7 +13,9 @@ import {
   CreditCard,
   Settings as SettingsIcon,
   Users,
+  ShieldCheck,
 } from "lucide-react";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; labelKey: string; icon: typeof LayoutGrid };
@@ -28,6 +32,10 @@ const MANAGE_NAV: NavItem[] = [
   { href: "/billing", labelKey: "billing", icon: CreditCard },
   { href: "/settings", labelKey: "settings", icon: SettingsIcon },
   { href: "/admin", labelKey: "admin", icon: Users },
+];
+
+const PLATFORM_NAV: NavItem[] = [
+  { href: "/platform", labelKey: "platform", icon: ShieldCheck },
 ];
 
 function NavLink({ item }: { item: NavItem }) {
@@ -57,6 +65,25 @@ function NavLink({ item }: { item: NavItem }) {
  * (icon) cannot be passed as a prop across the server→client boundary. */
 export function SidebarNav() {
   const t = useTranslations("Sidebar");
+  const { getToken } = useAuth();
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+
+  const tokenFn = useCallback(() => getToken(), [getToken]);
+  useEffect(() => {
+    let active = true;
+    api.me
+      .get(tokenFn)
+      .then((me) => {
+        if (active) setIsPlatformAdmin(me.is_platform_admin);
+      })
+      .catch(() => {
+        /* non-fatal: hide the platform section on error */
+      });
+    return () => {
+      active = false;
+    };
+  }, [tokenFn]);
+
   return (
     <>
       <div className="px-2.5 py-[10px] pb-[5px] text-[10px] font-semibold tracking-[0.08em] text-white/30">
@@ -72,6 +99,17 @@ export function SidebarNav() {
       {MANAGE_NAV.map((item) => (
         <NavLink key={item.href} item={item} />
       ))}
+
+      {isPlatformAdmin && (
+        <>
+          <div className="px-2.5 pt-3.5 pb-[5px] text-[10px] font-semibold tracking-[0.08em] text-white/30">
+            {t("platformSection")}
+          </div>
+          {PLATFORM_NAV.map((item) => (
+            <NavLink key={item.href} item={item} />
+          ))}
+        </>
+      )}
     </>
   );
 }

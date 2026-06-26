@@ -266,6 +266,58 @@ export interface OrgUser {
 
 export interface CurrentUser extends OrgUser {
   organization_name: string;
+  is_platform_admin: boolean;
+}
+
+// --- Platform back-office (cross-tenant; platform staff only) ---------------
+export interface PlatformStats {
+  total_clients: number;
+  total_users: number;
+  active_subscriptions: number;
+  past_due: number;
+  mrr_sar: number;
+  docs_analyzed: number;
+}
+
+export interface ClientSummary {
+  id: string;
+  name: string;
+  jurisdiction: string;
+  created_at: string;
+  members: number;
+  plan: string;
+  plan_name: string;
+  subscription_status: "none" | "active" | "past_due" | "canceled";
+  current_period_end: string | null;
+}
+
+export interface ClientDetail {
+  id: string;
+  name: string;
+  jurisdiction: string;
+  created_at: string;
+  members: { id: string; email: string; name: string; role: string; created_at: string }[];
+  subscription: {
+    plan: string;
+    plan_name: string;
+    status: "none" | "active" | "past_due" | "canceled";
+    current_period_end: string | null;
+    stripe_customer_id: string;
+    has_stripe_subscription: boolean;
+  };
+  usage: { used: number; limit: number | null; plan: string };
+  docs_analyzed: number;
+}
+
+export interface ClientPayment {
+  id: string;
+  number: string | null;
+  amount_paid: number;
+  currency: string;
+  status: string | null;
+  created: number | null;
+  hosted_invoice_url: string | null;
+  payment_intent: string | null;
 }
 
 export interface AdminStats {
@@ -345,6 +397,21 @@ export const api = {
   admin: {
     stats: (getToken: GetTokenFn) => apiGet<AdminStats>("/api/admin/stats/", getToken),
     auditLogs: (getToken: GetTokenFn) => apiGet<AuditLogEntry[]>("/api/audit-logs/", getToken),
+  },
+  backoffice: {
+    stats: (getToken: GetTokenFn) => apiGet<PlatformStats>("/api/backoffice/stats/", getToken),
+    clients: (getToken: GetTokenFn, q?: string) =>
+      apiGet<ClientSummary[]>(`/api/backoffice/clients/${q ? `?q=${encodeURIComponent(q)}` : ""}`, getToken),
+    client: (id: string, getToken: GetTokenFn) => apiGet<ClientDetail>(`/api/backoffice/clients/${id}/`, getToken),
+    payments: (id: string, getToken: GetTokenFn) => apiGet<ClientPayment[]>(`/api/backoffice/clients/${id}/payments/`, getToken),
+    changePlan: (id: string, plan: string, getToken: GetTokenFn) =>
+      apiPost<{ plan: string; status: string }>(`/api/backoffice/clients/${id}/change-plan/`, { plan }, getToken),
+    cancel: (id: string, getToken: GetTokenFn, atPeriodEnd = true) =>
+      apiPost<{ status: string; cancel_at_period_end: boolean }>(`/api/backoffice/clients/${id}/cancel/`, { at_period_end: atPeriodEnd }, getToken),
+    reactivate: (id: string, getToken: GetTokenFn) =>
+      apiPost<{ status: string }>(`/api/backoffice/clients/${id}/reactivate/`, {}, getToken),
+    refund: (id: string, body: { payment_intent: string; amount?: number }, getToken: GetTokenFn) =>
+      apiPost<{ id: string; status: string; amount: number; currency: string }>(`/api/backoffice/clients/${id}/refund/`, body, getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),
