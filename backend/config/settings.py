@@ -192,6 +192,12 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 # without a code change. Defaults to the contract-review model.
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 
+# Voyage AI — embeddings for the RAG legal assistant. The credential-free
+# deterministic placeholder embedder stays the default; Voyage activates only
+# when VOYAGE_API_KEY is set (see assistant/rag.py). Called via stdlib REST.
+VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
+VOYAGE_MODEL = os.environ.get("VOYAGE_MODEL", "voyage-3")
+
 # Fernet key used to encrypt per-org SMTP passwords at rest. In dev this falls
 # back to a key derived from SECRET_KEY (see compliance/crypto.py); production
 # MUST set a dedicated key: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

@@ -1,4 +1,6 @@
-from django.test import SimpleTestCase, TestCase
+from unittest import mock
+
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from . import rag
 from .models import KnowledgeChunk
@@ -60,6 +62,40 @@ class EmbedderTests(SimpleTestCase):
         text = "Para one.\n\n" + ("word " * 100) + "\n\nPara three."
         chunks = rag.chunk_text(text, max_chars=200)
         self.assertTrue(len(chunks) >= 2)
+
+
+class VoyageEmbedderTests(SimpleTestCase):
+    @override_settings(VOYAGE_API_KEY="")
+    def test_default_is_placeholder(self):
+        self.assertFalse(rag.voyage_enabled())
+        self.assertEqual(rag.active_embedder(), rag.PLACEHOLDER_NAME)
+
+    @override_settings(VOYAGE_API_KEY="vk", VOYAGE_MODEL="voyage-3")
+    def test_voyage_active_when_key_present(self):
+        self.assertTrue(rag.voyage_enabled())
+        self.assertEqual(rag.active_embedder(), "voyage-3")
+
+    @override_settings(VOYAGE_API_KEY="vk", VOYAGE_MODEL="voyage-3")
+    def test_embed_text_uses_voyage_when_enabled(self):
+        with mock.patch.object(rag, "_voyage_embed", return_value=[0.1, 0.2, 0.3]) as m:
+            vec = rag.embed_text("data protection")
+        self.assertEqual(vec, [0.1, 0.2, 0.3])
+        m.assert_called_once()
+
+    @override_settings(VOYAGE_API_KEY="")
+    def test_embed_text_uses_placeholder_when_disabled(self):
+        with mock.patch.object(rag, "_voyage_embed") as m:
+            vec = rag.embed_text("data protection")
+        m.assert_not_called()
+        self.assertEqual(len(vec), rag.PLACEHOLDER_DIM)
+
+    @override_settings(VOYAGE_API_KEY="vk", VOYAGE_MODEL="voyage-3")
+    def test_voyage_failure_raises_embedding_error(self):
+        import urllib.error
+
+        with mock.patch.object(rag.urllib.request, "urlopen", side_effect=urllib.error.URLError("down")):
+            with self.assertRaises(rag.EmbeddingError):
+                rag._voyage_embed("x")
 
 
 class RetrievalTests(TestCase):
