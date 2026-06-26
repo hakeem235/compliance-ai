@@ -15,6 +15,32 @@ from .serializers import DocumentSerializer, GeneratedDocumentSerializer
 VALID_RISK_LEVELS = {"high", "medium", "low"}
 VALID_CATEGORIES = {"liability", "termination", "confidentiality", "ip", "dispute_resolution", "other"}
 
+_CONTENT_TYPE_BY_FILE_TYPE = {
+    "pdf": "application/pdf",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "txt": "text/plain",
+}
+
+
+def _recover_text_via_ocr(document) -> str:
+    """OCR fallback for scanned/image-only documents: fetch the stored original
+    and run it through Azure OCR. Returns sanitized text, or "" when OCR isn't
+    applicable (no stored object), not configured, or fails. Never raises — the
+    caller treats "" as "still no extractable text". Text-layer documents never
+    reach here: they already have content_text from client-side extraction."""
+    from . import ocr, storage
+
+    if not (ocr.ocr_enabled() and storage.storage_enabled()):
+        return ""
+    if not document.s3_key or document.s3_key.startswith("local/"):
+        return ""
+    content_type = _CONTENT_TYPE_BY_FILE_TYPE.get(document.file_type, "application/octet-stream")
+    try:
+        file_bytes = storage.fetch_object_bytes(document.s3_key)
+        return ocr.extract_text(file_bytes, content_type)
+    except (ocr.OcrError, storage.StorageError):
+        return ""
+
 REVIEW_SYSTEM_PROMPT = (
     "You are the AI Contract Review Engine inside ComplianceAI, reviewing contracts for "
     "businesses operating in Saudi Arabia. Given the contract text, identify risky or "
@@ -106,22 +132,28 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Analysis not available — ANTHROPIC_API_KEY pending."}, status=503)
 
         if not document.content_text.strip():
-            DocumentAnalysis.objects.create(
-                document=document,
-                risk_score=None,
-                risk_summary=(
-                    "This document's text could not be analyzed: no text was extracted at "
-                    "upload time. Text is extracted client-side from the file's embedded text "
-                    "layer (PDF, DOCX, TXT) — there's no OCR pipeline, so scanned/image-only "
-                    "PDFs and legacy .doc files aren't supported. Try re-uploading a text-based "
-                    "PDF or DOCX, or a .txt file."
-                ),
-                status="completed",
-                model_version=settings.ANTHROPIC_MODEL,
-            )
-            document.status = "failed"
-            document.save(update_fields=["status"])
-            return Response({"detail": "No extractable text for this file type.", "document_id": document.id}, status=200)
+            # Fallback: a scanned/image-only PDF has no client-extracted text.
+            # Try OCR (Azure) on the stored original before giving up.
+            recovered = _recover_text_via_ocr(document)
+            if recovered.strip():
+                document.content_text = recovered
+                document.save(update_fields=["content_text"])
+            else:
+                DocumentAnalysis.objects.create(
+                    document=document,
+                    risk_score=None,
+                    risk_summary=(
+                        "This document's text could not be analyzed: no text could be extracted. "
+                        "Text is read from the file's embedded text layer (PDF, DOCX, TXT) client-side; "
+                        "scanned/image-only PDFs require OCR, which is unavailable or could not read "
+                        "this file. Try re-uploading a text-based PDF or DOCX, or a .txt file."
+                    ),
+                    status="completed",
+                    model_version=settings.ANTHROPIC_MODEL,
+                )
+                document.status = "failed"
+                document.save(update_fields=["status"])
+                return Response({"detail": "No extractable text for this file type.", "document_id": document.id}, status=200)
 
         try:
             result = _review_contract(document.content_text)

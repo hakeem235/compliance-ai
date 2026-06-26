@@ -187,6 +187,108 @@ class StorageTests(TestCase):
             self.storage.create_upload_url("org-1", "image.png", "image/png")
 
 
+class OcrTests(TestCase):
+    def setUp(self):
+        from documents import ocr
+
+        self.ocr = ocr
+
+    @override_settings(OCR_AZURE_ENDPOINT="", OCR_AZURE_KEY="")
+    def test_disabled_when_unconfigured(self):
+        self.assertFalse(self.ocr.ocr_enabled())
+
+    @override_settings(OCR_AZURE_ENDPOINT="https://x.cognitiveservices.azure.com", OCR_AZURE_KEY="k")
+    def test_enabled_when_configured(self):
+        self.assertTrue(self.ocr.ocr_enabled())
+
+    def test_routing_text_layer_does_not_need_ocr(self):
+        # Text-layer documents already carry extracted text → client path.
+        self.assertFalse(self.ocr.needs_ocr("Clause 1. The party agrees."))
+
+    def test_routing_image_only_needs_ocr(self):
+        # Empty/whitespace extraction → image-only/scanned → OCR path.
+        self.assertTrue(self.ocr.needs_ocr(""))
+        self.assertTrue(self.ocr.needs_ocr("   \n  "))
+
+    def test_sanitize_strips_nul_and_control_chars(self):
+        self.assertEqual(self.ocr.sanitize("Clause\x00 1\x07.\nNext"), "Clause 1.\nNext")
+
+    @override_settings(
+        OCR_AZURE_ENDPOINT="https://x.cognitiveservices.azure.com",
+        OCR_AZURE_KEY="k",
+        OCR_AZURE_MODEL="prebuilt-read",
+        OCR_AZURE_API_VERSION="2024-11-30",
+    )
+    def test_extract_text_polls_and_returns_sanitized_content(self):
+        # Mock the analyze POST (202 + Operation-Location) then a succeeded poll.
+        analyze = (202, {"Operation-Location": "https://x/op/123"}, {})
+        poll = (200, {}, {"status": "succeeded", "analyzeResult": {"content": "نص\x00 مُستخرج"}})
+        with mock.patch.object(self.ocr, "_request", side_effect=[analyze, poll]) as m, \
+                mock.patch.object(self.ocr.time, "sleep"):
+            text = self.ocr.extract_text(b"%PDF-bytes", "application/pdf")
+        self.assertEqual(text, "نص مُستخرج")  # NUL stripped
+        self.assertEqual(m.call_count, 2)
+
+    @override_settings(OCR_AZURE_ENDPOINT="https://x", OCR_AZURE_KEY="k")
+    def test_extract_text_raises_on_failed_operation(self):
+        analyze = (202, {"Operation-Location": "https://x/op/1"}, {})
+        poll = (200, {}, {"status": "failed"})
+        with mock.patch.object(self.ocr, "_request", side_effect=[analyze, poll]), \
+                mock.patch.object(self.ocr.time, "sleep"):
+            with self.assertRaises(self.ocr.OcrError):
+                self.ocr.extract_text(b"x", "application/pdf")
+
+    def test_extract_text_raises_when_disabled(self):
+        with override_settings(OCR_AZURE_ENDPOINT="", OCR_AZURE_KEY=""):
+            with self.assertRaises(self.ocr.OcrError):
+                self.ocr.extract_text(b"x", "application/pdf")
+
+
+class OcrFallbackRoutingTests(TestCase):
+    """The analyze action's OCR fallback only fires for stored, scanned docs."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Acme")
+
+    def _doc(self, **kw):
+        defaults = dict(organization=self.org, filename="f.pdf", file_type="pdf", s3_key="orgs/x/y/f.pdf")
+        defaults.update(kw)
+        return Document.objects.create(**defaults)
+
+    def test_no_recovery_when_ocr_disabled(self):
+        from documents.views import _recover_text_via_ocr
+
+        with override_settings(OCR_AZURE_ENDPOINT="", OCR_AZURE_KEY=""):
+            self.assertEqual(_recover_text_via_ocr(self._doc()), "")
+
+    @override_settings(
+        OCR_AZURE_ENDPOINT="https://x", OCR_AZURE_KEY="k",
+        AWS_STORAGE_BUCKET_NAME="b", AWS_S3_REGION_NAME="r",
+        AWS_ACCESS_KEY_ID="a", AWS_SECRET_ACCESS_KEY="s",
+    )
+    def test_no_recovery_for_legacy_local_key(self):
+        from documents.views import _recover_text_via_ocr
+
+        # Legacy synthetic keys have no stored object → never call OCR.
+        self.assertEqual(_recover_text_via_ocr(self._doc(s3_key="local/abc/f.pdf")), "")
+
+    @override_settings(
+        OCR_AZURE_ENDPOINT="https://x", OCR_AZURE_KEY="k",
+        AWS_STORAGE_BUCKET_NAME="b", AWS_S3_REGION_NAME="r",
+        AWS_ACCESS_KEY_ID="a", AWS_SECRET_ACCESS_KEY="s",
+    )
+    def test_recovers_text_for_stored_scanned_doc(self):
+        from documents import ocr, storage
+        from documents.views import _recover_text_via_ocr
+
+        with mock.patch.object(storage, "fetch_object_bytes", return_value=b"%PDF") as fetch, \
+                mock.patch.object(ocr, "extract_text", return_value="recovered text") as extract:
+            result = _recover_text_via_ocr(self._doc())
+        self.assertEqual(result, "recovered text")
+        fetch.assert_called_once()
+        extract.assert_called_once()
+
+
 class ExtractJsonTests(TestCase):
     def test_parses_raw_json(self):
         result = _extract_json('{"risk_score": 50, "findings": []}')

@@ -171,6 +171,16 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 # How long presigned upload/download URLs stay valid (seconds).
 AWS_S3_PRESIGN_EXPIRY = int(os.environ.get("AWS_S3_PRESIGN_EXPIRY", "900"))
 
+# OCR — Azure Document Intelligence (Read model), Arabic-capable. FALLBACK ONLY:
+# text-layer PDFs/DOCX keep extracting client-side; only image-only/scanned
+# PDFs are routed here. Inert until endpoint + key are provided (see
+# documents.ocr). Called via stdlib REST — no SDK dependency.
+OCR_AZURE_ENDPOINT = os.environ.get("OCR_AZURE_ENDPOINT", "")
+OCR_AZURE_KEY = os.environ.get("OCR_AZURE_KEY", "")
+OCR_AZURE_REGION = os.environ.get("OCR_AZURE_REGION", "")
+OCR_AZURE_MODEL = os.environ.get("OCR_AZURE_MODEL", "prebuilt-read")
+OCR_AZURE_API_VERSION = os.environ.get("OCR_AZURE_API_VERSION", "2024-11-30")
+
 # OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
