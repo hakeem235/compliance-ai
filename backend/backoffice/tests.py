@@ -60,13 +60,28 @@ class BackofficeApiSecurityTests(TestCase):
         self.client.force_authenticate(user=self.admin)
         resp = self.client.get("/api/backoffice/clients/")
         self.assertEqual(resp.status_code, 200)
-        names = {c["name"] for c in resp.json()}
+        names = {c["name"] for c in resp.json()["results"]}
         self.assertEqual(names, {"Alpha Corp", "Beta LLC"})
+        self.assertEqual(resp.json()["total"], 2)
 
     def test_client_search_filters_by_name(self):
         self.client.force_authenticate(user=self.admin)
         resp = self.client.get("/api/backoffice/clients/?q=beta")
-        self.assertEqual([c["name"] for c in resp.json()], ["Beta LLC"])
+        self.assertEqual([c["name"] for c in resp.json()["results"]], ["Beta LLC"])
+
+    def test_pagination_limits_results(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.get("/api/backoffice/clients/?page=1&page_size=1")
+        body = resp.json()
+        self.assertEqual(len(body["results"]), 1)
+        self.assertTrue(body["has_next"])
+
+    def test_csv_export(self):
+        self.client.force_authenticate(user=self.admin)
+        resp = self.client.get("/api/backoffice/clients/export/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "text/csv")
+        self.assertIn("Alpha Corp", resp.content.decode())
 
     def test_stats_counts_clients(self):
         self.client.force_authenticate(user=self.admin)
@@ -128,6 +143,106 @@ class BackofficeMutationTests(TestCase):
         with mock.patch("backoffice.services.list_payments", side_effect=BillingNotConfigured("Stripe is not configured")):
             resp = self.client.get(f"/api/backoffice/clients/{self.org.id}/payments/")
         self.assertEqual(resp.status_code, 503)
+
+
+class BackofficeCompleteFeatureTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.org = Organization.objects.create(name="Delta")
+        self.admin = _make_org_user(self.org, "admin_d", email="ops@us.com")
+        self.member = _make_org_user(self.org, "member_d", role="member", email="m@delta.com")
+        PlatformAdmin.objects.create(clerk_user_id="admin_d")
+        self.client.force_authenticate(user=self.admin)
+
+    def test_suspend_and_restore(self):
+        r = self.client.post(f"/api/backoffice/clients/{self.org.id}/suspend/", {"suspend": True}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.org.refresh_from_db()
+        self.assertTrue(self.org.is_suspended)
+        self.assertIsNotNone(self.org.suspended_at)
+        self.assertTrue(AuditLog.objects.filter(organization=self.org, action="platform.suspend").exists())
+        r = self.client.post(f"/api/backoffice/clients/{self.org.id}/suspend/", {"suspend": False}, format="json")
+        self.org.refresh_from_db()
+        self.assertFalse(self.org.is_suspended)
+
+    def test_update_notes(self):
+        r = self.client.put(f"/api/backoffice/clients/{self.org.id}/notes/", {"notes": "VIP client"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.internal_notes, "VIP client")
+
+    def test_change_member_role(self):
+        r = self.client.patch(
+            f"/api/backoffice/clients/{self.org.id}/members/{self.member.id}/", {"role": "legal_reviewer"}, format="json"
+        )
+        self.assertEqual(r.status_code, 200)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.role, "legal_reviewer")
+
+    def test_change_member_role_rejects_invalid(self):
+        r = self.client.patch(
+            f"/api/backoffice/clients/{self.org.id}/members/{self.member.id}/", {"role": "bogus"}, format="json"
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_remove_member(self):
+        r = self.client.delete(f"/api/backoffice/clients/{self.org.id}/members/{self.member.id}/")
+        self.assertEqual(r.status_code, 204)
+        self.assertFalse(OrgUser.objects.filter(id=self.member.id).exists())
+
+    def test_cannot_remove_last_member(self):
+        OrgUser.objects.filter(id=self.member.id).delete()
+        r = self.client.delete(f"/api/backoffice/clients/{self.org.id}/members/{self.admin.id}/")
+        self.assertEqual(r.status_code, 400)
+
+    def test_comp_plan_no_stripe(self):
+        r = self.client.post(f"/api/backoffice/clients/{self.org.id}/comp-plan/", {"plan": "enterprise"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        sub = Subscription.objects.get(organization=self.org)
+        self.assertEqual(sub.plan, "enterprise")
+        self.assertTrue(sub.comped)
+        self.assertEqual(sub.status, "active")
+
+    def test_client_audit_timeline(self):
+        self.client.post(f"/api/backoffice/clients/{self.org.id}/suspend/", {"suspend": True}, format="json")
+        r = self.client.get(f"/api/backoffice/clients/{self.org.id}/audit/")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(any(log["action"] == "platform.suspend" for log in r.json()))
+
+    def test_platform_wide_audit(self):
+        self.client.post(f"/api/backoffice/clients/{self.org.id}/comp-plan/", {"plan": "growth"}, format="json")
+        r = self.client.get("/api/backoffice/audit/")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(all(log["metadata"].get("platform_action") for log in r.json()))
+
+    def test_manage_platform_admins(self):
+        r = self.client.post("/api/backoffice/admins/", {"clerk_user_id": "new_staff", "email": "s@us.com"}, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="new_staff").exists())
+        new_id = r.json()["id"]
+        r = self.client.delete(f"/api/backoffice/admins/{new_id}/")
+        self.assertEqual(r.status_code, 204)
+
+    def test_cannot_remove_last_platform_admin(self):
+        only = PlatformAdmin.objects.get(clerk_user_id="admin_d")
+        r = self.client.delete(f"/api/backoffice/admins/{only.id}/")
+        self.assertEqual(r.status_code, 400)
+
+
+class SuspensionEnforcementTests(TestCase):
+    def test_suspended_org_member_is_blocked_at_auth(self):
+        from rest_framework import exceptions
+
+        from organizations.authentication import ClerkJWTAuthentication
+
+        org = Organization.objects.create(name="Suspended Inc", is_suspended=True)
+        OrgUser.objects.create(organization=org, clerk_user_id="blocked_user", email="b@x.com")
+        auth = ClerkJWTAuthentication()
+        with mock.patch.object(auth, "_verify_token", return_value={"sub": "blocked_user"}):
+            req = mock.Mock(headers={"Authorization": "Bearer t"})
+            with override_settings(CLERK_SECRET_KEY="x", CLERK_JWT_ISSUER="https://i"):
+                with self.assertRaises(exceptions.AuthenticationFailed):
+                    auth.authenticate(req)
 
 
 class AddPlatformAdminCommandTests(TestCase):

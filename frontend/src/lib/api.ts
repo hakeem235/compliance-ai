@@ -105,6 +105,25 @@ export function apiDelete<T>(path: string, getToken: GetTokenFn): Promise<T> {
   return request<T>(path, { method: "DELETE", getToken });
 }
 
+/** Authenticated file download (e.g. CSV export) — fetches with the bearer
+ * token and triggers a browser download of the response body. */
+export async function apiDownload(path: string, getToken: GetTokenFn, filename: string): Promise<void> {
+  const token = await getToken();
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(`Download failed (${res.status})`, res.status, null);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ---------------------------------------------------------------------------
 // Domain types — mirrored from backend serializers (see backend/*/serializers.py).
 // Keep these in sync manually; there is no codegen in this repo.
@@ -277,6 +296,8 @@ export interface PlatformStats {
   past_due: number;
   mrr_sar: number;
   docs_analyzed: number;
+  suspended_clients: number;
+  comped_clients: number;
 }
 
 export interface ClientSummary {
@@ -288,7 +309,36 @@ export interface ClientSummary {
   plan: string;
   plan_name: string;
   subscription_status: "none" | "active" | "past_due" | "canceled";
+  comped: boolean;
+  is_suspended: boolean;
   current_period_end: string | null;
+}
+
+export interface ClientListResponse {
+  results: ClientSummary[];
+  page: number;
+  page_size: number;
+  total: number;
+  has_next: boolean;
+}
+
+export interface AuditEntry {
+  id: string;
+  organization: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  actor_name: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface PlatformAdminEntry {
+  id: string;
+  clerk_user_id: string;
+  email: string;
+  note: string;
+  created_at?: string;
 }
 
 export interface ClientDetail {
@@ -296,11 +346,15 @@ export interface ClientDetail {
   name: string;
   jurisdiction: string;
   created_at: string;
+  is_suspended: boolean;
+  suspended_at: string | null;
+  internal_notes: string;
   members: { id: string; email: string; name: string; role: string; created_at: string }[];
   subscription: {
     plan: string;
     plan_name: string;
     status: "none" | "active" | "past_due" | "canceled";
+    comped: boolean;
     current_period_end: string | null;
     stripe_customer_id: string;
     has_stripe_subscription: boolean;
@@ -400,18 +454,50 @@ export const api = {
   },
   backoffice: {
     stats: (getToken: GetTokenFn) => apiGet<PlatformStats>("/api/backoffice/stats/", getToken),
-    clients: (getToken: GetTokenFn, q?: string) =>
-      apiGet<ClientSummary[]>(`/api/backoffice/clients/${q ? `?q=${encodeURIComponent(q)}` : ""}`, getToken),
+    clients: (getToken: GetTokenFn, params?: { q?: string; plan?: string; status?: string; page?: number; page_size?: number }) => {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set("q", params.q);
+      if (params?.plan) qs.set("plan", params.plan);
+      if (params?.status) qs.set("status", params.status);
+      if (params?.page) qs.set("page", String(params.page));
+      if (params?.page_size) qs.set("page_size", String(params.page_size));
+      const s = qs.toString();
+      return apiGet<ClientListResponse>(`/api/backoffice/clients/${s ? `?${s}` : ""}`, getToken);
+    },
+    exportPath: (params?: { q?: string; plan?: string; status?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set("q", params.q);
+      if (params?.plan) qs.set("plan", params.plan);
+      if (params?.status) qs.set("status", params.status);
+      const s = qs.toString();
+      return `/api/backoffice/clients/export/${s ? `?${s}` : ""}`;
+    },
     client: (id: string, getToken: GetTokenFn) => apiGet<ClientDetail>(`/api/backoffice/clients/${id}/`, getToken),
     payments: (id: string, getToken: GetTokenFn) => apiGet<ClientPayment[]>(`/api/backoffice/clients/${id}/payments/`, getToken),
+    clientAudit: (id: string, getToken: GetTokenFn) => apiGet<AuditEntry[]>(`/api/backoffice/clients/${id}/audit/`, getToken),
+    platformAudit: (getToken: GetTokenFn) => apiGet<AuditEntry[]>("/api/backoffice/audit/", getToken),
     changePlan: (id: string, plan: string, getToken: GetTokenFn) =>
       apiPost<{ plan: string; status: string }>(`/api/backoffice/clients/${id}/change-plan/`, { plan }, getToken),
+    compPlan: (id: string, plan: string, getToken: GetTokenFn) =>
+      apiPost<{ plan: string; status: string; comped: boolean }>(`/api/backoffice/clients/${id}/comp-plan/`, { plan }, getToken),
     cancel: (id: string, getToken: GetTokenFn, atPeriodEnd = true) =>
       apiPost<{ status: string; cancel_at_period_end: boolean }>(`/api/backoffice/clients/${id}/cancel/`, { at_period_end: atPeriodEnd }, getToken),
     reactivate: (id: string, getToken: GetTokenFn) =>
       apiPost<{ status: string }>(`/api/backoffice/clients/${id}/reactivate/`, {}, getToken),
     refund: (id: string, body: { payment_intent: string; amount?: number }, getToken: GetTokenFn) =>
       apiPost<{ id: string; status: string; amount: number; currency: string }>(`/api/backoffice/clients/${id}/refund/`, body, getToken),
+    suspend: (id: string, suspend: boolean, getToken: GetTokenFn) =>
+      apiPost<{ is_suspended: boolean }>(`/api/backoffice/clients/${id}/suspend/`, { suspend }, getToken),
+    saveNotes: (id: string, notes: string, getToken: GetTokenFn) =>
+      apiPut<{ internal_notes: string }>(`/api/backoffice/clients/${id}/notes/`, { notes }, getToken),
+    changeMemberRole: (orgId: string, memberId: string, role: string, getToken: GetTokenFn) =>
+      apiPatch<{ id: string; role: string }>(`/api/backoffice/clients/${orgId}/members/${memberId}/`, { role }, getToken),
+    removeMember: (orgId: string, memberId: string, getToken: GetTokenFn) =>
+      apiDelete(`/api/backoffice/clients/${orgId}/members/${memberId}/`, getToken),
+    admins: (getToken: GetTokenFn) => apiGet<PlatformAdminEntry[]>("/api/backoffice/admins/", getToken),
+    addAdmin: (body: { clerk_user_id: string; email?: string; note?: string }, getToken: GetTokenFn) =>
+      apiPost<PlatformAdminEntry>("/api/backoffice/admins/", body, getToken),
+    removeAdmin: (adminId: string, getToken: GetTokenFn) => apiDelete(`/api/backoffice/admins/${adminId}/`, getToken),
   },
   members: {
     list: (getToken: GetTokenFn) => apiGet<OrgUser[]>("/api/members/", getToken),

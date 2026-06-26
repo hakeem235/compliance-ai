@@ -69,6 +69,19 @@ def reactivate_subscription(organization) -> dict:
     return {"status": sub.status}
 
 
+def comp_plan(organization, plan_key: str) -> dict:
+    """Grant a plan with no Stripe charge (e.g. an enterprise comp). Plan limits
+    still apply. Requires no Stripe configuration."""
+    if plan_key not in PLANS:
+        raise ValueError(f"Unknown plan '{plan_key}'.")
+    sub = get_or_create_subscription(organization)
+    sub.plan = plan_key
+    sub.status = "active"
+    sub.comped = True
+    sub.save(update_fields=["plan", "status", "comped", "updated_at"])
+    return {"plan": sub.plan, "status": sub.status, "comped": True}
+
+
 def list_payments(organization, limit: int = 20) -> list[dict]:
     """Recent invoices for a client's Stripe customer."""
     _client()

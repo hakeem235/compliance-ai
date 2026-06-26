@@ -65,6 +65,12 @@ class ClerkJWTAuthentication(authentication.BaseAuthentication):
         except OrgUser.DoesNotExist:
             raise exceptions.AuthenticationFailed("No matching organization member for this session.")
 
+        # A suspended client org is blocked at the door: its members can't use
+        # the API at all. Platform staff are unaffected (their own org isn't
+        # suspended), so they can still manage/restore the suspended client.
+        if org_user.organization.is_suspended:
+            raise exceptions.AuthenticationFailed("This organization is suspended. Contact support.")
+
         return (org_user, token)
 
     def _verify_token(self, token: str) -> dict:
