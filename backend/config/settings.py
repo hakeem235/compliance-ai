@@ -161,9 +161,15 @@ CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
 # template). When set, a token with a missing/wrong `aud` is rejected.
 CLERK_JWT_AUDIENCE = os.environ.get("CLERK_JWT_AUDIENCE", "")
 
-# AWS S3 — document storage
+# AWS S3 — document storage. Uploads/downloads use short-lived presigned URLs;
+# the app holds these credentials, the browser never sees them. Inert until all
+# of bucket + region + access key + secret are provided (see documents.storage).
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+# How long presigned upload/download URLs stay valid (seconds).
+AWS_S3_PRESIGN_EXPIRY = int(os.environ.get("AWS_S3_PRESIGN_EXPIRY", "900"))
 
 # OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

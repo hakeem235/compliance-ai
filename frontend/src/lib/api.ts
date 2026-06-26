@@ -294,6 +294,19 @@ export const api = {
       body: { subject: string; body: string; recipients: string[] },
       getToken: GetTokenFn
     ) => apiPost<{ detail: string; sent: number; recipients: string[] }>(`/api/documents/${id}/send-email/`, body, getToken),
+    // Presigned S3 upload: ask the backend for a PUT URL, upload the file to it
+    // directly, then create the Document with the returned `key` as s3_key.
+    // Returns 503 (ApiError) until S3 storage is configured server-side.
+    uploadUrl: (
+      body: { filename: string; content_type: string },
+      getToken: GetTokenFn
+    ) => apiPost<{ url: string; key: string; content_type: string; expires_in: number }>(
+      "/api/documents/upload-url/",
+      body,
+      getToken
+    ),
+    downloadUrl: (id: string, getToken: GetTokenFn) =>
+      apiGet<{ url: string }>(`/api/documents/${id}/download-url/`, getToken),
   },
   generatedDocuments: {
     list: (getToken: GetTokenFn) => apiGet<GeneratedDocument[]>("/api/generated-documents/", getToken),

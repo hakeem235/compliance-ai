@@ -11,6 +11,14 @@ cryptography==49.0.0
 python-dotenv==1.2.2
 sqlparse==0.5.5
 stripe==14.0.1
+# AWS S3 — document storage (presigned upload/download)
+boto3==1.43.36
+# boto3 transitive deps (pinned per governance)
+botocore==1.43.36
+s3transfer==0.19.0
+jmespath==1.1.0
+python-dateutil==2.9.0.post0
+six==1.17.0
 # stripe transitive deps (pinned per governance)
 requests==2.34.2
 urllib3==2.7.0

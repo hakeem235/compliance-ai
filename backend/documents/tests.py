@@ -1,6 +1,7 @@
 import json
+from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from organizations.models import Organization
 
@@ -124,6 +125,66 @@ class SendEmailActionTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["sent"], 2)
         self.assertEqual(sent_args["recipients"], ["a@b.com", "c@d.com"])
+
+
+class StorageTests(TestCase):
+    def setUp(self):
+        from documents import storage
+
+        self.storage = storage
+
+    @override_settings(
+        AWS_STORAGE_BUCKET_NAME="", AWS_S3_REGION_NAME="", AWS_ACCESS_KEY_ID="", AWS_SECRET_ACCESS_KEY=""
+    )
+    def test_disabled_when_unconfigured(self):
+        self.assertFalse(self.storage.storage_enabled())
+
+    @override_settings(
+        AWS_STORAGE_BUCKET_NAME="bucket",
+        AWS_S3_REGION_NAME="me-south-1",
+        AWS_ACCESS_KEY_ID="AKIA",
+        AWS_SECRET_ACCESS_KEY="secret",
+    )
+    def test_enabled_when_fully_configured(self):
+        # boto3 is installed in the test env; full config => enabled.
+        self.assertTrue(self.storage.storage_enabled())
+
+    def test_object_key_is_org_scoped_and_unique(self):
+        k1 = self.storage.build_object_key("org-1", "Contract A.pdf")
+        k2 = self.storage.build_object_key("org-1", "Contract A.pdf")
+        self.assertTrue(k1.startswith("orgs/org-1/documents/"))
+        self.assertNotEqual(k1, k2)  # uuid keeps repeated uploads distinct
+        self.assertNotIn(" ", k1.split("/")[-1] or "")  # path-safe handled
+
+    def test_object_key_strips_path_separators(self):
+        key = self.storage.build_object_key("org-1", "../../etc/passwd")
+        # The filename segment must not introduce extra path traversal.
+        self.assertTrue(key.startswith("orgs/org-1/documents/"))
+        self.assertNotIn("..", key.split("/")[-1])
+
+    @override_settings(
+        AWS_STORAGE_BUCKET_NAME="bucket",
+        AWS_S3_REGION_NAME="me-south-1",
+        AWS_ACCESS_KEY_ID="AKIA",
+        AWS_SECRET_ACCESS_KEY="secret",
+        AWS_S3_PRESIGN_EXPIRY=900,
+    )
+    def test_create_upload_url_presigns_with_expected_params(self):
+        fake = mock.Mock()
+        fake.generate_presigned_url.return_value = "https://s3.example/presigned-put"
+        with mock.patch.object(self.storage, "_client", return_value=fake):
+            result = self.storage.create_upload_url("org-1", "deal.pdf", "application/pdf")
+        self.assertEqual(result["url"], "https://s3.example/presigned-put")
+        self.assertTrue(result["key"].startswith("orgs/org-1/documents/"))
+        self.assertEqual(result["expires_in"], 900)
+        _, kwargs = fake.generate_presigned_url.call_args
+        self.assertEqual(kwargs["Params"]["Bucket"], "bucket")
+        self.assertEqual(kwargs["Params"]["ContentType"], "application/pdf")
+        self.assertEqual(kwargs["ExpiresIn"], 900)
+
+    def test_create_upload_url_rejects_unsupported_content_type(self):
+        with self.assertRaises(ValueError):
+            self.storage.create_upload_url("org-1", "image.png", "image/png")
 
 
 class ExtractJsonTests(TestCase):

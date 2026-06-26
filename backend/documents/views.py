@@ -155,6 +155,61 @@ class DocumentViewSet(viewsets.ModelViewSet):
         document.save(update_fields=["status"])
         return Response({"detail": "Analysis complete.", "document_id": document.id}, status=200)
 
+    @action(detail=False, methods=["post"], url_path="upload-url")
+    def upload_url(self, request):
+        """Presigned S3 PUT URL for uploading a document straight from the browser.
+
+        The client uploads to the returned URL, then creates the Document with
+        the returned `key` as its `s3_key`. Returns 503 until S3 is configured.
+        """
+        from . import storage
+
+        if not storage.storage_enabled():
+            return Response(
+                {"detail": "Document storage is not configured.", "code": "storage_not_configured"},
+                status=503,
+            )
+
+        filename = (request.data.get("filename") or "").strip()
+        content_type = (request.data.get("content_type") or "").strip()
+        if not filename:
+            return Response({"detail": "filename is required."}, status=400)
+
+        try:
+            presigned = storage.create_upload_url(request.user.organization_id, filename, content_type)
+        except ValueError as exc:
+            return Response({"detail": str(exc), "code": "unsupported_content_type"}, status=400)
+        except storage.StorageError:
+            return Response({"detail": "Could not create an upload URL. Please try again."}, status=502)
+
+        return Response(presigned, status=200)
+
+    @action(detail=True, methods=["get"], url_path="download-url")
+    def download_url(self, request, pk=None):
+        """Presigned S3 GET URL for viewing/downloading a stored document."""
+        from . import storage
+
+        document = self.get_object()  # tenant-scoped
+        if not storage.storage_enabled():
+            return Response(
+                {"detail": "Document storage is not configured.", "code": "storage_not_configured"},
+                status=503,
+            )
+        # Documents created before storage was wired carry a synthetic local
+        # key with no object behind it — don't hand back a URL that 404s.
+        if not document.s3_key or document.s3_key.startswith("local/"):
+            return Response(
+                {"detail": "No stored file for this document.", "code": "no_stored_object"},
+                status=404,
+            )
+
+        try:
+            url = storage.create_download_url(document.s3_key)
+        except storage.StorageError:
+            return Response({"detail": "Could not create a download URL. Please try again."}, status=502)
+
+        return Response({"url": url}, status=200)
+
     @action(detail=True, methods=["post"], url_path="send-email")
     def send_email(self, request, pk=None):
         """Send the (edited) recommendation email draft via the org's SMTP config."""
