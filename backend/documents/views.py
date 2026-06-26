@@ -12,7 +12,6 @@ from rest_framework.response import Response
 from .models import ClauseFinding, Document, DocumentAnalysis, GeneratedDocument
 from .serializers import DocumentSerializer, GeneratedDocumentSerializer
 
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
 VALID_RISK_LEVELS = {"high", "medium", "low"}
 VALID_CATEGORIES = {"liability", "termination", "confidentiality", "ip", "dispute_resolution", "other"}
 
@@ -43,7 +42,7 @@ def _extract_json(text: str) -> dict:
 def _review_contract(content_text: str) -> dict:
     body = json.dumps(
         {
-            "model": ANTHROPIC_MODEL,
+            "model": settings.ANTHROPIC_MODEL,
             "max_tokens": 2000,
             "system": REVIEW_SYSTEM_PROMPT,
             "messages": [{"role": "user", "content": content_text[:50000]}],
@@ -118,7 +117,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                     "PDF or DOCX, or a .txt file."
                 ),
                 status="completed",
-                model_version=ANTHROPIC_MODEL,
+                model_version=settings.ANTHROPIC_MODEL,
             )
             document.status = "failed"
             document.save(update_fields=["status"])
@@ -136,7 +135,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
             risk_score=result.get("risk_score"),
             risk_summary=result.get("risk_summary", ""),
             status="completed",
-            model_version=ANTHROPIC_MODEL,
+            model_version=settings.ANTHROPIC_MODEL,
         )
         for finding in result.get("findings", [])[:8]:
             risk_level = finding.get("risk_level") if finding.get("risk_level") in VALID_RISK_LEVELS else "low"

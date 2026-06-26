@@ -156,6 +156,10 @@ REST_FRAMEWORK = {
 # Clerk — JWT verification (see organizations/authentication.py)
 CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
 CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
+# Optional expected audience. Clerk's default session tokens carry no `aud`
+# claim, so audience is only enforced when this is set (e.g. a custom JWT
+# template). When set, a token with a missing/wrong `aud` is rejected.
+CLERK_JWT_AUDIENCE = os.environ.get("CLERK_JWT_AUDIENCE", "")
 
 # AWS S3 — document storage
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "")
@@ -168,6 +172,9 @@ PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "")
 
 # Anthropic — AI Legal Assistant (direct model call, no retrieval/RAG pipeline yet)
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+# Model name is a non-secret, env-configurable setting so it can be upgraded
+# without a code change. Defaults to the contract-review model.
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 
 # Fernet key used to encrypt per-org SMTP passwords at rest. In dev this falls
 # back to a key derived from SECRET_KEY (see compliance/crypto.py); production
