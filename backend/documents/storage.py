@@ -111,3 +111,10 @@ def create_download_url(key: str) -> str:
         Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": key},
         ExpiresIn=settings.AWS_S3_PRESIGN_EXPIRY,
     )
+
+
+def fetch_object_bytes(key: str) -> bytes:
+    """Read a stored object's bytes server-side (used by the OCR fallback to
+    run scanned PDFs through Azure). Raises StorageError on failure."""
+    response = _client().get_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+    return response["Body"].read()
