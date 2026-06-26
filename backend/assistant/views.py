@@ -13,8 +13,6 @@ from documents.models import Document
 from .models import ChatMessage, ChatSession
 from .serializers import ChatMessageSerializer, ChatSessionSerializer
 
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-
 # Cap the document text injected as context so a large contract can't blow past
 # the model's input budget; the review engine uses the same ceiling.
 MAX_DOCUMENT_CONTEXT_CHARS = 40000
@@ -56,7 +54,7 @@ def _ask_claude(messages: list[dict], document_text: str = "") -> str:
     system = _build_system_prompt(document_text)
     body = json.dumps(
         {
-            "model": ANTHROPIC_MODEL,
+            "model": settings.ANTHROPIC_MODEL,
             "max_tokens": 600,
             "system": system,
             "messages": messages,
