@@ -136,3 +136,22 @@ class AddPlatformAdminCommandTests(TestCase):
 
         call_command("add_platform_admin", clerk_id="user_cmd", email="c@us.com", note="founder")
         self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="user_cmd").exists())
+
+
+class SeedDevAdminCommandTests(TestCase):
+    def test_seeds_org_user_and_platform_admin(self):
+        from django.core.management import call_command
+
+        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com", org_name="Dev Co")
+        org_user = OrgUser.objects.get(clerk_user_id="user_dev")
+        self.assertEqual(org_user.organization.name, "Dev Co")
+        self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="user_dev").exists())
+        self.assertTrue(is_platform_admin(org_user))
+
+    def test_rerun_is_idempotent(self):
+        from django.core.management import call_command
+
+        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com")
+        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com")
+        self.assertEqual(OrgUser.objects.filter(clerk_user_id="user_dev").count(), 1)
+        self.assertEqual(PlatformAdmin.objects.filter(clerk_user_id="user_dev").count(), 1)
