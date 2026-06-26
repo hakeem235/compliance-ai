@@ -145,6 +145,9 @@ export interface Document {
   created_at: string;
   updated_at: string;
   latest_analysis: DocumentAnalysis | null;
+  // Extracted document text. Only returned by the detail endpoint
+  // (omitted from the list response to keep payloads small).
+  content_text?: string;
 }
 
 export type ComplianceEventType = "license_renewal" | "contract_expiry" | "tax_deadline" | "hr_obligation";
@@ -209,11 +212,19 @@ export interface Usage {
   plan: string;
 }
 
+export interface Citation {
+  index: number;
+  source_title: string;
+  source_ref: string;
+  score: number;
+  is_synthetic: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  citations: unknown[];
+  citations: Citation[];
   created_at: string;
 }
 
@@ -286,6 +297,24 @@ export const api = {
       apiPost<Document>("/api/documents/", body, getToken),
     analyze: (id: string, getToken: GetTokenFn) =>
       apiPost<{ detail: string; document_id: string }>(`/api/documents/${id}/analyze/`, {}, getToken),
+    sendEmail: (
+      id: string,
+      body: { subject: string; body: string; recipients: string[] },
+      getToken: GetTokenFn
+    ) => apiPost<{ detail: string; sent: number; recipients: string[] }>(`/api/documents/${id}/send-email/`, body, getToken),
+    // Presigned S3 upload: ask the backend for a PUT URL, upload the file to it
+    // directly, then create the Document with the returned `key` as s3_key.
+    // Returns 503 (ApiError) until S3 storage is configured server-side.
+    uploadUrl: (
+      body: { filename: string; content_type: string },
+      getToken: GetTokenFn
+    ) => apiPost<{ url: string; key: string; content_type: string; expires_in: number }>(
+      "/api/documents/upload-url/",
+      body,
+      getToken
+    ),
+    downloadUrl: (id: string, getToken: GetTokenFn) =>
+      apiGet<{ url: string }>(`/api/documents/${id}/download-url/`, getToken),
   },
   generatedDocuments: {
     list: (getToken: GetTokenFn) => apiGet<GeneratedDocument[]>("/api/generated-documents/", getToken),

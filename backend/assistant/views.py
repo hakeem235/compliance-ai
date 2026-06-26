@@ -13,8 +13,6 @@ from documents.models import Document
 from .models import ChatMessage, ChatSession
 from .serializers import ChatMessageSerializer, ChatSessionSerializer
 
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-
 # Cap the document text injected as context so a large contract can't blow past
 # the model's input budget; the review engine uses the same ceiling.
 MAX_DOCUMENT_CONTEXT_CHARS = 40000
@@ -33,30 +31,40 @@ DISCLAIMER = (
 )
 
 
-def _build_system_prompt(document_text: str = "") -> str:
-    """Base system prompt, optionally grounded in an uploaded document.
+def _build_system_prompt(document_text: str = "", knowledge_context: str = "") -> str:
+    """Base system prompt, optionally grounded in an uploaded document and/or
+    retrieved knowledge-base passages.
 
-    When document text is present it's injected (capped) so the assistant can
-    quote/reference real clauses instead of claiming it has no access. This is
-    direct context injection, not RAG retrieval.
+    Document text is injected (capped) so the assistant can quote real clauses.
+    Knowledge context comes from RAG retrieval over the legal corpus; the model
+    is told to ground its answer in it and cite by the bracketed [n] indices.
     """
-    if not document_text:
-        return SYSTEM_PROMPT
-    return (
-        SYSTEM_PROMPT
-        + "\n\nThe user is asking about the following document they uploaded. "
-        "Use its actual content to answer; quote or reference specific parts "
-        "where helpful.\n\n--- DOCUMENT START ---\n"
-        + document_text[:MAX_DOCUMENT_CONTEXT_CHARS]
-        + "\n--- DOCUMENT END ---"
-    )
+    prompt = SYSTEM_PROMPT
+    if knowledge_context:
+        prompt += (
+            "\n\nThe following reference passages were retrieved from the "
+            "knowledge base. Ground your answer in them and cite the relevant "
+            "ones by their bracketed number, e.g. [1]. If they don't cover the "
+            "question, say so rather than guessing.\n\n--- REFERENCES START ---\n"
+            + knowledge_context
+            + "\n--- REFERENCES END ---"
+        )
+    if document_text:
+        prompt += (
+            "\n\nThe user is asking about the following document they uploaded. "
+            "Use its actual content to answer; quote or reference specific parts "
+            "where helpful.\n\n--- DOCUMENT START ---\n"
+            + document_text[:MAX_DOCUMENT_CONTEXT_CHARS]
+            + "\n--- DOCUMENT END ---"
+        )
+    return prompt
 
 
-def _ask_claude(messages: list[dict], document_text: str = "") -> str:
-    system = _build_system_prompt(document_text)
+def _ask_claude(messages: list[dict], document_text: str = "", knowledge_context: str = "") -> str:
+    system = _build_system_prompt(document_text, knowledge_context)
     body = json.dumps(
         {
-            "model": ANTHROPIC_MODEL,
+            "model": settings.ANTHROPIC_MODEL,
             "max_tokens": 600,
             "system": system,
             "messages": messages,
@@ -111,6 +119,15 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             if document:
                 document_text = document.content_text or ""
 
+        # RAG: retrieve relevant knowledge-base passages for this question and
+        # ground the answer in them. Returns no hits (and no citations) when the
+        # corpus is empty or nothing clears the relevance floor.
+        from . import rag
+
+        hits = rag.retrieve(question)
+        knowledge_context = rag.build_context(hits)
+        citations = rag.citations_from_hits(hits)
+
         # Send the full conversation so far so follow-up questions keep context.
         history = [
             {"role": m.role, "content": m.content}
@@ -119,7 +136,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         ]
 
         try:
-            answer = _ask_claude(history, document_text=document_text)
+            answer = _ask_claude(history, document_text=document_text, knowledge_context=knowledge_context)
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
             return Response(
                 {"detail": "AI assistant is temporarily unavailable. Please try again."},
@@ -130,9 +147,9 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             chat_session=session,
             role="assistant",
             content=answer + DISCLAIMER,
-            # No retrieval/RAG pipeline yet (Pinecone unprovisioned) — answers are a direct
-            # model call, not grounded in retrieved source documents, so no real citations.
-            citations=[],
+            # Citations from RAG retrieval over the legal corpus. Empty when
+            # nothing relevant was retrieved (e.g. corpus not yet seeded).
+            citations=citations,
         )
         if not session.title:
             session.title = question[:80]

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
 import { Database, Loader2, ShieldAlert } from "lucide-react";
 import { api, ApiError, type AdminStats, type AuditLogEntry } from "@/lib/api";
+import { EmailConfigCard } from "@/components/email-config-card";
 
 const JURISDICTIONS = [
   { key: "saudiLive", active: true },
@@ -133,8 +134,10 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* knowledge base + roadmap */}
+        {/* email config + knowledge base + roadmap */}
         <div className="flex flex-col gap-[18px]">
+          <EmailConfigCard />
+
           <div className="rounded-[14px] border border-border bg-card p-[18px]">
             <div className="mb-3.5 flex items-center gap-2">
               <Database className="size-[17px] text-primary" strokeWidth={1.7} />
