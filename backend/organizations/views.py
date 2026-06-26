@@ -15,9 +15,15 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from backoffice.permissions import is_platform_admin
+
         user = request.user
         data = OrgUserSerializer(user).data
         data["organization_name"] = user.organization.name
+        # Surfaced so the frontend can show/hide the platform back-office nav.
+        # The flag is advisory only — every back-office endpoint re-checks
+        # IsPlatformAdmin server-side, so spoofing it grants nothing.
+        data["is_platform_admin"] = is_platform_admin(user)
         return Response(data)
 
 
