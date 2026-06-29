@@ -56,6 +56,12 @@ class OrgEmailConfig(models.Model):
     use_tls = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @classmethod
+    def for_org(cls, organization_id) -> "OrgEmailConfig | None":
+        """The org's SMTP config, or None. Centralizes the tenant-scoped lookup
+        used by the views and the reminder command."""
+        return cls.objects.filter(organization_id=organization_id).first()
+
     def set_password(self, raw: str) -> None:
         self.password_encrypted = encrypt_secret(raw) if raw else ""
 

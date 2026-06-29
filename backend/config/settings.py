@@ -6,14 +6,24 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key-do-not-use-in-prod")
+_INSECURE_SECRET_KEY = "dev-only-insecure-key-do-not-use-in-prod"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", _INSECURE_SECRET_KEY)
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
+
+# Fail closed in production: never boot with the dev fallback key when DEBUG is
+# off. Without this, a missing DJANGO_SECRET_KEY silently ships an insecure key
+# (signing sessions/CSRF/password-reset tokens with a value that's public in git).
+if not DEBUG and SECRET_KEY == _INSECURE_SECRET_KEY:
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY must be set to a unique secret when DEBUG is off."
+    )
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
