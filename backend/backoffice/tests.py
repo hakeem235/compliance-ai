@@ -161,9 +161,9 @@ class BackofficeCompleteFeatureTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.org = Organization.objects.create(name="Delta")
-        self.admin = _make_org_user(self.org, "admin_d", email="ops@us.com")
-        self.member = _make_org_user(self.org, "member_d", role="member", email="m@delta.com")
-        PlatformAdmin.objects.create(clerk_user_id="admin_d")
+        self.admin = _make_org_user(self.org, "ops@us.com")
+        self.member = _make_org_user(self.org, "m@delta.com", role="member")
+        PlatformAdmin.objects.create(org_user=self.admin)
         self.client.force_authenticate(user=self.admin)
 
     def test_suspend_and_restore(self):
@@ -228,15 +228,17 @@ class BackofficeCompleteFeatureTests(TestCase):
         self.assertTrue(all(log["metadata"].get("platform_action") for log in r.json()))
 
     def test_manage_platform_admins(self):
-        r = self.client.post("/api/backoffice/admins/", {"clerk_user_id": "new_staff", "email": "s@us.com"}, format="json")
+        # The new staff member must have an account before being granted access.
+        staff = _make_org_user(self.org, "s@us.com", role="member")
+        r = self.client.post("/api/backoffice/admins/", {"email": "s@us.com"}, format="json")
         self.assertEqual(r.status_code, 201)
-        self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="new_staff").exists())
+        self.assertTrue(PlatformAdmin.objects.filter(org_user=staff).exists())
         new_id = r.json()["id"]
         r = self.client.delete(f"/api/backoffice/admins/{new_id}/")
         self.assertEqual(r.status_code, 204)
 
     def test_cannot_remove_last_platform_admin(self):
-        only = PlatformAdmin.objects.get(clerk_user_id="admin_d")
+        only = PlatformAdmin.objects.get(org_user=self.admin)
         r = self.client.delete(f"/api/backoffice/admins/{only.id}/")
         self.assertEqual(r.status_code, 400)
 
@@ -245,16 +247,17 @@ class SuspensionEnforcementTests(TestCase):
     def test_suspended_org_member_is_blocked_at_auth(self):
         from rest_framework import exceptions
 
-        from organizations.authentication import ClerkJWTAuthentication
+        from organizations.authentication import JWTAuthentication, make_token
 
         org = Organization.objects.create(name="Suspended Inc", is_suspended=True)
-        OrgUser.objects.create(organization=org, clerk_user_id="blocked_user", email="b@x.com")
-        auth = ClerkJWTAuthentication()
-        with mock.patch.object(auth, "_verify_token", return_value={"sub": "blocked_user"}):
-            req = mock.Mock(headers={"Authorization": "Bearer t"})
-            with override_settings(CLERK_SECRET_KEY="x", CLERK_JWT_ISSUER="https://i"):
-                with self.assertRaises(exceptions.AuthenticationFailed):
-                    auth.authenticate(req)
+        blocked = OrgUser(organization=org, email="b@x.com")
+        blocked.set_password("password123")
+        blocked.save()
+
+        auth = JWTAuthentication()
+        req = mock.Mock(headers={"Authorization": f"Bearer {make_token(blocked)}"})
+        with self.assertRaises(exceptions.AuthenticationFailed):
+            auth.authenticate(req)
 
 
 class AddPlatformAdminCommandTests(TestCase):
