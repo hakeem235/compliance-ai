@@ -74,23 +74,48 @@ def _activate(sub: Subscription, plan_key: str, payment_id: str) -> None:
     sub.save()
 
 
+def _assert_not_replayed(payment_id: str) -> None:
+    """A given Moyasar payment may activate a plan only once."""
+    if Subscription.objects.filter(stripe_subscription_id=str(payment_id)).exists():
+        raise BillingError("This payment has already been processed.")
+
+
+def _verify_payment(payment: dict, plan_key: str, organization_id) -> None:
+    """Validate a fetched/received Moyasar payment against the plan and org.
+    Rejects unpaid, wrong-amount/currency, and cross-org/plan tampering — the
+    amount lives client-side in Moyasar.js, so it must be re-checked here."""
+    plan = PLANS.get(plan_key)
+    if not plan or not plan.get("price_sar"):
+        raise BillingError("Unknown plan.")
+    if (payment.get("status") or "").lower() not in _PAID_STATUSES:
+        raise BillingError(f"Payment is not completed (status: {payment.get('status') or 'unknown'}).")
+    if payment.get("amount") != int(plan["price_sar"]) * 100 or (payment.get("currency") or "") != "SAR":
+        raise BillingError("Payment amount/currency does not match the plan.")
+    metadata = payment.get("metadata") or {}
+    if str(metadata.get("organization_id") or "") != str(organization_id) or metadata.get("plan") != plan_key:
+        raise BillingError("Payment does not belong to this organization/plan.")
+
+
 def confirm_payment(organization, plan_key: str, payment_id: str) -> None:
-    """Activate the plan after a Moyasar payment. Verifies the payment server-side
-    when the secret key is configured; otherwise (publishable-only) trusts the
-    redirect — fine for dev/test, but set MOYASAR_SECRET_KEY for production."""
+    """Activate the plan after a Moyasar in-page payment. The payment is ALWAYS
+    verified server-side against Moyasar (status, amount, currency, org/plan
+    binding) and checked for replay — confirmation requires MOYASAR_SECRET_KEY."""
     plan = PLANS.get(plan_key)
     if not plan or not plan.get("price_sar"):
         raise ValueError("Unknown plan.")
     if not payment_id:
         raise ValueError("A payment id is required.")
+    if not settings.MOYASAR_SECRET_KEY:
+        # Without the secret key we cannot verify the payment is real/paid, so we
+        # must NOT activate — refusing beats a free-plan bypass.
+        raise BillingNotConfigured(
+            "Payment confirmation requires MOYASAR_SECRET_KEY (the publishable key can render the "
+            "form but cannot verify payments server-side)."
+        )
 
-    if settings.MOYASAR_SECRET_KEY:
-        payment = _get_payment(payment_id)
-        status = (payment.get("status") or "").lower()
-        if status not in _PAID_STATUSES:
-            raise BillingError(f"Payment is not completed (status: {status or 'unknown'}).")
-        if payment.get("amount") != int(plan["price_sar"]) * 100 or (payment.get("currency") or "") != "SAR":
-            raise BillingError("Payment amount/currency does not match the plan.")
+    payment = _get_payment(payment_id)
+    _verify_payment(payment, plan_key, organization.id)
+    _assert_not_replayed(payment_id)
 
     sub = get_or_create_subscription(organization)
     _activate(sub, plan_key, payment_id)
@@ -112,17 +137,23 @@ def verify_webhook(payload: bytes, signature: str):
 
 
 def apply_subscription_event(event: dict) -> None:
-    """Activate the subscription when a Moyasar payment for a plan succeeds."""
+    """Activate the subscription when a Moyasar payment for a plan succeeds. The
+    webhook is authenticated by secret_token, but the payment amount still comes
+    from a client-set form value, so re-verify amount/plan and block replay."""
     if event.get("type") not in _PAID_EVENTS:
         return
     data = event.get("data") or {}
-    if (data.get("status") or "").lower() not in _PAID_STATUSES:
-        return
     metadata = data.get("metadata") or {}
     org_id = metadata.get("organization_id")
     plan_key = metadata.get("plan")
     if not org_id or plan_key not in PLANS:
         return
     sub = Subscription.objects.filter(organization_id=org_id).first()
-    if sub:
-        _activate(sub, plan_key, data.get("id"))
+    if not sub:
+        return
+    try:
+        _verify_payment(data, plan_key, org_id)
+        _assert_not_replayed(data.get("id"))
+    except BillingError:
+        return  # ignore unpaid/tampered/replayed events rather than 500 the webhook
+    _activate(sub, plan_key, data.get("id"))
