@@ -395,23 +395,28 @@ class PlatformAdminsView(APIView):
 
         return Response(
             [
-                {"id": str(a.id), "clerk_user_id": a.clerk_user_id, "email": a.email, "note": a.note, "created_at": a.created_at.isoformat()}
+                {"id": str(a.id), "org_user": str(a.org_user_id), "email": a.email, "note": a.note, "created_at": a.created_at.isoformat()}
                 for a in PlatformAdmin.objects.all().order_by("created_at")
             ]
         )
 
     def post(self, request):
+        from organizations.models import OrgUser
+
         from .models import PlatformAdmin
 
-        clerk_id = (request.data.get("clerk_user_id") or "").strip()
-        if not clerk_id:
-            return Response({"detail": "clerk_user_id is required."}, status=400)
+        email = (request.data.get("email") or "").strip().lower()
+        if not email:
+            return Response({"detail": "email is required."}, status=400)
+        user = OrgUser.objects.filter(email=email).first()
+        if user is None:
+            return Response({"detail": f"No user with email '{email}'. They must register first."}, status=400)
         admin, _ = PlatformAdmin.objects.update_or_create(
-            clerk_user_id=clerk_id,
-            defaults={"email": (request.data.get("email") or "").strip(), "note": (request.data.get("note") or "").strip()},
+            org_user=user,
+            defaults={"email": email, "note": (request.data.get("note") or "").strip()},
         )
         return Response(
-            {"id": str(admin.id), "clerk_user_id": admin.clerk_user_id, "email": admin.email, "note": admin.note},
+            {"id": str(admin.id), "org_user": str(admin.org_user_id), "email": admin.email, "note": admin.note},
             status=201,
         )
 

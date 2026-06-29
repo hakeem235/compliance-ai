@@ -46,26 +46,6 @@ class JWTAuthentication(authentication.BaseAuthentication):
 
         token = auth_header.removeprefix("Bearer ").strip()
         try:
-            org_user = OrgUser.objects.select_related("organization").get(clerk_user_id=sub)
-        except OrgUser.DoesNotExist:
-            raise exceptions.AuthenticationFailed("No matching organization member for this session.")
-
-        # A suspended client org is blocked at the door: its members can't use
-        # the API at all. Platform staff are unaffected (their own org isn't
-        # suspended), so they can still manage/restore the suspended client.
-        if org_user.organization.is_suspended:
-            raise exceptions.AuthenticationFailed("This organization is suspended. Contact support.")
-
-        return (org_user, token)
-
-    def _verify_token(self, token: str) -> dict:
-        # Audience is only enforced when configured — Clerk's default session
-        # tokens carry no `aud`, so enabling it unconditionally would reject
-        # every valid token. When set, a missing/wrong `aud` is rejected.
-        audience = settings.CLERK_JWT_AUDIENCE or None
-        try:
-            signing_key = _signing_key(settings.CLERK_JWT_ISSUER, token)
-            return jwt.decode(
             claims = jwt.decode(
                 token,
                 settings.SECRET_KEY,
@@ -80,5 +60,11 @@ class JWTAuthentication(authentication.BaseAuthentication):
             org_user = OrgUser.objects.select_related("organization").get(id=claims["sub"])
         except (OrgUser.DoesNotExist, ValueError, KeyError):
             raise exceptions.AuthenticationFailed("No matching user for this session.")
+
+        # A suspended client org is blocked at the door: its members can't use
+        # the API at all. Platform staff are unaffected (their own org isn't
+        # suspended), so they can still manage/restore the suspended client.
+        if org_user.organization.is_suspended:
+            raise exceptions.AuthenticationFailed("This organization is suspended. Contact support.")
 
         return (org_user, token)
