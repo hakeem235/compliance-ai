@@ -24,7 +24,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ComplianceAI",
+  title: "Moutabaq",
   description: "AI-powered contract review and compliance tracking for Saudi businesses.",
 };
 

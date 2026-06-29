@@ -1,5 +1,5 @@
 """
-Django settings for ComplianceAI backend.
+Django settings for Moutabaq backend.
 """
 
 import os

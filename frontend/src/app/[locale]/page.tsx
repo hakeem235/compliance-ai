@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { AiDisclaimer } from "@/components/citation-chip";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PricingPlans } from "@/components/pricing-plans";
@@ -24,21 +25,16 @@ const RISK_ITEMS = [
 
 export default function LandingPage() {
   const t = useTranslations("Landing");
+  const tb = useTranslations("Brand");
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <nav className="mx-auto flex h-[66px] max-w-[1200px] items-center gap-3.5 border-b border-border px-10">
-        <div
-          className="flex size-8 items-center justify-center rounded-[9px]"
-          style={{ background: "linear-gradient(150deg,#1F8A5B,#34D399)" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z" fill="#063124" />
-            <path d="m8.5 12 2.4 2.4L16 9.3" stroke="#5BD6A0" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div className="relative size-8 flex-none overflow-hidden rounded-[9px] bg-white ring-1 ring-border">
+          <Image src="/logo.jpg" alt={`${tb("name")} logo`} fill sizes="32px" className="object-cover" priority />
         </div>
         <div className="text-base font-bold tracking-tight">
-          Compliance<span className="text-accent">AI</span>
+          {tb("name")}
         </div>
         <div className="flex-1" />
         <a href="#product" className="cursor-pointer text-[13px] font-medium text-muted-foreground hover:text-foreground">
