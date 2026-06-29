@@ -1,4 +1,7 @@
 {
+  "Brand": {
+    "name": "Moutabaq"
+  },
   "Landing": {
     "nav": {
       "product": "Product",
@@ -63,8 +66,8 @@
       "heading": "Frequently asked questions",
       "items": [
         {
-          "q": "Is SaudiGRC a substitute for a lawyer?",
-          "a": "No. SaudiGRC's contract analysis, risk scoring, and assistant answers are informational only and do not constitute legal advice. Always consult a licensed lawyer before acting on AI output."
+          "q": "Is Moutabaq a substitute for a lawyer?",
+          "a": "No. Moutabaq's contract analysis, risk scoring, and assistant answers are informational only and do not constitute legal advice. Always consult a licensed lawyer before acting on AI output."
         },
         {
           "q": "Is my data stored in Saudi Arabia?",
@@ -72,7 +75,7 @@
         },
         {
           "q": "Which languages does the platform support?",
-          "a": "SaudiGRC is fully bilingual — English and Arabic, including right-to-left layout — across the marketing site and the product."
+          "a": "Moutabaq is fully bilingual — English and Arabic, including right-to-left layout — across the marketing site and the product."
         },
         {
           "q": "Can I cancel my subscription at any time?",
@@ -699,11 +702,11 @@
     "sections": [
       {
         "title": "1. Acceptance of terms",
-        "body": "By accessing or using SaudiGRC, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
+        "body": "By accessing or using Moutabaq, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
       },
       {
         "title": "2. Description of service",
-        "body": "SaudiGRC provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
+        "body": "Moutabaq provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
       },
       {
         "title": "3. Not legal advice",
@@ -723,11 +726,11 @@
       },
       {
         "title": "7. Intellectual property",
-        "body": "The platform, its design and underlying technology are owned by SaudiGRC. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
+        "body": "The platform, its design and underlying technology are owned by Moutabaq. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
       },
       {
         "title": "8. Limitation of liability",
-        "body": "SaudiGRC is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
+        "body": "Moutabaq is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
       },
       {
         "title": "9. Termination",

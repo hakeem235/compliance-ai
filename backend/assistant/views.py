@@ -18,7 +18,7 @@ from .serializers import ChatMessageSerializer, ChatSessionSerializer
 MAX_DOCUMENT_CONTEXT_CHARS = 40000
 
 SYSTEM_PROMPT = (
-    "You are the AI Legal Assistant inside SaudiGRC, a contract-review and compliance "
+    "You are the AI Legal Assistant inside Moutabaq, a contract-review and compliance "
     "platform for businesses operating in Saudi Arabia. Answer questions about Saudi "
     "commercial law, labor law, and the Personal Data Protection Law (PDPL) in clear, "
     "practical terms. You are not a lawyer; never claim to give legal advice. Keep answers "
@@ -26,7 +26,7 @@ SYSTEM_PROMPT = (
 )
 
 DISCLAIMER = (
-    "\n\nSaudiGRC provides AI-assisted guidance and does not constitute legal advice. "
+    "\n\nMoutabaq provides AI-assisted guidance and does not constitute legal advice. "
     "Consult a licensed attorney for legal decisions."
 )
 

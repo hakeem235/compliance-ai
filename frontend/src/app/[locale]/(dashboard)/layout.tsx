@@ -12,6 +12,7 @@ import { SidebarCredits } from "@/components/sidebar-credits";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("DashboardLayout");
+  const tb = useTranslations("Brand");
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
@@ -24,11 +25,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="relative size-[34px] flex-none overflow-hidden rounded-[9px] bg-white"
             style={{ boxShadow: "0 2px 8px rgba(31,138,91,0.4)" }}
           >
-            <Image src="/logo.jpg" alt="SaudiGRC logo" fill sizes="34px" className="object-cover" priority />
+            <Image src="/logo.jpg" alt={`${tb("name")} logo`} fill sizes="34px" className="object-cover" priority />
           </div>
           <div className="leading-[1.05]">
             <div className="text-base font-bold tracking-tight">
-              Saudi<span className="text-[#5BD6A0]">GRC</span>
+              {tb("name")}
             </div>
             <div className="text-[10px] font-medium tracking-wide text-sidebar-foreground-muted">
               {t("brandSubtitle")}

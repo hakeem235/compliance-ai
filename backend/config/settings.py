@@ -1,5 +1,5 @@
 """
-Django settings for SaudiGRC backend.
+Django settings for Moutabaq backend.
 """
 
 import os

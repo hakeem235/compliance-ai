@@ -25,15 +25,16 @@ const RISK_ITEMS = [
 
 export default function LandingPage() {
   const t = useTranslations("Landing");
+  const tb = useTranslations("Brand");
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <nav className="mx-auto flex h-[66px] max-w-[1200px] items-center gap-3.5 border-b border-border px-10">
         <div className="relative size-8 flex-none overflow-hidden rounded-[9px] bg-white ring-1 ring-border">
-          <Image src="/logo.jpg" alt="SaudiGRC logo" fill sizes="32px" className="object-cover" priority />
+          <Image src="/logo.jpg" alt={`${tb("name")} logo`} fill sizes="32px" className="object-cover" priority />
         </div>
         <div className="text-base font-bold tracking-tight">
-          Saudi<span className="text-accent">GRC</span>
+          {tb("name")}
         </div>
         <div className="flex-1" />
         <a href="#product" className="cursor-pointer text-[13px] font-medium text-muted-foreground hover:text-foreground">
