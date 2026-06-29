@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@/components/auth";
 import { ShieldCheck, Sparkles, CalendarDays, MessagesSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { SignedIn, SignedOut, SignUpButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignUpButton } from "@/components/auth";
 import { Check } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { PLANS } from "@/lib/plans";

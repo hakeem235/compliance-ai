@@ -9,11 +9,13 @@ import { OrgSwitcher } from "@/components/org-switcher";
 import { LanguageToggleButton } from "@/components/language-toggle-button";
 import { TopbarUser } from "@/components/topbar-user";
 import { SidebarCredits } from "@/components/sidebar-credits";
+import { RequireAuth } from "@/components/auth";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("DashboardLayout");
   const tb = useTranslations("Brand");
   return (
+    <RequireAuth>
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
       <aside className="flex h-screen w-[248px] flex-none flex-col border-e border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -77,5 +79,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="ca-scroll min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
+    </RequireAuth>
   );
 }

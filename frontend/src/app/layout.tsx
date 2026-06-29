@@ -1,5 +1,4 @@
-import {ClerkProvider} from "@clerk/nextjs";
-import { shadcn } from "@clerk/ui/themes";
+import { AuthProvider } from "@/components/auth";
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic, IBM_Plex_Mono } from "next/font/google";
 import { getLocale } from "next-intl/server";
@@ -49,9 +48,9 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ClerkProvider appearance={{ theme: shadcn }}>
+        <AuthProvider>
           <TooltipProvider>{children}</TooltipProvider>
-        </ClerkProvider>
+        </AuthProvider>
       </body>
     </html>
   );

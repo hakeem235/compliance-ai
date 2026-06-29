@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { Link } from "@/i18n/navigation";
 import { api, type Usage } from "@/lib/api";
 

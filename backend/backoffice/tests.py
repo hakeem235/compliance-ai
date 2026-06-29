@@ -11,16 +11,19 @@ from .models import PlatformAdmin
 from .permissions import is_platform_admin
 
 
-def _make_org_user(org, clerk_id, role="owner", email="u@x.com"):
-    return OrgUser.objects.create(organization=org, clerk_user_id=clerk_id, role=role, email=email)
+def _make_org_user(org, email, role="owner"):
+    user = OrgUser(organization=org, role=role, email=email)
+    user.set_password("password123")
+    user.save()
+    return user
 
 
 class PlatformAdminPermissionTests(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(name="Acme")
-        self.regular = _make_org_user(self.org, "user_regular", role="owner")
-        self.staff = _make_org_user(self.org, "user_staff", role="member", email="staff@us.com")
-        PlatformAdmin.objects.create(clerk_user_id="user_staff", email="staff@us.com")
+        self.regular = _make_org_user(self.org, "regular@x.com", role="owner")
+        self.staff = _make_org_user(self.org, "staff@us.com", role="member")
+        PlatformAdmin.objects.create(org_user=self.staff, email="staff@us.com")
 
     def test_regular_org_owner_is_not_platform_admin(self):
         # Being an org owner/admin grants NO platform access — separate boundary.
@@ -29,9 +32,9 @@ class PlatformAdminPermissionTests(TestCase):
     def test_listed_user_is_platform_admin(self):
         self.assertTrue(is_platform_admin(self.staff))
 
-    @override_settings(PLATFORM_ADMIN_CLERK_IDS="user_bootstrap")
+    @override_settings(PLATFORM_ADMIN_EMAILS="bootstrap@us.com")
     def test_bootstrap_env_allowlist_grants_access(self):
-        u = _make_org_user(self.org, "user_bootstrap", email="b@us.com")
+        u = _make_org_user(self.org, "bootstrap@us.com")
         self.assertTrue(is_platform_admin(u))
 
     def test_none_user_denied(self):
@@ -43,9 +46,9 @@ class BackofficeApiSecurityTests(TestCase):
         self.client = APIClient()
         self.org_a = Organization.objects.create(name="Alpha Corp")
         self.org_b = Organization.objects.create(name="Beta LLC")
-        self.regular = _make_org_user(self.org_a, "regular_1", role="owner")
-        self.admin = _make_org_user(self.org_a, "admin_1", role="member", email="ops@us.com")
-        PlatformAdmin.objects.create(clerk_user_id="admin_1")
+        self.regular = _make_org_user(self.org_a, "regular@a.com", role="owner")
+        self.admin = _make_org_user(self.org_a, "ops@us.com", role="member")
+        PlatformAdmin.objects.create(org_user=self.admin)
 
     def test_non_platform_admin_gets_403_on_clients(self):
         self.client.force_authenticate(user=self.regular)
@@ -88,8 +91,8 @@ class BackofficeMutationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.org = Organization.objects.create(name="Gamma")
-        self.admin = _make_org_user(self.org, "admin_x", email="ops@us.com")
-        PlatformAdmin.objects.create(clerk_user_id="admin_x")
+        self.admin = _make_org_user(self.org, "ops@us.com")
+        PlatformAdmin.objects.create(org_user=self.admin)
         self.client.force_authenticate(user=self.admin)
 
     def test_change_plan_calls_service_and_audits(self):
@@ -134,24 +137,27 @@ class AddPlatformAdminCommandTests(TestCase):
     def test_command_creates_platform_admin(self):
         from django.core.management import call_command
 
-        call_command("add_platform_admin", clerk_id="user_cmd", email="c@us.com", note="founder")
-        self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="user_cmd").exists())
+        org = Organization.objects.create(name="Cmd Co")
+        _make_org_user(org, "c@us.com")
+        call_command("add_platform_admin", email="c@us.com", note="founder")
+        self.assertTrue(PlatformAdmin.objects.filter(email="c@us.com").exists())
 
 
 class SeedDevAdminCommandTests(TestCase):
     def test_seeds_org_user_and_platform_admin(self):
         from django.core.management import call_command
 
-        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com", org_name="Dev Co")
-        org_user = OrgUser.objects.get(clerk_user_id="user_dev")
+        call_command("seed_dev_admin", email="dev@x.com", password="password123", org_name="Dev Co")
+        org_user = OrgUser.objects.get(email="dev@x.com")
         self.assertEqual(org_user.organization.name, "Dev Co")
-        self.assertTrue(PlatformAdmin.objects.filter(clerk_user_id="user_dev").exists())
+        self.assertTrue(PlatformAdmin.objects.filter(org_user=org_user).exists())
         self.assertTrue(is_platform_admin(org_user))
+        self.assertTrue(org_user.check_password("password123"))
 
     def test_rerun_is_idempotent(self):
         from django.core.management import call_command
 
-        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com")
-        call_command("seed_dev_admin", clerk_id="user_dev", email="dev@x.com")
-        self.assertEqual(OrgUser.objects.filter(clerk_user_id="user_dev").count(), 1)
-        self.assertEqual(PlatformAdmin.objects.filter(clerk_user_id="user_dev").count(), 1)
+        call_command("seed_dev_admin", email="dev@x.com", password="password123")
+        call_command("seed_dev_admin", email="dev@x.com", password="password123")
+        self.assertEqual(OrgUser.objects.filter(email="dev@x.com").count(), 1)
+        self.assertEqual(PlatformAdmin.objects.filter(org_user__email="dev@x.com").count(), 1)
