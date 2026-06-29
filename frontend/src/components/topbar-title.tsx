@@ -22,7 +22,7 @@ export function TopbarTitle() {
     ? TITLES[matchKey]
     : pathname.startsWith("/review/")
       ? ["Analysis Results", "AI contract review & risk assessment"]
-      : ["ComplianceAI", ""];
+      : ["SaudiGRC", ""];
 
   return (
     <div className="min-w-0">

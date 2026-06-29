@@ -32,7 +32,7 @@ export function AiDisclaimer({ className }: { className?: string }) {
     >
       <Info className="size-[15px] flex-none text-muted-foreground" aria-hidden="true" />
       <p className="text-[11.5px] leading-[1.4] text-muted-foreground">
-        ComplianceAI provides AI-assisted guidance and does not replace advice from a licensed legal
+        SaudiGRC provides AI-assisted guidance and does not replace advice from a licensed legal
         professional.
       </p>
     </div>

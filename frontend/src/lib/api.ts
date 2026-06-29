@@ -1,5 +1,5 @@
 /**
- * Typed fetch wrapper for the ComplianceAI Django/DRF backend.
+ * Typed fetch wrapper for the SaudiGRC Django/DRF backend.
  *
  * - Reads NEXT_PUBLIC_API_BASE_URL from env.
  * - Attaches the Clerk session JWT as a Bearer header (client-side only —
