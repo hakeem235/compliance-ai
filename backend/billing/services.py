@@ -14,6 +14,17 @@ class BillingNotConfigured(Exception):
     """Raised when Stripe keys/price IDs aren't set in the environment."""
 
 
+def _moyasar():
+    """The Moyasar provider module when BILLING_PROVIDER=moyasar, else None
+    (Stripe is the default). The seam that makes the PSP swappable for the PDPL
+    in-Kingdom-payments fix; Moyasar is a stub until Ahmed approves the swap."""
+    if getattr(settings, "BILLING_PROVIDER", "stripe").lower() == "moyasar":
+        from . import moyasar
+
+        return moyasar
+    return None
+
+
 def _client() -> None:
     if not settings.STRIPE_SECRET_KEY:
         raise BillingNotConfigured("Stripe is not configured (STRIPE_SECRET_KEY missing).")
@@ -39,7 +50,10 @@ def _ensure_customer(sub: Subscription, organization, email: str) -> str:
 
 
 def create_checkout_session(organization, plan_key: str, email: str) -> str:
-    """Create a Stripe Checkout Session for a plan; returns the redirect URL."""
+    """Create a checkout session for a plan; returns the redirect URL."""
+    provider = _moyasar()
+    if provider:
+        return provider.create_checkout_session(organization, plan_key, email)
     _client()
     price_id = price_id_for(plan_key)
     if not price_id:
@@ -58,7 +72,10 @@ def create_checkout_session(organization, plan_key: str, email: str) -> str:
 
 
 def create_portal_session(organization) -> str:
-    """Create a Stripe billing-portal session; returns the redirect URL."""
+    """Create a billing-portal session; returns the redirect URL."""
+    provider = _moyasar()
+    if provider:
+        return provider.create_portal_session(organization)
     _client()
     sub = get_or_create_subscription(organization)
     if not sub.stripe_customer_id:
@@ -71,7 +88,10 @@ def create_portal_session(organization) -> str:
 
 
 def verify_webhook(payload: bytes, signature: str):
-    """Verify a Stripe webhook signature and return the parsed event."""
+    """Verify a webhook signature and return the parsed event."""
+    provider = _moyasar()
+    if provider:
+        return provider.verify_webhook(payload, signature)
     if not settings.STRIPE_WEBHOOK_SECRET:
         raise BillingNotConfigured("Stripe webhook secret not configured.")
     return stripe.Webhook.construct_event(payload, signature, settings.STRIPE_WEBHOOK_SECRET)
@@ -82,7 +102,10 @@ def _period_end(epoch) -> datetime | None:
 
 
 def apply_subscription_event(stripe_subscription: dict) -> None:
-    """Sync a Stripe subscription object onto our Subscription row."""
+    """Sync a subscription object onto our Subscription row."""
+    provider = _moyasar()
+    if provider:
+        return provider.apply_subscription_event(stripe_subscription)
     customer_id = stripe_subscription.get("customer")
     sub = Subscription.objects.filter(stripe_customer_id=customer_id).first()
     if not sub:
