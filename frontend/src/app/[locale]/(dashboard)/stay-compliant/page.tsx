@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { ChevronLeft, ChevronRight, BellRing, Loader2, AlertTriangle, Plus, X } from "lucide-react";
 import {
   api,

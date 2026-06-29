@@ -2,6 +2,26 @@
   "Brand": {
     "name": "Moutabaq"
   },
+  "Auth": {
+    "marketingTitle": "Compliance confidence, built for the Kingdom.",
+    "marketingBody": "Join SMEs, startups and legal teams using AI to review contracts and stay compliant with Saudi regulations.",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to your account to continue.",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "Start reviewing contracts in minutes.",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "fullName": "Full name",
+    "organizationName": "Organization name",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating account…",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "genericError": "Something went wrong. Please try again."
+  },
   "Landing": {
     "nav": {
       "product": "Product",

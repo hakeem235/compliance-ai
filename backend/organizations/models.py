@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 
 
@@ -23,10 +24,12 @@ class OrgUser(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    clerk_user_id = models.CharField(max_length=255, unique=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="member")
-    email = models.EmailField()
+    # Email is the login identifier — unique across the platform.
+    email = models.EmailField(unique=True)
+    # Django-hashed password (PBKDF2 by default). Never stored in plaintext.
+    password = models.CharField(max_length=255, blank=True, default="")
     name = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -34,6 +37,17 @@ class OrgUser(models.Model):
     def __str__(self):
         return f"{self.email} ({self.organization.name})"
 
+    def set_password(self, raw_password: str) -> None:
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password: str) -> bool:
+        return bool(self.password) and check_password(raw_password, self.password)
+
+    # DRF treats the authenticated user as truthy + authenticated.
     @property
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
         return True
+
+    @property
+    def is_anonymous(self) -> bool:
+        return False

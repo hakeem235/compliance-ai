@@ -139,7 +139,7 @@ CORS_ALLOWED_ORIGINS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "organizations.authentication.ClerkJWTAuthentication",
+        "organizations.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -154,18 +154,14 @@ REST_FRAMEWORK = {
     },
 }
 
-# Clerk — JWT verification (see organizations/authentication.py)
-CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
-CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
-# Optional expected audience. Clerk's default session tokens carry no `aud`
-# claim, so audience is only enforced when this is set (e.g. a custom JWT
-# template). When set, a token with a missing/wrong `aud` is rejected.
-CLERK_JWT_AUDIENCE = os.environ.get("CLERK_JWT_AUDIENCE", "")
+# Auth — app-issued session JWTs (see organizations/authentication.py). Tokens
+# are signed with SECRET_KEY (HS256); this controls how long they stay valid.
+AUTH_TOKEN_TTL_HOURS = int(os.environ.get("AUTH_TOKEN_TTL_HOURS", "168"))  # 7 days
 
-# Platform back-office: bootstrap allowlist of Clerk user ids granted
-# cross-tenant platform-admin access before any PlatformAdmin row exists.
-# Comma-separated. Prefer the `add_platform_admin` command for the durable list.
-PLATFORM_ADMIN_CLERK_IDS = os.environ.get("PLATFORM_ADMIN_CLERK_IDS", "")
+# Platform back-office: bootstrap allowlist of user emails granted cross-tenant
+# platform-admin access before any PlatformAdmin row exists. Comma-separated.
+# Prefer the `add_platform_admin` command for the durable list.
+PLATFORM_ADMIN_EMAILS = os.environ.get("PLATFORM_ADMIN_EMAILS", "")
 
 # AWS S3 — document storage. Uploads/downloads use short-lived presigned URLs;
 # the app holds these credentials, the browser never sees them. Inert until all
