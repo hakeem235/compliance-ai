@@ -221,7 +221,9 @@ export interface PlanCatalogItem {
 export interface BillingState {
   subscription: Subscription;
   plans: PlanCatalogItem[];
-  stripe_enabled: boolean;
+  provider: string;
+  billing_enabled: boolean;
+  portal_supported: boolean;
 }
 
 export interface Usage {
@@ -511,6 +513,8 @@ export const api = {
   billing: {
     get: (getToken: GetTokenFn) => apiGet<BillingState>("/api/billing/", getToken),
     checkout: (plan: PlanKey, getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/checkout/", { plan }, getToken),
+    confirm: (plan: string, paymentId: string, getToken: GetTokenFn) =>
+      apiPost<{ status: string; plan: string }>("/api/billing/confirm/", { plan, payment_id: paymentId }, getToken),
     portal: (getToken: GetTokenFn) => apiPost<{ url: string }>("/api/billing/portal/", {}, getToken),
   },
 };

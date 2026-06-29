@@ -232,12 +232,22 @@ VERTEX_LOCATION = os.environ.get("VERTEX_LOCATION", "me-central2")
 VERTEX_EMBED_MODEL = os.environ.get("VERTEX_EMBED_MODEL", "text-embedding-005")
 VERTEX_ACCESS_TOKEN = os.environ.get("VERTEX_ACCESS_TOKEN", "")
 
-# Billing provider selector for the PDPL KSA re-host. "stripe" (default) keeps
-# the existing SAMA-non-aligned path; "moyasar" routes to the in-Kingdom PSP
-# stub (NOT implemented — migration plan only; see docs/PDPL_PROCESSOR_EVALUATION).
-BILLING_PROVIDER = os.environ.get("BILLING_PROVIDER", "stripe")
+# Billing provider. "moyasar" (default) is the in-Kingdom, SAMA-aligned PSP for
+# PDPL; "stripe" stays selectable as a fallback. Moyasar uses the Invoices API
+# (hosted payment page) + a `secret_token` webhook — see billing/moyasar.py.
+BILLING_PROVIDER = os.environ.get("BILLING_PROVIDER", "moyasar")
 MOYASAR_SECRET_KEY = os.environ.get("MOYASAR_SECRET_KEY", "")
 MOYASAR_WEBHOOK_SECRET = os.environ.get("MOYASAR_WEBHOOK_SECRET", "")
+MOYASAR_BASE_URL = os.environ.get("MOYASAR_BASE_URL", "https://api.moyasar.com/v1")
+# Optional per-invoice webhook callback (must be publicly reachable). When blank,
+# rely on a webhook configured in the Moyasar dashboard instead.
+MOYASAR_CALLBACK_URL = os.environ.get("MOYASAR_CALLBACK_URL", "")
+# Where the hosted payment page returns the customer after success/cancel.
+BILLING_RETURN_URL = os.environ.get(
+    "BILLING_RETURN_URL", os.environ.get("STRIPE_BILLING_RETURN_URL", "http://localhost:3000/billing")
+)
+# Frontend base URL — used to build the in-app Moyasar payment page (/pay).
+FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://localhost:3000")
 
 # OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

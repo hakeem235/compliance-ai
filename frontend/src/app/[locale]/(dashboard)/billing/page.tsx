@@ -26,18 +26,43 @@ export default function BillingPage() {
 
   const [billing, setBilling] = useState<BillingState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null); // plan key or "portal" in flight
 
-  useEffect(() => {
-    let active = true;
-    api.billing
+  const loadBilling = useCallback(() => {
+    return api.billing
       .get(tokenFn)
-      .then((b) => active && setBilling(b))
-      .catch((err) => active && setError(err instanceof ApiError ? err.message : t("errorLoad")));
-    return () => {
-      active = false;
-    };
-  }, [tokenFn]);
+      .then(setBilling)
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorLoad")));
+  }, [tokenFn, t]);
+
+  useEffect(() => {
+    loadBilling();
+  }, [loadBilling]);
+
+  // Returning from the Moyasar payment page: callback_url carries ?plan=&id=&status=.
+  // Confirm the payment (server verifies it when the secret key is set), then
+  // clean the URL so a refresh doesn't re-confirm.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const plan = params.get("plan");
+    const status = params.get("status");
+    if (!id || !plan) return;
+
+    const clean = () => window.history.replaceState({}, "", window.location.pathname);
+    if (status && status !== "paid") {
+      setError(t("paymentNotCompleted"));
+      clean();
+      return;
+    }
+    api.billing
+      .confirm(plan, id, tokenFn)
+      .then(() => loadBilling())
+      .then(() => setNotice(t("paymentSuccess")))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorCheckout")))
+      .finally(clean);
+  }, [tokenFn, loadBilling, t]);
 
   const currentPlanKey = billing?.subscription.plan ?? "";
 
@@ -75,6 +100,12 @@ export default function BillingPage() {
           {error}
         </div>
       )}
+      {notice && (
+        <div className="mb-4 flex items-center gap-2 rounded-[10px] border border-[#CDEBDC] bg-[#F4FAF7] px-3.5 py-3 text-[12.5px] text-accent">
+          <Check className="size-3.5 flex-none" strokeWidth={2} />
+          {notice}
+        </div>
+      )}
 
       {/* current plan + usage */}
       <div className="mb-[18px] grid grid-cols-2 gap-[18px]">
@@ -103,14 +134,16 @@ export default function BillingPage() {
                 {busy === "growth" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
                 {t("upgrade")}
               </button>
-              <button
-                onClick={openPortal}
-                disabled={busy !== null}
-                className="flex h-9 items-center gap-1.5 rounded-[9px] border border-white/20 px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
-              >
-                {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
-                {t("manage")}
-              </button>
+              {billing?.portal_supported && (
+                <button
+                  onClick={openPortal}
+                  disabled={busy !== null}
+                  className="flex h-9 items-center gap-1.5 rounded-[9px] border border-white/20 px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                >
+                  {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
+                  {t("manage")}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -199,15 +232,19 @@ export default function BillingPage() {
       <div className="grid grid-cols-[300px_1fr] gap-[18px]">
         <div className="rounded-[14px] border border-border bg-card p-[18px]">
           <div className="mb-3.5 text-[13px] font-bold">{t("paymentMethod")}</div>
-          <p className="mb-[11px] text-[12px] leading-[1.5] text-muted-foreground">{t("paymentManagedByStripe")}</p>
-          <button
-            onClick={openPortal}
-            disabled={busy !== null}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-border bg-card text-xs font-semibold text-secondary-foreground disabled:opacity-50"
-          >
-            {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
-            {t("manageBilling")}
-          </button>
+          <p className="mb-[11px] text-[12px] leading-[1.5] text-muted-foreground">
+            {billing?.portal_supported ? t("paymentManagedByStripe") : t("paymentManagedInApp")}
+          </p>
+          {billing?.portal_supported && (
+            <button
+              onClick={openPortal}
+              disabled={busy !== null}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-border bg-card text-xs font-semibold text-secondary-foreground disabled:opacity-50"
+            >
+              {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
+              {t("manageBilling")}
+            </button>
+          )}
         </div>
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-[18px] py-3.5">
