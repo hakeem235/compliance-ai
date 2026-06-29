@@ -195,6 +195,7 @@
     "noActiveSubscription": "No active subscription",
     "choosePlan": "Choose plan",
     "paymentManagedByStripe": "Your payment method and invoices are managed securely in the Stripe billing portal.",
+    "paymentManagedInApp": "Your plan is managed in-app. Renew or change it any time from this page; receipts are emailed by Moyasar after payment.",
     "manageBilling": "Manage billing",
     "invoicesInPortal": "Full history in portal",
     "errorLoad": "Failed to load billing information.",

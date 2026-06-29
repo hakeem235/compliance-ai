@@ -221,7 +221,9 @@ export interface PlanCatalogItem {
 export interface BillingState {
   subscription: Subscription;
   plans: PlanCatalogItem[];
-  stripe_enabled: boolean;
+  provider: string;
+  billing_enabled: boolean;
+  portal_supported: boolean;
 }
 
 export interface Usage {

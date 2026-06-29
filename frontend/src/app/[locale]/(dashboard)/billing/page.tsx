@@ -103,14 +103,16 @@ export default function BillingPage() {
                 {busy === "growth" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
                 {t("upgrade")}
               </button>
-              <button
-                onClick={openPortal}
-                disabled={busy !== null}
-                className="flex h-9 items-center gap-1.5 rounded-[9px] border border-white/20 px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
-              >
-                {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
-                {t("manage")}
-              </button>
+              {billing?.portal_supported && (
+                <button
+                  onClick={openPortal}
+                  disabled={busy !== null}
+                  className="flex h-9 items-center gap-1.5 rounded-[9px] border border-white/20 px-4 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                >
+                  {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
+                  {t("manage")}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -199,15 +201,19 @@ export default function BillingPage() {
       <div className="grid grid-cols-[300px_1fr] gap-[18px]">
         <div className="rounded-[14px] border border-border bg-card p-[18px]">
           <div className="mb-3.5 text-[13px] font-bold">{t("paymentMethod")}</div>
-          <p className="mb-[11px] text-[12px] leading-[1.5] text-muted-foreground">{t("paymentManagedByStripe")}</p>
-          <button
-            onClick={openPortal}
-            disabled={busy !== null}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-border bg-card text-xs font-semibold text-secondary-foreground disabled:opacity-50"
-          >
-            {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
-            {t("manageBilling")}
-          </button>
+          <p className="mb-[11px] text-[12px] leading-[1.5] text-muted-foreground">
+            {billing?.portal_supported ? t("paymentManagedByStripe") : t("paymentManagedInApp")}
+          </p>
+          {billing?.portal_supported && (
+            <button
+              onClick={openPortal}
+              disabled={busy !== null}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[9px] border border-border bg-card text-xs font-semibold text-secondary-foreground disabled:opacity-50"
+            >
+              {busy === "portal" && <Loader2 className="size-3.5 animate-spin" strokeWidth={2} />}
+              {t("manageBilling")}
+            </button>
+          )}
         </div>
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-[18px] py-3.5">
