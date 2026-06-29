@@ -17,6 +17,9 @@ class Subscription(models.Model):
     stripe_customer_id = models.CharField(max_length=255, blank=True, default="")
     stripe_subscription_id = models.CharField(max_length=255, blank=True, default="")
     current_period_end = models.DateTimeField(null=True, blank=True)
+    # Comped: a plan granted by platform staff without Stripe (no charge). Plan
+    # limits still apply; there's no stripe_subscription_id to manage.
+    comped = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

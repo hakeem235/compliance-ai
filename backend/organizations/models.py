@@ -10,6 +10,12 @@ class Organization(models.Model):
     jurisdiction = models.CharField(max_length=10, default="SA")
     plan = models.CharField(max_length=50, default="free")
     created_at = models.DateTimeField(auto_now_add=True)
+    # Platform back-office controls. A suspended org's members are blocked at
+    # authentication (see ClerkJWTAuthentication); platform staff are unaffected
+    # since their own org is not suspended. internal_notes are staff-only.
+    is_suspended = models.BooleanField(default=False)
+    suspended_at = models.DateTimeField(null=True, blank=True)
+    internal_notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.name
