@@ -45,10 +45,28 @@ def voyage_enabled() -> bool:
     return bool(getattr(settings, "VOYAGE_API_KEY", ""))
 
 
+def vertex_enabled() -> bool:
+    """True when in-Kingdom Vertex AI embeddings (me-central2) are configured.
+
+    PDPL residency: Vertex keeps embedding generation inside KSA, replacing the
+    US-hosted Voyage hop. Takes precedence over Voyage when both are set; the
+    placeholder stays the default until either is configured."""
+    return bool(
+        getattr(settings, "VERTEX_PROJECT", "")
+        and getattr(settings, "VERTEX_LOCATION", "")
+        and getattr(settings, "VERTEX_EMBED_MODEL", "")
+        and getattr(settings, "VERTEX_ACCESS_TOKEN", "")
+    )
+
+
 def active_embedder() -> str:
     """Name of the embedder currently producing vectors. Recorded on each chunk
     so a provider switch re-embeds rather than mixing incompatible spaces."""
-    return settings.VOYAGE_MODEL if voyage_enabled() else PLACEHOLDER_NAME
+    if vertex_enabled():
+        return f"vertex:{settings.VERTEX_EMBED_MODEL}"
+    if voyage_enabled():
+        return settings.VOYAGE_MODEL
+    return PLACEHOLDER_NAME
 
 
 def _tokens(text: str) -> list[str]:
@@ -93,10 +111,42 @@ def _voyage_embed(text: str) -> list[float]:
         raise EmbeddingError(f"Voyage embedding failed: {exc}") from exc
 
 
+def _vertex_embed(text: str) -> list[float]:
+    """Embed via Vertex AI in me-central2 (stdlib REST, no SDK). In-Kingdom
+    embeddings for PDPL residency. The OAuth bearer comes from the Cloud Run
+    service account (metadata server / ADC) in production; settings.VERTEX_ACCESS_TOKEN
+    is the explicit override that also makes the scaffold testable.
+
+    Raises EmbeddingError on failure so callers don't persist a bad vector."""
+    endpoint = (
+        f"https://{settings.VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/"
+        f"{settings.VERTEX_PROJECT}/locations/{settings.VERTEX_LOCATION}/publishers/"
+        f"google/models/{settings.VERTEX_EMBED_MODEL}:predict"
+    )
+    body = json.dumps({"instances": [{"content": text}]}).encode()
+    request = urllib.request.Request(
+        endpoint,
+        data=body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {settings.VERTEX_ACCESS_TOKEN}",
+            "content-type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read())
+        return payload["predictions"][0]["embeddings"]["values"]
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, KeyError, IndexError, ValueError) as exc:
+        raise EmbeddingError(f"Vertex embedding failed: {exc}") from exc
+
+
 def embed_text(text: str) -> list[float]:
-    """Embed text with the active embedder: Voyage when configured, otherwise
-    the deterministic placeholder. The same function embeds both corpus chunks
-    and queries, so they always share a vector space."""
+    """Embed text with the active embedder: Vertex (in-Kingdom) when configured,
+    else Voyage, else the deterministic placeholder. The same function embeds
+    both corpus chunks and queries, so they always share a vector space."""
+    if vertex_enabled():
+        return _vertex_embed(text)
     if voyage_enabled():
         return _voyage_embed(text)
     return _placeholder_embed(text)

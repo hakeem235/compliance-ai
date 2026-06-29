@@ -164,3 +164,56 @@ class SeedCommandTests(TestCase):
         count_after_first = KnowledgeChunk.objects.count()
         call_command("seed_synthetic_corpus", reset=True)
         self.assertEqual(KnowledgeChunk.objects.count(), count_after_first)
+
+
+class VertexEmbedderTests(SimpleTestCase):
+    """In-Kingdom Vertex AI embeddings (PDPL re-host) behind active_embedder()."""
+
+    @override_settings(VERTEX_PROJECT="", VOYAGE_API_KEY="")
+    def test_placeholder_is_default(self):
+        self.assertFalse(rag.vertex_enabled())
+        self.assertEqual(rag.active_embedder(), rag.PLACEHOLDER_NAME)
+
+    @override_settings(
+        VERTEX_PROJECT="proj",
+        VERTEX_LOCATION="me-central2",
+        VERTEX_EMBED_MODEL="text-embedding-005",
+        VERTEX_ACCESS_TOKEN="ya29.token",
+    )
+    def test_vertex_enabled_and_named(self):
+        self.assertTrue(rag.vertex_enabled())
+        self.assertEqual(rag.active_embedder(), "vertex:text-embedding-005")
+
+    @override_settings(
+        VERTEX_PROJECT="proj",
+        VERTEX_LOCATION="me-central2",
+        VERTEX_EMBED_MODEL="text-embedding-005",
+        VERTEX_ACCESS_TOKEN="ya29.token",
+        VOYAGE_API_KEY="vk",  # Vertex must win over Voyage when both set.
+    )
+    def test_vertex_takes_precedence_over_voyage(self):
+        self.assertEqual(rag.active_embedder(), "vertex:text-embedding-005")
+
+    @override_settings(
+        VERTEX_PROJECT="proj",
+        VERTEX_LOCATION="me-central2",
+        VERTEX_EMBED_MODEL="text-embedding-005",
+        VERTEX_ACCESS_TOKEN="ya29.token",
+    )
+    def test_embed_text_calls_vertex_in_region_endpoint(self):
+        import io
+        import json as _json
+
+        body = _json.dumps({"predictions": [{"embeddings": {"values": [0.1, 0.2, 0.3]}}]}).encode()
+
+        class _Resp(io.BytesIO):
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+
+        with mock.patch.object(rag.urllib.request, "urlopen", return_value=_Resp(body)) as m:
+            vec = rag.embed_text("data protection clause")
+        self.assertEqual(vec, [0.1, 0.2, 0.3])
+        called_url = m.call_args[0][0].full_url
+        self.assertIn("me-central2-aiplatform.googleapis.com", called_url)

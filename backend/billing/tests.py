@@ -110,3 +110,31 @@ class ApplySubscriptionEventTests(TestCase):
         # No row for this customer → no crash, nothing created.
         apply_subscription_event({"id": "sub_x", "customer": "cus_nope", "status": "active", "items": {"data": []}})
         self.assertEqual(Subscription.objects.filter(stripe_customer_id="cus_nope").count(), 0)
+
+
+class BillingProviderSeamTests(TestCase):
+    """PDPL in-Kingdom PSP seam: BILLING_PROVIDER swaps Stripe → Moyasar stub."""
+
+    def setUp(self):
+        from billing import services
+
+        self.services = services
+        self.org = Organization.objects.create(name="Acme")
+
+    def test_default_provider_is_stripe(self):
+        self.assertIsNone(self.services._moyasar())
+
+    @override_settings(BILLING_PROVIDER="moyasar")
+    def test_moyasar_selected_returns_module(self):
+        self.assertIsNotNone(self.services._moyasar())
+
+    @override_settings(BILLING_PROVIDER="moyasar")
+    def test_moyasar_stub_not_implemented_does_not_silently_pass(self):
+        from billing.services import BillingNotConfigured
+
+        with self.assertRaises(BillingNotConfigured):
+            self.services.create_checkout_session(self.org, "starter", "a@b.com")
+        with self.assertRaises(BillingNotConfigured):
+            self.services.create_portal_session(self.org)
+        with self.assertRaises(BillingNotConfigured):
+            self.services.verify_webhook(b"{}", "sig")

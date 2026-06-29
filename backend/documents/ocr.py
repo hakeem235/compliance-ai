@@ -32,9 +32,33 @@ _POLL_MAX_ATTEMPTS = 20
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 
-def ocr_enabled() -> bool:
+def azure_enabled() -> bool:
     """True only when Azure Document Intelligence is configured."""
     return bool(settings.OCR_AZURE_ENDPOINT and settings.OCR_AZURE_KEY)
+
+
+def gcp_enabled() -> bool:
+    """True only when in-Kingdom GCP Document AI (me-central2) is configured.
+
+    PDPL residency: keeps scanned-document OCR inside KSA, replacing the Azure
+    hop. Selected by OCR_PROVIDER=gcp; inert until project + processor + bearer
+    are all set."""
+    return bool(
+        settings.OCR_GCP_PROJECT
+        and settings.OCR_GCP_LOCATION
+        and settings.OCR_GCP_PROCESSOR_ID
+        and settings.OCR_GCP_ACCESS_TOKEN
+    )
+
+
+def _provider() -> str:
+    """Active OCR provider name: 'gcp' when selected, else 'azure' (default)."""
+    return "gcp" if settings.OCR_PROVIDER.lower() == "gcp" else "azure"
+
+
+def ocr_enabled() -> bool:
+    """True only when the active OCR provider is fully configured."""
+    return gcp_enabled() if _provider() == "gcp" else azure_enabled()
 
 
 def needs_ocr(content_text: str) -> bool:
@@ -61,14 +85,58 @@ def _request(url: str, *, data=None, content_type=None) -> tuple[int, dict, dict
 
 
 def extract_text(file_bytes: bytes, content_type: str) -> str:
-    """Run the Azure Read model on a document's bytes and return sanitized text.
+    """Run the active OCR provider on a document's bytes and return sanitized text.
 
-    Raises OcrError on any failure so callers can fall back cleanly rather than
-    persisting a half-result.
+    Routes to GCP Document AI (in-Kingdom, me-central2) when OCR_PROVIDER=gcp,
+    else Azure Document Intelligence. Raises OcrError on any failure so callers
+    can fall back cleanly rather than persisting a half-result.
     """
     if not ocr_enabled():
         raise OcrError("OCR is not configured.")
+    if _provider() == "gcp":
+        return _extract_text_gcp(file_bytes, content_type)
+    return _extract_text_azure(file_bytes, content_type)
 
+
+def _extract_text_gcp(file_bytes: bytes, content_type: str) -> str:
+    """GCP Document AI (me-central2) synchronous `:process`. In-Kingdom OCR for
+    PDPL residency; Arabic-capable. Bearer comes from the Cloud Run service
+    account (metadata/ADC) in prod; settings.OCR_GCP_ACCESS_TOKEN is the explicit,
+    testable override. stdlib REST — no SDK."""
+    import base64
+
+    endpoint = (
+        f"https://{settings.OCR_GCP_LOCATION}-documentai.googleapis.com/v1/projects/"
+        f"{settings.OCR_GCP_PROJECT}/locations/{settings.OCR_GCP_LOCATION}/processors/"
+        f"{settings.OCR_GCP_PROCESSOR_ID}:process"
+    )
+    body = json.dumps(
+        {
+            "rawDocument": {
+                "content": base64.b64encode(file_bytes).decode("ascii"),
+                "mimeType": content_type,
+            }
+        }
+    ).encode()
+    req = urllib.request.Request(
+        endpoint,
+        data=body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {settings.OCR_GCP_ACCESS_TOKEN}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            payload = json.loads(resp.read() or b"{}")
+        text = (payload.get("document") or {}).get("text", "")
+        return sanitize(text)
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as exc:
+        raise OcrError(f"OCR request failed: {exc}") from exc
+
+
+def _extract_text_azure(file_bytes: bytes, content_type: str) -> str:
     endpoint = settings.OCR_AZURE_ENDPOINT.rstrip("/")
     analyze_url = (
         f"{endpoint}/documentintelligence/documentModels/"
