@@ -134,17 +134,21 @@ class BillingProviderSeamTests(TestCase):
         self.assertTrue(self.services.portal_supported())
 
     @override_settings(BILLING_PROVIDER="moyasar", MOYASAR_SECRET_KEY="")
-    def test_moyasar_503s_until_keyed(self):
+    @override_settings(FRONTEND_BASE_URL="http://localhost:3000")
+    def test_checkout_returns_pay_page_without_secret_key(self):
+        # The in-page (Moyasar.js) flow only needs the publishable key on the
+        # frontend, so checkout works (returns our /pay URL) with no secret key.
+        url = self.services.create_checkout_session(self.org, "starter", "a@b.com")
+        self.assertEqual(url, "http://localhost:3000/pay?plan=starter")
+
+    def test_portal_unsupported_without_key(self):
         from billing.services import BillingNotConfigured
 
-        # Checkout needs a key; portal is never supported on Moyasar.
-        with self.assertRaises(BillingNotConfigured):
-            self.services.create_checkout_session(self.org, "starter", "a@b.com")
         with self.assertRaises(BillingNotConfigured):
             self.services.create_portal_session(self.org)
 
 
-@override_settings(BILLING_PROVIDER="moyasar", MOYASAR_SECRET_KEY="sk_test_x", MOYASAR_BASE_URL="https://api.moyasar.com/v1")
+@override_settings(BILLING_PROVIDER="moyasar", MOYASAR_BASE_URL="https://api.moyasar.com/v1", FRONTEND_BASE_URL="http://localhost:3000")
 class MoyasarProviderTests(TestCase):
     def setUp(self):
         from billing import moyasar
@@ -152,11 +156,31 @@ class MoyasarProviderTests(TestCase):
         self.moyasar = moyasar
         self.org = Organization.objects.create(name="Acme")
 
-    def test_checkout_creates_invoice_and_returns_url(self):
+    def test_checkout_returns_in_app_pay_url(self):
+        url = self.moyasar.create_checkout_session(self.org, "starter", "a@b.com")
+        self.assertEqual(url, "http://localhost:3000/pay?plan=starter")
+
+    def test_portal_unsupported(self):
+        from billing.services import BillingNotConfigured
+
+        with self.assertRaises(BillingNotConfigured):
+            self.moyasar.create_portal_session(self.org)
+
+    def test_confirm_without_secret_key_trusts_and_activates(self):
+        # Publishable-only (dev/test): no server verification, plan activates.
+        Subscription.objects.create(organization=self.org)
+        self.moyasar.confirm_payment(self.org, "starter", "pay_abc")
+        sub = Subscription.objects.get(organization=self.org)
+        self.assertEqual(sub.plan, "starter")
+        self.assertEqual(sub.status, "active")
+        self.assertEqual(sub.stripe_subscription_id, "pay_abc")
+
+    @override_settings(MOYASAR_SECRET_KEY="sk_test_x")
+    def test_confirm_with_secret_key_verifies_payment(self):
         from unittest import mock
         import io
 
-        captured = {}
+        Subscription.objects.create(organization=self.org)
 
         class _Resp(io.BytesIO):
             def __enter__(self):
@@ -164,28 +188,23 @@ class MoyasarProviderTests(TestCase):
             def __exit__(self, *a):
                 return False
 
-        def fake_urlopen(req, timeout=0):
-            captured["url"] = req.full_url
-            captured["body"] = json.loads(req.data)
-            captured["auth"] = req.headers.get("Authorization")
-            return _Resp(json.dumps({"id": "inv_1", "status": "initiated", "url": "https://moyasar.test/pay/inv_1"}).encode())
+        # Verified paid payment of the right amount → activates.
+        ok = json.dumps({"id": "pay_1", "status": "paid", "amount": 24900, "currency": "SAR"}).encode()
+        with mock.patch.object(self.moyasar.urllib.request, "urlopen", return_value=_Resp(ok)):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")
+        self.assertEqual(Subscription.objects.get(organization=self.org).status, "active")
 
-        with mock.patch.object(self.moyasar.urllib.request, "urlopen", side_effect=fake_urlopen):
-            url = self.moyasar.create_checkout_session(self.org, "starter", "a@b.com")
+        # Unpaid payment → rejected, plan unchanged.
+        from billing.services import BillingError
 
-        self.assertEqual(url, "https://moyasar.test/pay/inv_1")
-        self.assertTrue(captured["url"].endswith("/invoices"))
-        self.assertEqual(captured["body"]["amount"], 24900)  # SAR 249 -> halalas
-        self.assertEqual(captured["body"]["currency"], "SAR")
-        self.assertEqual(captured["body"]["metadata"]["plan"], "starter")
-        self.assertEqual(captured["body"]["metadata"]["organization_id"], str(self.org.id))
-        self.assertTrue(captured["auth"].startswith("Basic "))
+        bad = json.dumps({"id": "pay_2", "status": "failed", "amount": 24900, "currency": "SAR"}).encode()
+        with mock.patch.object(self.moyasar.urllib.request, "urlopen", return_value=_Resp(bad)):
+            with self.assertRaises(BillingError):
+                self.moyasar.confirm_payment(self.org, "growth", "pay_2")
 
-    def test_portal_unsupported(self):
-        from billing.services import BillingNotConfigured
-
-        with self.assertRaises(BillingNotConfigured):
-            self.moyasar.create_portal_session(self.org)
+    def test_confirm_requires_payment_id(self):
+        with self.assertRaises(ValueError):
+            self.moyasar.confirm_payment(self.org, "starter", "")
 
     @override_settings(MOYASAR_WEBHOOK_SECRET="whsec_123")
     def test_webhook_secret_token_verified(self):

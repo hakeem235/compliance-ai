@@ -89,6 +89,28 @@ class PortalView(APIView):
         return Response({"url": url})
 
 
+class ConfirmView(APIView):
+    """Confirm an in-page Moyasar payment and activate the plan. Called by the
+    frontend after Moyasar.js completes (with the returned payment id)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan_key = request.data.get("plan", "")
+        payment_id = (request.data.get("payment_id") or "").strip()
+        if plan_key not in PLANS:
+            return Response({"detail": "Unknown plan."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            services.confirm_payment(request.user.organization, plan_key, payment_id)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except services.BillingNotConfigured as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except services.BillingError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_402_PAYMENT_REQUIRED)
+        return Response({"status": "active", "plan": plan_key})
+
+
 class WebhookView(APIView):
     """Payment webhook receiver — verifies and syncs subscription state. Called
     server-to-server by the provider (Moyasar/Stripe), so no user auth. Moyasar

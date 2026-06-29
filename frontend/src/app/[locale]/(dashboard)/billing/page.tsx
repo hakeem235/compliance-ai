@@ -26,18 +26,43 @@ export default function BillingPage() {
 
   const [billing, setBilling] = useState<BillingState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null); // plan key or "portal" in flight
 
-  useEffect(() => {
-    let active = true;
-    api.billing
+  const loadBilling = useCallback(() => {
+    return api.billing
       .get(tokenFn)
-      .then((b) => active && setBilling(b))
-      .catch((err) => active && setError(err instanceof ApiError ? err.message : t("errorLoad")));
-    return () => {
-      active = false;
-    };
-  }, [tokenFn]);
+      .then(setBilling)
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorLoad")));
+  }, [tokenFn, t]);
+
+  useEffect(() => {
+    loadBilling();
+  }, [loadBilling]);
+
+  // Returning from the Moyasar payment page: callback_url carries ?plan=&id=&status=.
+  // Confirm the payment (server verifies it when the secret key is set), then
+  // clean the URL so a refresh doesn't re-confirm.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const plan = params.get("plan");
+    const status = params.get("status");
+    if (!id || !plan) return;
+
+    const clean = () => window.history.replaceState({}, "", window.location.pathname);
+    if (status && status !== "paid") {
+      setError(t("paymentNotCompleted"));
+      clean();
+      return;
+    }
+    api.billing
+      .confirm(plan, id, tokenFn)
+      .then(() => loadBilling())
+      .then(() => setNotice(t("paymentSuccess")))
+      .catch((err) => setError(err instanceof ApiError ? err.message : t("errorCheckout")))
+      .finally(clean);
+  }, [tokenFn, loadBilling, t]);
 
   const currentPlanKey = billing?.subscription.plan ?? "";
 
@@ -73,6 +98,12 @@ export default function BillingPage() {
         <div className="mb-4 flex items-center gap-2 rounded-[10px] border border-[#F8DADA] bg-[#FDF5F5] px-3.5 py-3 text-[12.5px] text-risk-high">
           <AlertTriangle className="size-3.5 flex-none" strokeWidth={1.8} />
           {error}
+        </div>
+      )}
+      {notice && (
+        <div className="mb-4 flex items-center gap-2 rounded-[10px] border border-[#CDEBDC] bg-[#F4FAF7] px-3.5 py-3 text-[12.5px] text-accent">
+          <Check className="size-3.5 flex-none" strokeWidth={2} />
+          {notice}
         </div>
       )}
 

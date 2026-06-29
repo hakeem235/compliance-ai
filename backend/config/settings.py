@@ -246,6 +246,8 @@ MOYASAR_CALLBACK_URL = os.environ.get("MOYASAR_CALLBACK_URL", "")
 BILLING_RETURN_URL = os.environ.get(
     "BILLING_RETURN_URL", os.environ.get("STRIPE_BILLING_RETURN_URL", "http://localhost:3000/billing")
 )
+# Frontend base URL — used to build the in-app Moyasar payment page (/pay).
+FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://localhost:3000")
 
 # OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

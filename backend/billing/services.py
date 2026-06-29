@@ -118,6 +118,15 @@ def verify_webhook(payload: bytes, signature: str):
     return stripe.Webhook.construct_event(payload, signature, settings.STRIPE_WEBHOOK_SECRET)
 
 
+def confirm_payment(organization, plan_key: str, payment_id: str) -> None:
+    """Confirm an in-page (Moyasar.js) payment and activate the plan. Only the
+    Moyasar provider implements this; Stripe uses Checkout + webhooks instead."""
+    provider = _moyasar()
+    if provider:
+        return provider.confirm_payment(organization, plan_key, payment_id)
+    raise BillingNotConfigured("Payment confirmation is not used by the active provider.")
+
+
 def process_webhook(payload: bytes, stripe_signature: str = "") -> None:
     """Provider-aware webhook handler: verify the event and apply it. Keeps the
     view thin and provider-agnostic. Raises BillingNotConfigured (→503) or

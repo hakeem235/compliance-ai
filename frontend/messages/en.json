@@ -200,6 +200,8 @@
     "invoicesInPortal": "Full history in portal",
     "errorLoad": "Failed to load billing information.",
     "errorCheckout": "Couldn't start checkout. Please try again.",
+    "paymentSuccess": "Payment successful — your plan is now active.",
+    "paymentNotCompleted": "Payment was not completed. Please try again.",
     "errorPortal": "Couldn't open the billing portal. Please try again.",
     "upgrade": "Upgrade",
     "manage": "Manage",
