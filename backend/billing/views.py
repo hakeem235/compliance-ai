@@ -1,5 +1,4 @@
 import stripe
-from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -31,7 +30,9 @@ class BillingView(APIView):
             {
                 "subscription": SubscriptionSerializer(sub).data,
                 "plans": list(PLANS.values()),
-                "stripe_enabled": bool(settings.STRIPE_SECRET_KEY),
+                "provider": services.provider_name(),
+                "billing_enabled": services.billing_enabled(),
+                "portal_supported": services.portal_supported(),
             }
         )
 
@@ -68,8 +69,8 @@ class CheckoutView(APIView):
             url = services.create_checkout_session(request.user.organization, plan_key, request.user.email)
         except services.BillingNotConfigured as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except stripe.StripeError as exc:
-            return Response({"detail": f"Stripe error: {exc}"}, status=status.HTTP_502_BAD_GATEWAY)
+        except (services.BillingError, stripe.StripeError) as exc:
+            return Response({"detail": f"Payment error: {exc}"}, status=status.HTTP_502_BAD_GATEWAY)
         return Response({"url": url})
 
 
@@ -83,14 +84,37 @@ class PortalView(APIView):
             url = services.create_portal_session(request.user.organization)
         except services.BillingNotConfigured as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except stripe.StripeError as exc:
-            return Response({"detail": f"Stripe error: {exc}"}, status=status.HTTP_502_BAD_GATEWAY)
+        except (services.BillingError, stripe.StripeError) as exc:
+            return Response({"detail": f"Payment error: {exc}"}, status=status.HTTP_502_BAD_GATEWAY)
         return Response({"url": url})
 
 
+class ConfirmView(APIView):
+    """Confirm an in-page Moyasar payment and activate the plan. Called by the
+    frontend after Moyasar.js completes (with the returned payment id)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan_key = request.data.get("plan", "")
+        payment_id = (request.data.get("payment_id") or "").strip()
+        if plan_key not in PLANS:
+            return Response({"detail": "Unknown plan."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            services.confirm_payment(request.user.organization, plan_key, payment_id)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except services.BillingNotConfigured as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except services.BillingError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_402_PAYMENT_REQUIRED)
+        return Response({"status": "active", "plan": plan_key})
+
+
 class WebhookView(APIView):
-    """Stripe webhook receiver — verifies the signature and syncs subscription
-    state. Called server-to-server by Stripe, so no user auth."""
+    """Payment webhook receiver — verifies and syncs subscription state. Called
+    server-to-server by the provider (Moyasar/Stripe), so no user auth. Moyasar
+    authenticates via a `secret_token` in the body; Stripe via a header."""
 
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -98,18 +122,10 @@ class WebhookView(APIView):
     def post(self, request):
         signature = request.META.get("HTTP_STRIPE_SIGNATURE", "")
         try:
-            event = services.verify_webhook(request.body, signature)
+            services.process_webhook(request.body, signature)
         except services.BillingNotConfigured as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except (ValueError, stripe.SignatureVerificationError):
-            return Response({"detail": "Invalid webhook signature."}, status=status.HTTP_400_BAD_REQUEST)
-
-        event_type = event["type"]
-        obj = event["data"]["object"]
-        if event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"):
-            services.apply_subscription_event(obj)
-        elif event_type == "checkout.session.completed" and obj.get("subscription"):
-            stripe.api_key = settings.STRIPE_SECRET_KEY
-            services.apply_subscription_event(stripe.Subscription.retrieve(obj["subscription"]))
+        except ValueError:
+            return Response({"detail": "Invalid webhook."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"received": True})

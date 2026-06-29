@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase, override_settings
 
 from organizations.models import Organization
@@ -72,7 +73,7 @@ class PlanMappingTests(TestCase):
         self.assertEqual(plan_for_price_id(""), "")
 
 
-@override_settings(STRIPE_PRICE_IDS={"starter": "price_starter", "growth": "price_growth"})
+@override_settings(BILLING_PROVIDER="stripe", STRIPE_PRICE_IDS={"starter": "price_starter", "growth": "price_growth"})
 class ApplySubscriptionEventTests(TestCase):
     def _sub(self):
         org = Organization.objects.create(name="Acme")
@@ -113,7 +114,7 @@ class ApplySubscriptionEventTests(TestCase):
 
 
 class BillingProviderSeamTests(TestCase):
-    """PDPL in-Kingdom PSP seam: BILLING_PROVIDER swaps Stripe → Moyasar stub."""
+    """BILLING_PROVIDER selects Moyasar (default, in-Kingdom) or Stripe."""
 
     def setUp(self):
         from billing import services
@@ -121,20 +122,163 @@ class BillingProviderSeamTests(TestCase):
         self.services = services
         self.org = Organization.objects.create(name="Acme")
 
-    def test_default_provider_is_stripe(self):
-        self.assertIsNone(self.services._moyasar())
-
-    @override_settings(BILLING_PROVIDER="moyasar")
-    def test_moyasar_selected_returns_module(self):
+    def test_default_provider_is_moyasar(self):
+        self.assertEqual(self.services.provider_name(), "moyasar")
         self.assertIsNotNone(self.services._moyasar())
+        self.assertFalse(self.services.portal_supported())  # Moyasar has no portal
 
-    @override_settings(BILLING_PROVIDER="moyasar")
-    def test_moyasar_stub_not_implemented_does_not_silently_pass(self):
+    @override_settings(BILLING_PROVIDER="stripe")
+    def test_stripe_selectable(self):
+        self.assertEqual(self.services.provider_name(), "stripe")
+        self.assertIsNone(self.services._moyasar())
+        self.assertTrue(self.services.portal_supported())
+
+    @override_settings(BILLING_PROVIDER="moyasar", MOYASAR_SECRET_KEY="")
+    @override_settings(FRONTEND_BASE_URL="http://localhost:3000")
+    def test_checkout_returns_pay_page_without_secret_key(self):
+        # The in-page (Moyasar.js) flow only needs the publishable key on the
+        # frontend, so checkout works (returns our /pay URL) with no secret key.
+        url = self.services.create_checkout_session(self.org, "starter", "a@b.com")
+        self.assertEqual(url, "http://localhost:3000/pay?plan=starter")
+
+    def test_portal_unsupported_without_key(self):
         from billing.services import BillingNotConfigured
 
         with self.assertRaises(BillingNotConfigured):
-            self.services.create_checkout_session(self.org, "starter", "a@b.com")
-        with self.assertRaises(BillingNotConfigured):
             self.services.create_portal_session(self.org)
+
+
+@override_settings(BILLING_PROVIDER="moyasar", MOYASAR_BASE_URL="https://api.moyasar.com/v1", FRONTEND_BASE_URL="http://localhost:3000")
+class MoyasarProviderTests(TestCase):
+    def setUp(self):
+        from billing import moyasar
+
+        self.moyasar = moyasar
+        self.org = Organization.objects.create(name="Acme")
+
+    def test_checkout_returns_in_app_pay_url(self):
+        url = self.moyasar.create_checkout_session(self.org, "starter", "a@b.com")
+        self.assertEqual(url, "http://localhost:3000/pay?plan=starter")
+
+    def test_portal_unsupported(self):
+        from billing.services import BillingNotConfigured
+
         with self.assertRaises(BillingNotConfigured):
-            self.services.verify_webhook(b"{}", "sig")
+            self.moyasar.create_portal_session(self.org)
+
+    def test_confirm_without_secret_key_is_rejected(self):
+        # No publishable-only activation — that would be a free-plan bypass.
+        from billing.services import BillingNotConfigured
+
+        Subscription.objects.create(organization=self.org)
+        with self.assertRaises(BillingNotConfigured):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_abc")
+        self.assertEqual(Subscription.objects.get(organization=self.org).status, "none")
+
+    def _mock_payment(self, **overrides):
+        import io
+        from unittest import mock
+
+        payment = {
+            "id": "pay_1",
+            "status": "paid",
+            "amount": 24900,
+            "currency": "SAR",
+            "metadata": {"organization_id": str(self.org.id), "plan": "starter"},
+        }
+        payment.update(overrides)
+
+        class _Resp(io.BytesIO):
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+
+        return mock.patch.object(self.moyasar.urllib.request, "urlopen", return_value=_Resp(json.dumps(payment).encode()))
+
+    @override_settings(MOYASAR_SECRET_KEY="sk_test_x")
+    def test_confirm_verifies_paid_amount_and_org(self):
+        Subscription.objects.create(organization=self.org)
+        with self._mock_payment():
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")
+        self.assertEqual(Subscription.objects.get(organization=self.org).status, "active")
+
+    @override_settings(MOYASAR_SECRET_KEY="sk_test_x")
+    def test_confirm_rejects_unpaid_wrong_amount_and_cross_org(self):
+        from billing.services import BillingError
+
+        Subscription.objects.create(organization=self.org)
+        # Unpaid
+        with self._mock_payment(status="failed"), self.assertRaises(BillingError):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")
+        # Tampered amount (paid SAR 1 but claiming starter) — caught by amount check
+        with self._mock_payment(amount=100), self.assertRaises(BillingError):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")
+        # Payment belongs to a DIFFERENT org → rejected (IDOR)
+        other = Organization.objects.create(name="Other")
+        with self._mock_payment(metadata={"organization_id": str(other.id), "plan": "starter"}), self.assertRaises(BillingError):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")
+        self.assertEqual(Subscription.objects.get(organization=self.org).status, "none")
+
+    @override_settings(MOYASAR_SECRET_KEY="sk_test_x")
+    def test_confirm_blocks_payment_replay(self):
+        from billing.services import BillingError
+
+        Subscription.objects.create(organization=self.org)
+        with self._mock_payment():
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")  # first time OK
+        with self._mock_payment(), self.assertRaises(BillingError):
+            self.moyasar.confirm_payment(self.org, "starter", "pay_1")  # replay rejected
+
+    def test_confirm_requires_payment_id(self):
+        with self.assertRaises(ValueError):
+            self.moyasar.confirm_payment(self.org, "starter", "")
+
+    @override_settings(MOYASAR_WEBHOOK_SECRET="whsec_123")
+    def test_webhook_secret_token_verified(self):
+        good = json.dumps({"type": "payment_paid", "secret_token": "whsec_123", "data": {}}).encode()
+        self.assertEqual(self.moyasar.verify_webhook(good, "")["type"], "payment_paid")
+
+        bad = json.dumps({"type": "payment_paid", "secret_token": "wrong", "data": {}}).encode()
+        with self.assertRaises(ValueError):
+            self.moyasar.verify_webhook(bad, "")
+
+    def test_paid_event_activates_subscription(self):
+        Subscription.objects.create(organization=self.org)
+        event = {
+            "type": "payment_paid",
+            "data": {
+                "id": "pay_1",
+                "status": "paid",
+                "amount": 74900,  # growth = SAR 749
+                "currency": "SAR",
+                "metadata": {"organization_id": str(self.org.id), "plan": "growth"},
+            },
+        }
+        self.moyasar.apply_subscription_event(event)
+        sub = Subscription.objects.get(organization=self.org)
+        self.assertEqual(sub.plan, "growth")
+        self.assertEqual(sub.status, "active")
+        self.assertIsNotNone(sub.current_period_end)
+        self.assertEqual(sub.stripe_subscription_id, "pay_1")
+
+    def test_unpaid_event_is_ignored(self):
+        Subscription.objects.create(organization=self.org)
+        self.moyasar.apply_subscription_event(
+            {"type": "payment_failed", "data": {"status": "failed", "metadata": {"organization_id": str(self.org.id), "plan": "growth"}}}
+        )
+        self.assertEqual(Subscription.objects.get(organization=self.org).status, "none")
+
+    @override_settings(MOYASAR_WEBHOOK_SECRET="whsec_123")
+    def test_webhook_endpoint_end_to_end(self):
+        from rest_framework.test import APIClient
+
+        Subscription.objects.create(organization=self.org)
+        body = {
+            "type": "payment_paid",
+            "secret_token": "whsec_123",
+            "data": {"id": "pay_9", "status": "paid", "amount": 24900, "currency": "SAR", "metadata": {"organization_id": str(self.org.id), "plan": "starter"}},
+        }
+        resp = APIClient().post("/api/billing/webhook/", body, format="json")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Subscription.objects.get(organization=self.org).plan, "starter")

@@ -11,18 +11,39 @@ from .plans import plan_for_price_id, price_id_for
 
 
 class BillingNotConfigured(Exception):
-    """Raised when Stripe keys/price IDs aren't set in the environment."""
+    """Raised when the provider's keys/price IDs aren't set in the environment."""
+
+
+class BillingError(Exception):
+    """Raised when the payment provider returns/transports an error (HTTP, etc.)."""
 
 
 def _moyasar():
     """The Moyasar provider module when BILLING_PROVIDER=moyasar, else None
-    (Stripe is the default). The seam that makes the PSP swappable for the PDPL
-    in-Kingdom-payments fix; Moyasar is a stub until Ahmed approves the swap."""
-    if getattr(settings, "BILLING_PROVIDER", "stripe").lower() == "moyasar":
+    (Stripe). Moyasar is the in-Kingdom PSP for the PDPL payments fix and is the
+    default; Stripe stays as a fallback selectable via BILLING_PROVIDER=stripe."""
+    if getattr(settings, "BILLING_PROVIDER", "moyasar").lower() == "moyasar":
         from . import moyasar
 
         return moyasar
     return None
+
+
+def provider_name() -> str:
+    """Active payment provider id (for the frontend to adapt its UI)."""
+    return "moyasar" if _moyasar() else "stripe"
+
+
+def portal_supported() -> bool:
+    """Whether the active provider has a hosted billing portal (Moyasar doesn't)."""
+    return _moyasar() is None
+
+
+def billing_enabled() -> bool:
+    """Whether the active provider is configured enough to start a checkout."""
+    if _moyasar():
+        return bool(settings.MOYASAR_SECRET_KEY)
+    return bool(settings.STRIPE_SECRET_KEY)
 
 
 def _client() -> None:
@@ -95,6 +116,39 @@ def verify_webhook(payload: bytes, signature: str):
     if not settings.STRIPE_WEBHOOK_SECRET:
         raise BillingNotConfigured("Stripe webhook secret not configured.")
     return stripe.Webhook.construct_event(payload, signature, settings.STRIPE_WEBHOOK_SECRET)
+
+
+def confirm_payment(organization, plan_key: str, payment_id: str) -> None:
+    """Confirm an in-page (Moyasar.js) payment and activate the plan. Only the
+    Moyasar provider implements this; Stripe uses Checkout + webhooks instead."""
+    provider = _moyasar()
+    if provider:
+        return provider.confirm_payment(organization, plan_key, payment_id)
+    raise BillingNotConfigured("Payment confirmation is not used by the active provider.")
+
+
+def process_webhook(payload: bytes, stripe_signature: str = "") -> None:
+    """Provider-aware webhook handler: verify the event and apply it. Keeps the
+    view thin and provider-agnostic. Raises BillingNotConfigured (→503) or
+    ValueError (→400) on bad/unconfigured input."""
+    provider = _moyasar()
+    if provider:
+        event = provider.verify_webhook(payload, stripe_signature)
+        provider.apply_subscription_event(event)
+        return
+
+    # --- Stripe ---
+    try:
+        event = verify_webhook(payload, stripe_signature)
+    except stripe.SignatureVerificationError as exc:
+        raise ValueError(str(exc)) from exc
+    event_type = event["type"]
+    obj = event["data"]["object"]
+    if event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"):
+        apply_subscription_event(obj)
+    elif event_type == "checkout.session.completed" and obj.get("subscription"):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        apply_subscription_event(stripe.Subscription.retrieve(obj["subscription"]))
 
 
 def _period_end(epoch) -> datetime | None:
