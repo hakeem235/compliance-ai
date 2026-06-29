@@ -49,7 +49,7 @@ class Command(BaseCommand):
             if not recipients:
                 skipped_no_recipients += 1
                 continue
-            config = OrgEmailConfig.objects.filter(organization_id=event.organization_id).first()
+            config = OrgEmailConfig.for_org(event.organization_id)
             if not config or not config.has_password:
                 skipped_no_config += 1
                 continue

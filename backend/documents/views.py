@@ -255,7 +255,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         self.get_object()  # enforces tenant scoping (404 for other orgs' docs)
 
-        config = OrgEmailConfig.objects.filter(organization_id=request.user.organization_id).first()
+        config = OrgEmailConfig.for_org(request.user.organization_id)
         if config is None:
             return Response(
                 {

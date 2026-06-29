@@ -25,7 +25,7 @@ class EmailConfigView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        config = OrgEmailConfig.objects.filter(organization_id=request.user.organization_id).first()
+        config = OrgEmailConfig.for_org(request.user.organization_id)
         if not config:
             return Response({"configured": False})
         data = OrgEmailConfigSerializer(config).data
@@ -33,7 +33,7 @@ class EmailConfigView(APIView):
         return Response(data)
 
     def put(self, request):
-        config = OrgEmailConfig.objects.filter(organization_id=request.user.organization_id).first()
+        config = OrgEmailConfig.for_org(request.user.organization_id)
         serializer = OrgEmailConfigSerializer(config, data=request.data, partial=bool(config))
         serializer.is_valid(raise_exception=True)
         serializer.save(organization_id=request.user.organization_id)
@@ -48,7 +48,7 @@ class EmailConfigTestView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        config = OrgEmailConfig.objects.filter(organization_id=request.user.organization_id).first()
+        config = OrgEmailConfig.for_org(request.user.organization_id)
         if not config or not config.has_password:
             return Response(
                 {"detail": "Email is not fully configured yet. Save host, credentials and a from address first."},
