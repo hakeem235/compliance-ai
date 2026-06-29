@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { FileText, MessagesSquare, Download, Loader2, AlertTriangle, Hourglass, Mail, Copy, Check, Send } from "lucide-react";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";
 import { CitationChip } from "@/components/citation-chip";

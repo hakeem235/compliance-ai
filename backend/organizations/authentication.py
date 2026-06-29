@@ -1,15 +1,13 @@
 """
-Clerk JWT authentication for DRF.
+Email/password JWT authentication for DRF.
 
-Verifies the Clerk-issued session JWT on every request and resolves it to an
-OrgUser. Role and organization_id are read only from the verified token
-claims — never trusted from request body/query params.
-
-Signature verification is delegated to PyJWT (RS256 against the instance's
-JWKS) — we never hand-roll crypto on this security boundary.
+Tokens are signed by this app (HS256 with DJANGO_SECRET_KEY) at login/register
+and verified here on every request. The `sub` claim is the OrgUser id; role and
+organization are read from the database via that id — never trusted from the
+request body/query params. Replaces the previous Clerk integration.
 """
 
-from functools import lru_cache
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from django.conf import settings
@@ -17,53 +15,46 @@ from rest_framework import authentication, exceptions
 
 from .models import OrgUser
 
-# JWKS is cached in-process for this long; a `kid` miss (key rotation) forces a
-# fresh fetch regardless, so a rotated signing key is picked up immediately.
-_JWKS_LIFESPAN_SECONDS = 600
+ALGORITHM = "HS256"
 
 
-@lru_cache(maxsize=2)
-def _jwks_client(issuer: str) -> jwt.PyJWKClient:
-    return jwt.PyJWKClient(
-        f"{issuer}/.well-known/jwks.json",
-        cache_keys=True,
-        lifespan=_JWKS_LIFESPAN_SECONDS,
-    )
+def make_token(org_user: OrgUser) -> str:
+    """Issue a signed session token for an authenticated OrgUser."""
+    now = datetime.now(timezone.utc)
+    ttl_hours = getattr(settings, "AUTH_TOKEN_TTL_HOURS", 168)  # default 7 days
+    payload = {
+        "sub": str(org_user.id),
+        "email": org_user.email,
+        "iat": now,
+        "exp": now + timedelta(hours=ttl_hours),
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
-def _signing_key(issuer: str, token: str):
-    """Resolve the signing key, refreshing the JWKS once on a `kid` miss."""
-    try:
-        return _jwks_client(issuer).get_signing_key_from_jwt(token)
-    except jwt.PyJWKClientError:
-        # Likely a rotated key not in the cached set — drop the cached client
-        # and refetch once before giving up.
-        _jwks_client.cache_clear()
-        return _jwks_client(issuer).get_signing_key_from_jwt(token)
+class JWTAuthentication(authentication.BaseAuthentication):
+    """Verify the app-issued Bearer token and resolve it to an OrgUser."""
 
+    def authenticate_header(self, request):
+        # Advertise the scheme so DRF returns 401 (not 403) on missing/invalid
+        # credentials — the frontend keys off 401 to redirect to login.
+        return "Bearer"
 
-class ClerkJWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return None
 
-        if not settings.CLERK_SECRET_KEY or not settings.CLERK_JWT_ISSUER:
-            raise exceptions.AuthenticationFailed(
-                "Clerk is not configured (CLERK_SECRET_KEY/CLERK_JWT_ISSUER missing) — cannot verify session token."
-            )
-
         token = auth_header.removeprefix("Bearer ").strip()
-        claims = self._verify_token(token)
-
-        sub = claims.get("sub")
-        if not sub:
-            raise exceptions.AuthenticationFailed("Session token has no subject claim.")
-
         try:
             org_user = OrgUser.objects.select_related("organization").get(clerk_user_id=sub)
         except OrgUser.DoesNotExist:
             raise exceptions.AuthenticationFailed("No matching organization member for this session.")
+
+        # A suspended client org is blocked at the door: its members can't use
+        # the API at all. Platform staff are unaffected (their own org isn't
+        # suspended), so they can still manage/restore the suspended client.
+        if org_user.organization.is_suspended:
+            raise exceptions.AuthenticationFailed("This organization is suspended. Contact support.")
 
         return (org_user, token)
 
@@ -75,16 +66,19 @@ class ClerkJWTAuthentication(authentication.BaseAuthentication):
         try:
             signing_key = _signing_key(settings.CLERK_JWT_ISSUER, token)
             return jwt.decode(
+            claims = jwt.decode(
                 token,
-                signing_key.key,
-                algorithms=["RS256"],
-                issuer=settings.CLERK_JWT_ISSUER,
-                audience=audience,
-                options={"verify_aud": audience is not None, "require": ["exp", "iat"]},
-                # Tolerate small clock skew between Clerk's issuer and this
-                # server — without it, a token whose `iat`/`nbf` is a few
-                # seconds ahead of local time is rejected as "not yet valid".
+                settings.SECRET_KEY,
+                algorithms=[ALGORITHM],
+                options={"require": ["exp", "iat", "sub"]},
                 leeway=60,
             )
         except jwt.PyJWTError as exc:
             raise exceptions.AuthenticationFailed(f"Invalid session token: {exc}") from exc
+
+        try:
+            org_user = OrgUser.objects.select_related("organization").get(id=claims["sub"])
+        except (OrgUser.DoesNotExist, ValueError, KeyError):
+            raise exceptions.AuthenticationFailed("No matching user for this session.")
+
+        return (org_user, token)

@@ -1,5 +1,3 @@
-import {ClerkProvider} from "@clerk/nextjs";
-import { shadcn } from "@clerk/themes";
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic, IBM_Plex_Mono } from "next/font/google";
 import { getLocale } from "next-intl/server";
@@ -24,7 +22,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ComplianceAI",
+  title: "Moutabaq",
   description: "AI-powered contract review and compliance tracking for Saudi businesses.",
 };
 
@@ -49,9 +47,9 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ClerkProvider appearance={{ theme: shadcn }}>
+        <AuthProvider>
           <TooltipProvider>{children}</TooltipProvider>
-        </ClerkProvider>
+        </AuthProvider>
       </body>
     </html>
   );

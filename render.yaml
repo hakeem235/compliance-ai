@@ -1,3 +1,7 @@
+# SUPERSEDED for the PDPL KSA re-host by deploy/gcp/ (Cloud Run + Cloud SQL in
+# me-central2 / Dammam). Kept for reference / the current Render deploy until the
+# GCP cutover. New target: backend/Dockerfile + deploy/gcp/{cloudbuild,service}.yaml.
+#
 # Render Blueprint for the ComplianceAI Django backend.
 # Deploy: Render Dashboard → New → Blueprint → connect this repo.
 # Secrets marked `sync: false` must be filled in the Render dashboard after the

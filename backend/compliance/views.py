@@ -60,8 +60,8 @@ class EmailConfigTestView(APIView):
         try:
             send_email(
                 config,
-                subject="ComplianceAI test email",
-                body="This is a test email confirming your SMTP configuration works. — ComplianceAI",
+                subject="Moutabaq test email",
+                body="This is a test email confirming your SMTP configuration works. — Moutabaq",
                 recipients=[recipient],
             )
         except Exception as exc:  # noqa: BLE001 — surface the SMTP error to the user

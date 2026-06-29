@@ -34,12 +34,12 @@ def send_email(config: OrgEmailConfig, subject: str, body: str, recipients: list
 def reminder_body(event) -> str:
     label = event.category or event.get_type_display()
     return (
-        f"This is an automated reminder from ComplianceAI.\n\n"
+        f"This is an automated reminder from Moutabaq.\n\n"
         f"Obligation: {label}\n"
         f"Type: {event.get_type_display()}\n"
         f"Due date: {event.due_date:%Y-%m-%d}\n"
         f"Status: {event.get_status_display()}\n\n"
         f"Please ensure this obligation is addressed before its due date.\n\n"
-        f"— ComplianceAI\n"
+        f"— Moutabaq\n"
         f"This message is informational only and does not constitute legal advice."
     )

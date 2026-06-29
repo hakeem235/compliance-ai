@@ -1,4 +1,27 @@
 {
+  "Brand": {
+    "name": "Moutabaq"
+  },
+  "Auth": {
+    "marketingTitle": "Compliance confidence, built for the Kingdom.",
+    "marketingBody": "Join SMEs, startups and legal teams using AI to review contracts and stay compliant with Saudi regulations.",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to your account to continue.",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "Start reviewing contracts in minutes.",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "fullName": "Full name",
+    "organizationName": "Organization name",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating account…",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "genericError": "Something went wrong. Please try again."
+  },
   "Landing": {
     "nav": {
       "product": "Product",
@@ -63,8 +86,8 @@
       "heading": "Frequently asked questions",
       "items": [
         {
-          "q": "Is ComplianceAI a substitute for a lawyer?",
-          "a": "No. ComplianceAI's contract analysis, risk scoring, and assistant answers are informational only and do not constitute legal advice. Always consult a licensed lawyer before acting on AI output."
+          "q": "Is Moutabaq a substitute for a lawyer?",
+          "a": "No. Moutabaq's contract analysis, risk scoring, and assistant answers are informational only and do not constitute legal advice. Always consult a licensed lawyer before acting on AI output."
         },
         {
           "q": "Is my data stored in Saudi Arabia?",
@@ -72,7 +95,7 @@
         },
         {
           "q": "Which languages does the platform support?",
-          "a": "ComplianceAI is fully bilingual — English and Arabic, including right-to-left layout — across the marketing site and the product."
+          "a": "Moutabaq is fully bilingual — English and Arabic, including right-to-left layout — across the marketing site and the product."
         },
         {
           "q": "Can I cancel my subscription at any time?",
@@ -699,11 +722,11 @@
     "sections": [
       {
         "title": "1. Acceptance of terms",
-        "body": "By accessing or using ComplianceAI, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
+        "body": "By accessing or using Moutabaq, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the service."
       },
       {
         "title": "2. Description of service",
-        "body": "ComplianceAI provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
+        "body": "Moutabaq provides AI-assisted contract review, document generation, compliance deadline tracking and a legal assistant. The service is informational and does not constitute legal advice."
       },
       {
         "title": "3. Not legal advice",
@@ -723,11 +746,11 @@
       },
       {
         "title": "7. Intellectual property",
-        "body": "The platform, its design and underlying technology are owned by ComplianceAI. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
+        "body": "The platform, its design and underlying technology are owned by Moutabaq. Documents you upload or generate remain your property; you grant us a limited license to process them to provide the service."
       },
       {
         "title": "8. Limitation of liability",
-        "body": "ComplianceAI is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
+        "body": "Moutabaq is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, we are not liable for indirect, incidental or consequential damages arising from use of the service."
       },
       {
         "title": "9. Termination",
@@ -820,6 +843,38 @@
     "reviewsUsed": "{used} / {limit} reviews",
     "reviewsUnlimited": "{used} reviews (unlimited)",
     "close": "Close",
-    "selectClient": "Select a client to view details."
+    "selectClient": "Select a client to view details.",
+    "tabClients": "Clients",
+    "tabAudit": "Activity",
+    "tabStaff": "Staff",
+    "filterPlan": "All plans",
+    "filterStatus": "All statuses",
+    "export": "Export CSV",
+    "statSuspended": "Suspended",
+    "statComped": "Comped",
+    "prev": "Prev",
+    "next": "Next",
+    "pageOf": "Page {page}",
+    "suspended": "Suspended",
+    "comped": "Comped",
+    "suspend": "Suspend",
+    "restore": "Restore",
+    "confirmSuspend": "Suspend this client? Their members will be blocked from signing in.",
+    "notes": "Internal notes",
+    "notesPlaceholder": "Staff-only notes about this client…",
+    "saveNotes": "Save notes",
+    "compPlan": "Comp plan (no charge)",
+    "role": "Role",
+    "remove": "Remove",
+    "confirmRemoveMember": "Remove this member?",
+    "activityTitle": "Client activity",
+    "platformActivityTitle": "Platform activity (staff actions)",
+    "noActivity": "No activity yet.",
+    "staffTitle": "Platform staff",
+    "addStaff": "Add staff",
+    "clerkIdPlaceholder": "Clerk user id (user_…)",
+    "emailPlaceholder": "email",
+    "confirmRemoveStaff": "Remove this platform admin?",
+    "add": "Add"
   }
 }

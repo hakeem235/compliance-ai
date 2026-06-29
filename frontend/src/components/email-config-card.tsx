@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { Loader2, AlertTriangle, Settings2, CheckCircle2, X, Mail } from "lucide-react";
 import { api, ApiError, type EmailConfigInput } from "@/lib/api";
 

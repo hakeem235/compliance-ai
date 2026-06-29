@@ -1,0 +1,54 @@
+# Cloud Build — build the backend image and deploy it to Cloud Run in
+# me-central2 (Dammam) for the PDPL KSA re-host. Replaces the Render build.
+#
+# Run: gcloud builds submit --config deploy/gcp/cloudbuild.yaml \
+#        --substitutions=_REGION=me-central2,_SERVICE=complianceai-api,_CLOUDSQL=PROJECT:me-central2:complianceai-db
+#
+# Secrets are NOT baked into the image — they are bound from Secret Manager on
+# the Cloud Run service (see service.yaml / the README). Nothing here incurs
+# cost until you actually run it against a provisioned project.
+
+substitutions:
+  _REGION: "me-central2"
+  _SERVICE: "complianceai-api"
+  _REPO: "complianceai"
+  _CLOUDSQL: "" # PROJECT:me-central2:complianceai-db — set at submit time
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"
+      - "backend"
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - "${_SERVICE}"
+      - "--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"
+      - "--region=${_REGION}" # me-central2 — data-processing stays in KSA
+      - "--platform=managed"
+      - "--no-allow-unauthenticated" # front with IAP / API gateway as needed
+      - "--add-cloudsql-instances=${_CLOUDSQL}"
+      - "--service-account=complianceai-run@$PROJECT_ID.iam.gserviceaccount.com"
+      # Non-secret config (region-pinned providers for the residency re-host).
+      - "--set-env-vars=DJANGO_DEBUG=false,STORAGE_BACKEND=gcs,GCS_LOCATION=me-central2,OCR_PROVIDER=gcp,OCR_GCP_LOCATION=me-central2,VERTEX_LOCATION=me-central2"
+      # Secrets bound from Secret Manager (values never in git). See README.
+      - "--set-secrets=DJANGO_SECRET_KEY=django-secret:latest,DATABASE_URL=database-url:latest,CLERK_SECRET_KEY=clerk-secret:latest,CLERK_JWT_ISSUER=clerk-issuer:latest,ANTHROPIC_API_KEY=anthropic-key:latest,EMAIL_CONFIG_ENCRYPTION_KEY=email-fernet:latest,GCS_BUCKET_NAME=gcs-bucket:latest,GCS_SA_EMAIL=gcs-sa-email:latest,GCS_SA_PRIVATE_KEY=gcs-sa-key:latest,STRIPE_SECRET_KEY=stripe-secret:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook:latest,STRIPE_BILLING_RETURN_URL=stripe-return-url:latest,CORS_ALLOWED_ORIGINS=cors-origins:latest,CSRF_TRUSTED_ORIGINS=csrf-origins:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
