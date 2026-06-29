@@ -6,21 +6,22 @@ from .models import PlatformAdmin
 
 def is_platform_admin(user) -> bool:
     """True only for allow-listed platform staff. Default-deny: anything other
-    than an authenticated OrgUser whose clerk_user_id is in the PlatformAdmin
-    table (or the bootstrap env allowlist) is rejected."""
-    clerk_user_id = getattr(user, "clerk_user_id", None)
-    if not clerk_user_id:
+    than an authenticated OrgUser who has a PlatformAdmin row (or whose email is
+    in the bootstrap env allowlist) is rejected."""
+    user_id = getattr(user, "id", None)
+    if not user_id:
         return False
     # Bootstrap allowlist for standing up the first platform admin before any
-    # row exists. Comma-separated Clerk user ids in PLATFORM_ADMIN_CLERK_IDS.
+    # row exists. Comma-separated emails in PLATFORM_ADMIN_EMAILS.
+    email = (getattr(user, "email", None) or "").strip().lower()
     bootstrap = {
-        v.strip()
-        for v in getattr(settings, "PLATFORM_ADMIN_CLERK_IDS", "").split(",")
+        v.strip().lower()
+        for v in getattr(settings, "PLATFORM_ADMIN_EMAILS", "").split(",")
         if v.strip()
     }
-    if clerk_user_id in bootstrap:
+    if email and email in bootstrap:
         return True
-    return PlatformAdmin.objects.filter(clerk_user_id=clerk_user_id).exists()
+    return PlatformAdmin.objects.filter(org_user_id=user_id).exists()
 
 
 class IsPlatformAdmin(permissions.BasePermission):

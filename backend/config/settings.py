@@ -1,5 +1,5 @@
 """
-Django settings for ComplianceAI backend.
+Django settings for Moutabaq backend.
 """
 
 import os
@@ -139,7 +139,7 @@ CORS_ALLOWED_ORIGINS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "organizations.authentication.ClerkJWTAuthentication",
+        "organizations.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -154,18 +154,14 @@ REST_FRAMEWORK = {
     },
 }
 
-# Clerk — JWT verification (see organizations/authentication.py)
-CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
-CLERK_JWT_ISSUER = os.environ.get("CLERK_JWT_ISSUER", "")
-# Optional expected audience. Clerk's default session tokens carry no `aud`
-# claim, so audience is only enforced when this is set (e.g. a custom JWT
-# template). When set, a token with a missing/wrong `aud` is rejected.
-CLERK_JWT_AUDIENCE = os.environ.get("CLERK_JWT_AUDIENCE", "")
+# Auth — app-issued session JWTs (see organizations/authentication.py). Tokens
+# are signed with SECRET_KEY (HS256); this controls how long they stay valid.
+AUTH_TOKEN_TTL_HOURS = int(os.environ.get("AUTH_TOKEN_TTL_HOURS", "168"))  # 7 days
 
-# Platform back-office: bootstrap allowlist of Clerk user ids granted
-# cross-tenant platform-admin access before any PlatformAdmin row exists.
-# Comma-separated. Prefer the `add_platform_admin` command for the durable list.
-PLATFORM_ADMIN_CLERK_IDS = os.environ.get("PLATFORM_ADMIN_CLERK_IDS", "")
+# Platform back-office: bootstrap allowlist of user emails granted cross-tenant
+# platform-admin access before any PlatformAdmin row exists. Comma-separated.
+# Prefer the `add_platform_admin` command for the durable list.
+PLATFORM_ADMIN_EMAILS = os.environ.get("PLATFORM_ADMIN_EMAILS", "")
 
 # AWS S3 — document storage. Uploads/downloads use short-lived presigned URLs;
 # the app holds these credentials, the browser never sees them. Inert until all
@@ -177,6 +173,24 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 # How long presigned upload/download URLs stay valid (seconds).
 AWS_S3_PRESIGN_EXPIRY = int(os.environ.get("AWS_S3_PRESIGN_EXPIRY", "900"))
 
+# Object-storage backend selector for the PDPL KSA re-host. "s3" (default) keeps
+# the existing AWS S3 path unchanged; "gcs" routes through documents.gcs_storage
+# to a Google Cloud Storage bucket in me-central2 (Dammam). Same interface either
+# way; the GCS path is INERT until its env below is fully set.
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "s3")
+
+# Google Cloud Storage — in-Kingdom document storage (PDPL residency). Uploads/
+# downloads use short-lived V4 signed URLs generated server-side with the service
+# account key (RS256 via the already-pinned `cryptography`, no new dependency).
+# Inert until bucket + service-account email + private key are all set.
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "")
+GCS_LOCATION = os.environ.get("GCS_LOCATION", "me-central2")
+GCS_SA_EMAIL = os.environ.get("GCS_SA_EMAIL", "")
+# PEM private key for the signing service account. Supports a literal PEM or one
+# with escaped newlines (as env vars / Secret Manager often store it).
+GCS_SA_PRIVATE_KEY = os.environ.get("GCS_SA_PRIVATE_KEY", "").replace("\\n", "\n")
+GCS_SIGN_EXPIRY = int(os.environ.get("GCS_SIGN_EXPIRY", "900"))
+
 # OCR — Azure Document Intelligence (Read model), Arabic-capable. FALLBACK ONLY:
 # text-layer PDFs/DOCX keep extracting client-side; only image-only/scanned
 # PDFs are routed here. Inert until endpoint + key are provided (see
@@ -186,6 +200,34 @@ OCR_AZURE_KEY = os.environ.get("OCR_AZURE_KEY", "")
 OCR_AZURE_REGION = os.environ.get("OCR_AZURE_REGION", "")
 OCR_AZURE_MODEL = os.environ.get("OCR_AZURE_MODEL", "prebuilt-read")
 OCR_AZURE_API_VERSION = os.environ.get("OCR_AZURE_API_VERSION", "2024-11-30")
+
+# OCR provider selector for the PDPL KSA re-host. "azure" (default) keeps the
+# existing path; "gcp" routes the scanned-PDF fallback to GCP Document AI in
+# me-central2 (Arabic-capable, in-Kingdom). Same fallback-only interface; the GCP
+# path is INERT until its env below is fully set. stdlib REST — no SDK dependency.
+OCR_PROVIDER = os.environ.get("OCR_PROVIDER", "azure")
+OCR_GCP_PROJECT = os.environ.get("OCR_GCP_PROJECT", "")
+OCR_GCP_LOCATION = os.environ.get("OCR_GCP_LOCATION", "me-central2")
+OCR_GCP_PROCESSOR_ID = os.environ.get("OCR_GCP_PROCESSOR_ID", "")
+# OAuth bearer for GCP REST calls. In production this comes from the Cloud Run
+# service account via the metadata server / ADC; this env override exists so the
+# scaffold is testable and explicit (see documents.ocr._gcp_access_token).
+OCR_GCP_ACCESS_TOKEN = os.environ.get("OCR_GCP_ACCESS_TOKEN", "")
+
+# Vertex AI — in-Kingdom embeddings (PDPL residency) for the RAG assistant,
+# me-central2. Behind active_embedder(): Vertex when configured, else Voyage,
+# else the credential-free placeholder (unchanged default). stdlib REST — no dep.
+VERTEX_PROJECT = os.environ.get("VERTEX_PROJECT", "")
+VERTEX_LOCATION = os.environ.get("VERTEX_LOCATION", "me-central2")
+VERTEX_EMBED_MODEL = os.environ.get("VERTEX_EMBED_MODEL", "text-embedding-005")
+VERTEX_ACCESS_TOKEN = os.environ.get("VERTEX_ACCESS_TOKEN", "")
+
+# Billing provider selector for the PDPL KSA re-host. "stripe" (default) keeps
+# the existing SAMA-non-aligned path; "moyasar" routes to the in-Kingdom PSP
+# stub (NOT implemented — migration plan only; see docs/PDPL_PROCESSOR_EVALUATION).
+BILLING_PROVIDER = os.environ.get("BILLING_PROVIDER", "stripe")
+MOYASAR_SECRET_KEY = os.environ.get("MOYASAR_SECRET_KEY", "")
+MOYASAR_WEBHOOK_SECRET = os.environ.get("MOYASAR_WEBHOOK_SECRET", "")
 
 # OpenAI / Pinecone — AI review, generation, RAG (not yet provisioned)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

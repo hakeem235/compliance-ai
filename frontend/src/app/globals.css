@@ -1,4 +1,3 @@
-@import '@clerk/ui/themes/shadcn.css';
 
 @tailwind base;
 @tailwind components;
@@ -17,7 +16,7 @@
     --font-mono: var(--font-mono);
   }
   :root {
-    /* ComplianceAI design system v2 — "trusted green legal expert": deep green sidebar + neutral surface + amber/red risk accents */
+    /* Moutabaq design system v2 — "trusted green legal expert": deep green sidebar + neutral surface + amber/red risk accents */
     --background: #F4F6F5;
     --foreground: #10201A;
     --card: #FFFFFF;

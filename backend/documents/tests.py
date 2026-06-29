@@ -307,3 +307,134 @@ class ExtractJsonTests(TestCase):
     def test_raises_on_malformed_json(self):
         with self.assertRaises(json.JSONDecodeError):
             _extract_json("{not valid json}")
+
+
+class GcsStorageTests(TestCase):
+    """In-Kingdom GCS storage adapter (PDPL re-host), selected by STORAGE_BACKEND=gcs."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        cls.pem = key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            serialization.NoEncryption(),
+        ).decode()
+
+    def setUp(self):
+        from documents import gcs_storage, storage
+
+        self.gcs = gcs_storage
+        self.storage = storage
+
+    def _enabled(self, **extra):
+        base = dict(
+            STORAGE_BACKEND="gcs",
+            GCS_BUCKET_NAME="ksa-docs",
+            GCS_LOCATION="me-central2",
+            GCS_SA_EMAIL="signer@proj.iam.gserviceaccount.com",
+            GCS_SA_PRIVATE_KEY=self.pem,
+            GCS_SIGN_EXPIRY=900,
+        )
+        base.update(extra)
+        return override_settings(**base)
+
+    @override_settings(STORAGE_BACKEND="gcs", GCS_BUCKET_NAME="", GCS_SA_EMAIL="", GCS_SA_PRIVATE_KEY="")
+    def test_disabled_when_unconfigured(self):
+        self.assertFalse(self.gcs.storage_enabled())
+        # Dispatch: the public storage interface reports the GCS backend's state.
+        self.assertFalse(self.storage.storage_enabled())
+
+    def test_enabled_when_fully_configured(self):
+        with self._enabled():
+            self.assertTrue(self.gcs.storage_enabled())
+            self.assertTrue(self.storage.storage_enabled())
+
+    def test_dispatch_routes_to_gcs_when_selected(self):
+        with self._enabled():
+            result = self.storage.create_upload_url("org-1", "deal.pdf", "application/pdf")
+        self.assertIn("storage.googleapis.com", result["url"])
+        self.assertIn("X-Goog-Signature=", result["url"])
+        self.assertIn("X-Goog-Algorithm=GOOG4-RSA-SHA256", result["url"])
+        self.assertTrue(result["key"].startswith("orgs/org-1/documents/"))
+        self.assertEqual(result["expires_in"], 900)
+
+    def test_default_backend_is_s3(self):
+        # No STORAGE_BACKEND override → S3 path (GCS dispatch returns None).
+        self.assertIsNone(self.storage._active())
+
+    def test_upload_url_rejects_unsupported_content_type(self):
+        with self._enabled():
+            with self.assertRaises(ValueError):
+                self.gcs.create_upload_url("org-1", "image.png", "image/png")
+
+    def test_signed_download_url_is_get(self):
+        with self._enabled():
+            url = self.gcs.create_download_url("orgs/org-1/documents/x/deal.pdf")
+        self.assertIn("storage.googleapis.com/ksa-docs/", url)
+        self.assertIn("X-Goog-Signature=", url)
+
+    def test_object_key_reuses_s3_scheme(self):
+        k = self.gcs.build_object_key("org-9", "../../etc/passwd")
+        self.assertTrue(k.startswith("orgs/org-9/documents/"))
+        self.assertNotIn("..", k.split("/")[-1])
+
+
+class GcpOcrRoutingTests(TestCase):
+    """In-Kingdom GCP Document AI OCR (PDPL re-host), selected by OCR_PROVIDER=gcp."""
+
+    def setUp(self):
+        from documents import ocr
+
+        self.ocr = ocr
+
+    @override_settings(
+        OCR_PROVIDER="gcp", OCR_GCP_PROJECT="", OCR_GCP_PROCESSOR_ID="", OCR_GCP_ACCESS_TOKEN=""
+    )
+    def test_gcp_disabled_when_unconfigured(self):
+        self.assertFalse(self.ocr.ocr_enabled())
+
+    @override_settings(
+        OCR_PROVIDER="gcp",
+        OCR_GCP_PROJECT="proj",
+        OCR_GCP_LOCATION="me-central2",
+        OCR_GCP_PROCESSOR_ID="abc123",
+        OCR_GCP_ACCESS_TOKEN="ya29.token",
+    )
+    def test_gcp_enabled_and_selected(self):
+        self.assertTrue(self.ocr.ocr_enabled())
+        self.assertEqual(self.ocr._provider(), "gcp")
+
+    @override_settings(OCR_PROVIDER="azure", OCR_AZURE_ENDPOINT="https://x", OCR_AZURE_KEY="k")
+    def test_default_provider_is_azure(self):
+        self.assertEqual(self.ocr._provider(), "azure")
+
+    @override_settings(
+        OCR_PROVIDER="gcp",
+        OCR_GCP_PROJECT="proj",
+        OCR_GCP_LOCATION="me-central2",
+        OCR_GCP_PROCESSOR_ID="abc123",
+        OCR_GCP_ACCESS_TOKEN="ya29.token",
+    )
+    def test_extract_text_routes_to_gcp_and_sanitizes(self):
+        import io
+        import json as _json
+
+        payload = _json.dumps({"document": {"text": "نص\x00 مُستخرج"}}).encode()
+
+        class _Resp(io.BytesIO):
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+
+        with mock.patch.object(self.ocr.urllib.request, "urlopen", return_value=_Resp(payload)) as m:
+            text = self.ocr.extract_text(b"%PDF-bytes", "application/pdf")
+        self.assertEqual(text, "نص مُستخرج")  # NUL stripped
+        # Routed to the Document AI me-central2 endpoint, not Azure.
+        called_url = m.call_args[0][0].full_url
+        self.assertIn("me-central2-documentai.googleapis.com", called_url)

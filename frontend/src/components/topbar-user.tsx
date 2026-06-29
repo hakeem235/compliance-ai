@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { UserButton, useAuth, useUser } from "@clerk/nextjs";
+import { UserButton, useAuth, useUser } from "@/components/auth";
 import { api, type CurrentUser, type OrgUser } from "@/lib/api";
 
 const ROLE_LABEL_KEY: Record<OrgUser["role"], string> = {

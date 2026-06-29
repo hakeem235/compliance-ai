@@ -1,10 +1,9 @@
 /**
- * Typed fetch wrapper for the ComplianceAI Django/DRF backend.
+ * Typed fetch wrapper for the Moutabaq Django/DRF backend.
  *
  * - Reads NEXT_PUBLIC_API_BASE_URL from env.
- * - Attaches the Clerk session JWT as a Bearer header (client-side only —
- *   call sites in this app are "use client" pages, so we use Clerk's
- *   useAuth().getToken() pattern via the `getToken` param injected by callers).
+ * - Attaches the app session JWT as a Bearer header via the `getToken` param
+ *   injected by callers (from useAuth() in components/auth).
  * - Parses JSON responses and surfaces errors in a consistent ApiError shape
  *   instead of swallowing them, so calling code can render loading/error/empty
  *   states explicitly.
@@ -32,9 +31,9 @@ type RequestOptions = Omit<RequestInit, "body"> & {
 };
 
 /**
- * Core request function. `getToken` should be the function returned by
- * Clerk's `useAuth()` hook (`const { getToken } = useAuth()`), passed in by
- * the calling component — this module has no React/Clerk dependency itself.
+ * Core request function. `getToken` should be the function returned by the
+ * app's `useAuth()` hook (`const { getToken } = useAuth()`), passed in by the
+ * calling component — this module has no React/auth dependency itself.
  */
 async function request<T>(path: string, { getToken, body, headers, ...init }: RequestOptions): Promise<T> {
   const token = await getToken();

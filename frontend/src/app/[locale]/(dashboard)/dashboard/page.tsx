@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { FileText, AlertTriangle, Clock, ShieldCheck, Loader2 } from "lucide-react";
 import { RiskGauge } from "@/components/risk-gauge";
 import { RiskBadge, type RiskLevel } from "@/components/risk-badge";

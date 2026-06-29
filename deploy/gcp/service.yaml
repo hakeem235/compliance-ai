@@ -1,0 +1,54 @@
+# Cloud Run service manifest (Knative) — declarative alternative to the
+# `gcloud run deploy` in cloudbuild.yaml. Region is implied by the deploy target
+# (`gcloud run services replace deploy/gcp/service.yaml --region=me-central2`).
+#
+# me-central2 = Dammam, KSA. Keeps compute + data processing in the Kingdom for
+# PDPL. Replace PROJECT_ID and the Cloud SQL connection name before applying.
+# Inert until applied against a provisioned project; nothing here incurs cost.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: complianceai-api
+  labels:
+    app: complianceai
+    residency: ksa-me-central2
+  annotations:
+    run.googleapis.com/ingress: internal-and-cloud-load-balancing
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cloudsql-instances: PROJECT_ID:me-central2:complianceai-db
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "4"
+    spec:
+      serviceAccountName: complianceai-run@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+        - image: me-central2-docker.pkg.dev/PROJECT_ID/complianceai/complianceai-api:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # Non-secret, region-pinned provider config (the residency re-host).
+            - { name: DJANGO_DEBUG, value: "false" }
+            - { name: STORAGE_BACKEND, value: "gcs" }
+            - { name: GCS_LOCATION, value: "me-central2" }
+            - { name: OCR_PROVIDER, value: "gcp" }
+            - { name: OCR_GCP_LOCATION, value: "me-central2" }
+            - { name: VERTEX_LOCATION, value: "me-central2" }
+            # Secrets come from Secret Manager — see README. Example binding:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: database-url, key: latest }
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: django-secret, key: latest }
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /api/health/
+              port: 8080
+            failureThreshold: 10
+            periodSeconds: 6

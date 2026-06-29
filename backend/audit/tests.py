@@ -16,12 +16,12 @@ class AuditLogSerializerTests(TestCase):
         )
 
     def test_actor_name_prefers_name(self):
-        actor = OrgUser.objects.create(clerk_user_id="u1", organization=self.org, email="a@x.com", name="Ada Lovelace")
+        actor = OrgUser.objects.create(organization=self.org, email="a@x.com", name="Ada Lovelace")
         data = AuditLogSerializer(self._log(actor)).data
         self.assertEqual(data["actor_name"], "Ada Lovelace")
 
     def test_actor_name_falls_back_to_email(self):
-        actor = OrgUser.objects.create(clerk_user_id="u2", organization=self.org, email="b@x.com", name="")
+        actor = OrgUser.objects.create(organization=self.org, email="b@x.com", name="")
         data = AuditLogSerializer(self._log(actor)).data
         self.assertEqual(data["actor_name"], "b@x.com")
 

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
+import { ShieldAlert, Loader2, Search, Users, CreditCard, RefreshCcw, XCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   ShieldAlert, Loader2, Search, Users, CreditCard, RefreshCcw, XCircle, CheckCircle2,
   AlertTriangle, Download, Ban, ShieldCheck, Trash2, History, Gift,

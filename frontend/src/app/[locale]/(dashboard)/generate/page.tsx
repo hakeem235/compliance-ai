@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { ArrowLeft, Check, FileDown, FileText, Printer, AlertTriangle, Loader2 } from "lucide-react";
 import { api, ApiError, type GeneratedDocType } from "@/lib/api";
 

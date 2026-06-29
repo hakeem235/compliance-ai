@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth";
 import { Send, MessagesSquare, BookText, AlertTriangle } from "lucide-react";
 import { api, ApiError, type ChatMessage } from "@/lib/api";
 

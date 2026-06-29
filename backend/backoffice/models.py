@@ -14,10 +14,12 @@ class PlatformAdmin(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    clerk_user_id = models.CharField(max_length=255, unique=True)
+    org_user = models.OneToOneField(
+        "organizations.OrgUser", on_delete=models.CASCADE, related_name="platform_admin"
+    )
     email = models.EmailField(blank=True)
     note = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.email or self.clerk_user_id
+        return self.email or str(self.org_user_id)
